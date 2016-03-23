@@ -7,15 +7,13 @@ import java.io.ObjectStreamException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.PrivateKey;
-import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 
 import org.crypthing.security.provider.NharuProvider;
+import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuCommon;
 
-public class NharuRSAPrivateKey implements RSAPrivateKey
+public final class NharuRSAPrivateKey implements RSAPrivateKey
 {
 	static { NharuProvider.isLoaded(); }
 
@@ -25,11 +23,14 @@ public class NharuRSAPrivateKey implements RSAPrivateKey
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
 	private static final long serialVersionUID = -4864032840615951991L;
 	private final byte[] encoding;
+	private NharuX509Certificate[] chain;
 
-	public NharuRSAPrivateKey(final byte[] encoding) throws InvalidKeyException
+	public NharuRSAPrivateKey(final byte[] encoding) throws InvalidKeyException { this(encoding, null); }
+	public NharuRSAPrivateKey(final byte[] encoding, final NharuX509Certificate[] chain) throws InvalidKeyException
 	{
 		this.encoding = encoding;
 		hHandle = nharuNewRSAPrivateKey(encoding);
+		this.chain = chain;
 	}
 
 	public void releaseObject()
@@ -40,33 +41,63 @@ public class NharuRSAPrivateKey implements RSAPrivateKey
 			hHandle = 0;
 		}
 	}
-	
-	@Override
-	public BigInteger getModulus()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public BigInteger getPrivateExponent()
-	{
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override public byte[] getEncoded() { return encoding; }
-	@Override public String getAlgorithm() { return "RSA"; }
-	@Override public String getFormat() { return "PKCS#8"; }
-
+	/**
+	 * Signs specified buffer with this private key
+	 * @param data: the buffer
+	 * @param algorithm: signature algorithm. Only SHA1withRSA, SHA256withRSA, SHA384withRSA, SHA512withRSA and MD5withRSA are supported.
+	 * @return the signature itself.
+	 * @throws GeneralSecurityException (an instance of java.security.KeyException) if data could not be signed.
+	 */
 	public byte[] sign(final byte[] data, final String algorithm) throws GeneralSecurityException
 	{
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		return nharuRSASign(hHandle, data, NharuCommon.getAlgorithmConstant(algorithm));
 	}
 
+	/**
+	 * Gets the length of the signature byte array.
+	 * @param algorithm: ignored.
+	 * @return the signature length.
+	 */
+	public int signatureLength(final String algorithm)
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return nharuRSASignatureLength(hHandle);
+	}
+
+	/**
+	 * Sets certificate chain associated to this private key.
+	 * @param chain: the chain itself. It is assumed that the chain is valid.
+	 */
+	public void setChain(final NharuX509Certificate[] chain) { this.chain = chain; }
+
+	/**
+	 * Gets the certificate chain associated to this private key.
+	 * @return the chain or null.
+	 */
+	public NharuX509Certificate[] getChain() { return chain; }
+
+	@Override
+	public BigInteger getModulus()
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return new BigInteger(nharuGetRSAModulus(hHandle));
+	}
+	@Override
+	public BigInteger getPrivateExponent()
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return new BigInteger(nharuGetRSAPrivateExponent(hHandle));
+	}
+	@Override public byte[] getEncoded() { return encoding; }
+	@Override public String getAlgorithm() { return "RSA"; }
+	@Override public String getFormat() { return "PKCS#8"; }
+
 	private static native long nharuNewRSAPrivateKey(byte[] encoding) throws InvalidKeyException;
 	private static native void nharuReleaseRSAPrivateKey(long handle);
-
+	private static native byte[] nharuGetRSAModulus(long handle);
+	private static native byte[] nharuGetRSAPrivateExponent(long handle);
 	private static native byte[] nharuRSASign(long handle, byte[] data, int mechanism) throws InvalidKeyException;
 	private static native int nharuRSASignatureLength(long handle);
 }

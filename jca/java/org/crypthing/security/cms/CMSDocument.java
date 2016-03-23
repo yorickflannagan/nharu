@@ -623,7 +623,7 @@ public abstract class CMSDocument
 		System.out.print("CMSSignedData generation test... ");
 		try
 		{
-			final BlindSigner signer = new BlindSigner();
+			final NharuKeyStore signer = new NharuKeyStore();
 			try
 			{
 				final CMSSignedDataBuilder builder = new CMSSignedDataBuilder("eContent".getBytes(), true);
