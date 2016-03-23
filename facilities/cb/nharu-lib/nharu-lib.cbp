@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="nharu-lib" />
+		<Option makefile_is_custom="1" />
+		<Option execution_dir="../../../nharu/src" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/debug/nharu-lib" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/debug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+				</Compiler>
+				<MakeCommands>
+					<Build command="$make -f $makefile DEBUG=1" />
+					<CompileFile command="$make -f $makefile $file DEBUG=1" />
+					<Clean command="$make -f $makefile clean DEBUG=1" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile DEBUG=1" />
+					<SilentBuild command="$make -f $makefile DEBUG=1 &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/release/nharu-lib" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/release/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-Wall" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+				<MakeCommands>
+					<Build command="$make -f $makefile" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile" />
+					<SilentBuild command="$make -f $makefile &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Environment>
+				<Variable name="UNIX_IMPL" value="1" />
+			</Environment>
+		</Build>
+		<Unit filename="../../../nharu/include/base.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/cms.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/crypto.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/error.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/parser.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/pkibr.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/pkix.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/include/sysservc.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/cms_env.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/cms_sd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/config.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/crypto.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/libgfshare.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/libgfshare.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/libgfshare_tables.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/pkix.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/sysservc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../nharu/src/x509.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../pkcs#11/cryptoki.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../pkcs#11/pkcs11.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../pkcs#11/pkcs11f.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../pkcs#11/pkcs11t.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Extensions>
+			<envvars />
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

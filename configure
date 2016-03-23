@@ -1,0 +1,57 @@
+#!/bin/bash
+# #############################################################################
+# The Crypthing Initiative
+# Nharu project
+# Copyleft 2015
+# Arguments
+# -t [PATH]: 3rd party directory (optional). Default $HOME/development/3rdparty
+# -c [FILE}: configuration XML (optional). Default configure.xml
+# #############################################################################
+
+TRD_DIR="$HOME/development/3rdparty"
+CONF_FILE="configure.xml"
+OPTIND=1
+while getopts "t:c:" opt; do
+	case "$opt" in
+		t) TRD_DIR=$OPTARG
+		;;
+		c) CONF_FILE=$OPTARG
+	esac
+done
+
+
+#perl requirements
+#libxml-libxml-perl
+#libxml-xpath-perl
+#libswitch-perl
+
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' libxml-libxml-perl|grep "install ok installed")
+echo "Checking for perl XML Support: $PKG_OK"
+if [ "" == "$PKG_OK" ]; then
+  echo "No perl XML Support. Setting up XML Support."
+  sudo apt-get --force-yes -y install libxml-libxml-perl
+fi
+
+
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' libxml-xpath-perl|grep "install ok installed")
+echo "Checking for perl XPATH Support: $PKG_OK"
+if [ "" == "$PKG_OK" ]; then
+  echo "No XPATH Support. Setting up XPATH Support."
+  sudo apt-get --force-yes -y install libxml-xpath-perl
+fi
+
+
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' libswitch-perl|grep "install ok installed")
+echo "Checking for perl Switch Support: $PKG_OK"
+if [ "" == "$PKG_OK" ]; then
+  echo "No Switch Support. Setting up Switch Support."
+  sudo apt-get --force-yes -y install libswitch-perl
+fi
+
+
+cd $(dirname $CONF_FILE)
+export CURRENT_DIR=$PWD
+cd -
+export TRD_DIR=$TRD_DIR
+export USR_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+perl main.pl $CONF_FILE
