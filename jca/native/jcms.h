@@ -27,13 +27,13 @@
 #include "cms.h"
 
 
-typedef struct JNH_CMS_PARSING_HANDLER_STR
+typedef struct JNH_CMSSD_PARSING_HANDLER_STR
 {
 	jbyte*		encoding;
 	jsize			len;
 	NH_CMS_SD_PARSER	hCMS;
 
-} JNH_CMS_PARSING_HANDLER_STR, *JNH_CMS_PARSING_HANDLER;
+} JNH_CMSSD_PARSING_HANDLER_STR, *JNH_CMSSD_PARSING_HANDLER;
 
 typedef struct JNH_CMS_ENCODING_HANDLER_STR
 {
@@ -42,18 +42,28 @@ typedef struct JNH_CMS_ENCODING_HANDLER_STR
 
 } JNH_CMS_ENCODING_HANDLER_STR, *JNH_CMS_ENCODING_HANDLER;
 
-typedef struct JNH_SIGNER_CALLBACK_STR
+typedef struct JNH_RSA_CALLBACK_STR
 {
 	JNIEnv*				env;
 	jstring				algorithm;
-	jobject				signer;
+	jobject				iface;
 	jclass				clazz;
 
-} JNH_SIGNER_CALLBACK_STR, *JNH_SIGNER_CALLBACK;
+} JNH_RSA_CALLBACK_STR, *JNH_RSA_CALLBACK;
+
+typedef struct JNH_CMSENV_PARSING_HANDLER_STR
+{
+	jbyte*		encoding;
+	jsize			len;
+	NH_CMS_ENV_PARSER	hCMS;
+
+} JNH_CMSENV_PARSING_HANDLER_STR, *JNH_CMSENV_PARSING_HANDLER;
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 /*
  * Class:     org_crypthing_security_cms_CMSDocument
@@ -63,6 +73,9 @@ extern "C" {
 JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSDocument_nhcmsDiscover(JNIEnv *, jclass, jbyteArray);
 
 
+/** *********************************
+ *  CMS SignedData parsing operations
+ *  *********************************/
 /*
  * Class:     org_crypthing_security_cms_CMSSignedData
  * Method:    nhcmsParseSignedData
@@ -120,33 +133,9 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSi
 
 
 
-/*
- * Class:     org_crypthing_security_cms_BlindSigner
- * Method:    nhcmsNewRSAPrivateKey
- * Signature: ([B)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsNewRSAPrivateKey(JNIEnv *, jclass, jbyteArray);
-/*
- * Class:     org_crypthing_security_cms_BlindSigner
- * Method:    nhcmsReleaseRSAPrivateKey
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsReleaseRSAPrivateKey(JNIEnv *, jclass, jlong);
-/*
- * Class:     org_crypthing_security_cms_BlindSigner
- * Method:    nhcmsRSASign
- * Signature: (J[BI)[B
- */
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsRSASign(JNIEnv *, jclass, jlong, jbyteArray, jint);
-/*
- * Class:     org_crypthing_security_cms_BlindSigner
- * Method:    nhcmsRSASignatureLength
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsRSASignatureLength(JNIEnv *, jclass, jlong);
-
-
-
+/** *********************************
+ *  CMS SignedData building operations
+ *  *********************************/
 /*
  * Class:     org_crypthing_security_cms_CMSSignedDataBuilder
  * Method:    nhcmsNewSignedDataBuilder
@@ -168,11 +157,6 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcm
 /*
  * Class:     org_crypthing_security_cms_CMSSignedDataBuilder
  * Method:    nhcmsSign
- * Signature: (JILorg/crypthing/security/cms/SignerInterface;)V
- */
-/*
- * Class:     org_crypthing_security_cms_CMSSignedDataBuilder
- * Method:    nhcmsSign
  * Signature: (JJILorg/crypthing/security/cms/SignerInterface;)V
  */
 JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsSign(JNIEnv *, jclass, jlong, jlong, jint, jobject);
@@ -182,6 +166,23 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcm
  * Signature: (J)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsEncode(JNIEnv *, jclass, jlong);
+
+
+/** ************************************
+ *  CMS EnvelopedData parsing operations
+ *  ************************************/
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedData
+ * Method:    nhcmsParseEnvelopedData
+ * Signature: ([B)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsParseEnvelopedData(JNIEnv *, jclass, jbyteArray);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedData
+ * Method:    nhcmsReleaseHandle
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsReleaseHandle(JNIEnv *, jclass, jlong);
 
 
 #ifdef __cplusplus

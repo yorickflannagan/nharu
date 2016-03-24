@@ -384,6 +384,30 @@ typedef struct NH_CMS_ENV_PARSER_STR	NH_CMS_ENV_PARSER_STR;
 typedef NH_METHOD(NH_RV, NH_CMSENV_RID_FUNCTION)(_IN_ NH_CMS_ENV_PARSER_STR*, _IN_ size_t, _OUT_ NH_CMS_ISSUER_SERIAL*);
 
 /*
+ ****f* NH_CMS_ENV_PARSER/NH_CMS_PDEC_FUNCTION
+ *
+ * NAME
+ *	NH_CMS_PDEC_FUNCTION
+ *
+ * PURPOSE
+ *	Private decryption callback
+ *
+ * ARGUMENTS
+ *	_IN_ NH_BLOB *data: data to be decrypted.
+ *	_IN_ CK_MECHANISM_TYPE mechanism: private decryption algorithm
+ *	_IN_ void *params: any desired parameter
+ *	_OUT_ unsigned char *plaintext: the plain text, or NULL if plain size is required.
+ *	_INOUT_ size_t *plainSize: size of plaintext
+ *
+ * RESULT
+ *	NH_OK or whatever...
+ *
+ ******
+ *
+ */
+typedef NH_CALLBACK(NH_RV, NH_CMS_PDEC_FUNCTION)(_IN_ NH_BLOB*, _IN_ CK_MECHANISM_TYPE, _IN_ void*, _OUT_ unsigned char*, _INOUT_ size_t*);
+
+/*
  ****f* NH_CMS_ENV_PARSER/decrypt
  *
  * NAME
@@ -395,14 +419,15 @@ typedef NH_METHOD(NH_RV, NH_CMSENV_RID_FUNCTION)(_IN_ NH_CMS_ENV_PARSER_STR*, _I
  * ARGUMENTS
  *	_INOUT_ NH_CMS_ENV_PARSER *self: the handler
  *	_IN_ size_t idx: RecipientInfo index. Must be a value between 0 and count.
- *	_IN_ NH_RSA_PRIVKEY_HANDLER hKey: recipient RSA private key handler
+ *	_IN_ NH_CMS_PDEC_FUNCTION callback: private decryption callback
+ *	, _IN_ void *params: any parameter to callback
  *
  * RESULT
  *
  ******
  *
  */
-typedef NH_METHOD(NH_RV, NH_CMSENV_DEC_FUNCTION)(_INOUT_ NH_CMS_ENV_PARSER_STR*, _IN_ size_t, _IN_ NH_RSA_PRIVKEY_HANDLER);
+typedef NH_METHOD(NH_RV, NH_CMSENV_DEC_FUNCTION)(_INOUT_ NH_CMS_ENV_PARSER_STR*, _IN_ size_t, _IN_ NH_CMS_PDEC_FUNCTION, _IN_ void*);
 
 /*
  ****s* CMS/NH_CMS_ENV_PARSER

@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.security.GeneralSecurityException;
 
+import org.crypthing.security.SignerInterface;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuCommon;

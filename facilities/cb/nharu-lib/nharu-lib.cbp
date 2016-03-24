@@ -4,12 +4,12 @@
 	<Project>
 		<Option title="nharu-lib" />
 		<Option makefile_is_custom="1" />
-		<Option execution_dir="../../../nharu/src" />
+		<Option execution_dir="../../../src" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/debug/nharu-lib" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../dist/debug/nharu-lib" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/debug/" />
 				<Option type="2" />
@@ -29,7 +29,7 @@
 				</MakeCommands>
 			</Target>
 			<Target title="Release">
-				<Option output="bin/release/nharu-lib" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../dist/release/nharu-lib" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/release/" />
 				<Option type="2" />
@@ -55,61 +55,28 @@
 				<Variable name="UNIX_IMPL" value="1" />
 			</Environment>
 		</Build>
-		<Unit filename="../../../nharu/include/base.h">
+		<Unit filename="../../../include/base.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/cms.h">
+		<Unit filename="../../../include/cms.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/crypto.h">
+		<Unit filename="../../../include/crypto.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/error.h">
+		<Unit filename="../../../include/error.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/parser.h">
+		<Unit filename="../../../include/parser.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/pkibr.h">
+		<Unit filename="../../../include/pkibr.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/pkix.h">
+		<Unit filename="../../../include/pkix.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/include/sysservc.h">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/cms_env.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/cms_sd.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/config.h">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/crypto.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/libgfshare.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/libgfshare.h">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/libgfshare_tables.h">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/parser.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/pkix.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/sysservc.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="../../../nharu/src/x509.c">
+		<Unit filename="../../../include/sysservc.h">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../pkcs#11/cryptoki.h">
@@ -122,6 +89,39 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../pkcs#11/pkcs11t.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/cms_env.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/cms_sd.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/config.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/crypto.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/libgfshare.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/libgfshare.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/libgfshare_tables.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/pkix.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/sysservc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../src/x509.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

@@ -16,9 +16,12 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
+import org.crypthing.security.DecryptInterface;
 import org.crypthing.security.NharuRSAPrivateKey;
+import org.crypthing.security.SignerInterface;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.security.x509.NharuX509Factory;
 
@@ -69,14 +72,9 @@ public class NharuKeyStore implements SignerInterface
 			}
 		}
 		if (alias == null) throw new UnrecoverableKeyException();
-		return getInstance(from, pwd, alias);
+		return new NharuKeyStore(from, pwd, alias);
 	}
 
-	public static NharuKeyStore getInstance(final KeyStore from, final char[] pwd, final String signerAlias) throws KeyStoreException, UnrecoverableKeyException, CertificateEncodingException, CertificateException
-	{
-		if (from == null || signerAlias == null) throw new NullPointerException("Arguments must not be null");
-		return new NharuKeyStore(from, pwd, signerAlias);
-	}
 
 	private NharuRSAPrivateKey getKey(final KeyStore from, final char[] pwd, final String alias) throws KeyStoreException, UnrecoverableKeyException, CertificateEncodingException, CertificateException
 	{
@@ -95,8 +93,20 @@ public class NharuKeyStore implements SignerInterface
 	}
 	private final NharuRSAPrivateKey signer;
 	private final Map<IssuerAndSerialNumber, NharuRSAPrivateKey> recips;
-	private NharuKeyStore(final KeyStore from, final char[] pwd, final String signerAlias) throws KeyStoreException, UnrecoverableKeyException, CertificateEncodingException, CertificateException
+
+	/**
+	 * Creates a new RSA private keys store.
+	 * @param from: Java key store from where all private keys should be retrieved 
+	 * @param pwd: key store password
+	 * @param signerAlias: alias of signing key. All other keys should be for decryption.
+	 * @throws KeyStoreException
+	 * @throws UnrecoverableKeyException
+	 * @throws CertificateEncodingException
+	 * @throws CertificateException
+	 */
+	public NharuKeyStore(final KeyStore from, final char[] pwd, final String signerAlias) throws KeyStoreException, UnrecoverableKeyException, CertificateEncodingException, CertificateException
 	{
+		if (from == null || signerAlias == null) throw new NullPointerException("Arguments must not be null");
 		signer = getKey(from, pwd, signerAlias);
 		recips = new HashMap<>();
 		final Enumeration<String> en = from.aliases();
@@ -111,6 +121,18 @@ public class NharuKeyStore implements SignerInterface
 			}
 		}
 	}
+
+	/**
+	 * Releases this object. Must be called when object is no more needed 
+	 */
+	public void releaseObject()
+	{
+		signer.releaseObject();
+		final Iterator<IssuerAndSerialNumber> it = recips.keySet().iterator();
+		while (it.hasNext()) recips.get(it.next()).releaseObject();
+	}
+	public NharuX509Certificate[] getSignerChain() { return signer.getChain(); }
+	public DecryptInterface getDecrypt(final IssuerAndSerialNumber issuer) { return recips.get(issuer); }
 
 	@Override public byte[] sign(final byte[] data, final String algorithm) throws GeneralSecurityException { return signer.sign(data, algorithm); }
 	@Override public int signatureLength(String algorithm) { return signer.signatureLength(algorithm); }

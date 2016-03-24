@@ -1,4 +1,4 @@
-package org.crypthing.security.x509;
+package org.crypthing.security;
 
 import java.io.IOException;
 import java.io.NotSerializableException;
@@ -7,10 +7,11 @@ import java.io.ObjectStreamException;
 import java.math.BigInteger;
 import java.security.interfaces.RSAPublicKey;
 
+import org.crypthing.security.x509.NharuX509Certificate;
+
 
 public final class NharuRSAPublicKey extends NharuPublicKey implements RSAPublicKey
 {
-
 	private static final long serialVersionUID = 6023121324073746434L;
 	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
@@ -40,24 +41,7 @@ public final class NharuRSAPublicKey extends NharuPublicKey implements RSAPublic
 		return nhixGetPublicKeyHandle(parent.getCertificateHandle());
 	}
 
-	/**
-	 * Get RSA key modulus n.
-	 * @param handle - parent certificate handle.
-	 * @return copy of the ASN.1 INTEGER (little endian) value.
-	 */
 	private static native byte[] nhixGetRSAKeyModulus(long handle);
-
-	/**
-	 * Get RSA key public exponent e.
-	 * @param handle - parent certificate handle.
-	 * @return copy of the ASN.1 INTEGER (little endian) value.
-	 */
 	private static native byte[] nhixGetRSAKeyPublicExponent(long handle);
-
-	/**
-	 * Obtém um handle nativo para o campo Subject Public Key Info.
-	 * @param handle - parent certificate handle.
-	 * @return native SubjectPublicKeyInfo handle. If it is created, it is released by nhixReleaseCertificate().
-	 */
 	protected static native long nhixGetPublicKeyHandle(long handle);
 }

@@ -4,12 +4,12 @@
 	<Project>
 		<Option title="nharu-test" />
 		<Option makefile_is_custom="1" />
-		<Option execution_dir="../../../test-apps/nharu" />
+		<Option execution_dir="../../../test" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="../../../test-apps/dist/debug/ntest-app" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../test/dist/debug/ntest-app" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -29,25 +29,25 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../../../test-apps/nharu/cert_t.c">
+		<Unit filename="../../../test/cert_t.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../test-apps/nharu/cms_t.c">
+		<Unit filename="../../../test/cms_t.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../test-apps/nharu/crl_t.c">
+		<Unit filename="../../../test/crl_t.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../test-apps/nharu/crypto_t.c">
+		<Unit filename="../../../test/crypto_t.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../test-apps/nharu/nmain.c">
+		<Unit filename="../../../test/nmain.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../test-apps/nharu/parser_t.c">
+		<Unit filename="../../../test/parser_t.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../test-apps/nharu/test.h">
+		<Unit filename="../../../test/test.h">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

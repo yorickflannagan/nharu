@@ -13,7 +13,12 @@ import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuCommon;
 
-public final class NharuRSAPrivateKey implements RSAPrivateKey
+/**
+ * Implements a RSA private key DER encoded as a plain text
+ * @author magut
+ *
+ */
+public final class NharuRSAPrivateKey implements RSAPrivateKey, SignerInterface, DecryptInterface
 {
 	static { NharuProvider.isLoaded(); }
 
@@ -25,7 +30,19 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey
 	private final byte[] encoding;
 	private NharuX509Certificate[] chain;
 
+	/**
+	 * Creates a new NharuRSAPrivateKey instance
+	 * @param encoding: DER encoding of RSA private key attributes according to RFC 3447
+	 * @throws InvalidKeyException
+	 */
 	public NharuRSAPrivateKey(final byte[] encoding) throws InvalidKeyException { this(encoding, null); }
+
+	/**
+	 * Creates a new NharuRSAPrivateKey instance
+	 * @param encoding: DER encoding of RSA private key attributes according to RFC 3447
+	 * @param chain: certificate chain associated to this private key.
+	 * @throws InvalidKeyException
+	 */
 	public NharuRSAPrivateKey(final byte[] encoding, final NharuX509Certificate[] chain) throws InvalidKeyException
 	{
 		this.encoding = encoding;
@@ -33,6 +50,9 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey
 		this.chain = chain;
 	}
 
+	/**
+	 * Releases this object. Must be called when object is no more needed 
+	 */
 	public void releaseObject()
 	{
 		if (hHandle != 0)
@@ -49,6 +69,7 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey
 	 * @return the signature itself.
 	 * @throws GeneralSecurityException (an instance of java.security.KeyException) if data could not be signed.
 	 */
+	@Override
 	public byte[] sign(final byte[] data, final String algorithm) throws GeneralSecurityException
 	{
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
@@ -60,10 +81,28 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey
 	 * @param algorithm: ignored.
 	 * @return the signature length.
 	 */
+	@Override
 	public int signatureLength(final String algorithm)
 	{
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		return nharuRSASignatureLength(hHandle);
+	}
+
+	@Override
+	public int plainTextLength(final String padding) { return signatureLength(padding); }
+
+	/**
+	 * Private decrypt contents.
+	 * @param data: the buffer
+	 * @param padding: RSA private decryption algorithm. Only PKCS1Padding, OAEPPadding and NoPadding are supported.
+	 * @return the plaintext
+	 * @throws GeneralSecurityException
+	 */
+	@Override
+	public byte[] decrypt(final byte[] data, final String padding) throws GeneralSecurityException
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return nharuRSADecrypt(hHandle, data, NharuCommon.getAlgorithmConstant(padding));
 	}
 
 	/**
@@ -94,10 +133,12 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey
 	@Override public String getAlgorithm() { return "RSA"; }
 	@Override public String getFormat() { return "PKCS#8"; }
 
+
 	private static native long nharuNewRSAPrivateKey(byte[] encoding) throws InvalidKeyException;
 	private static native void nharuReleaseRSAPrivateKey(long handle);
 	private static native byte[] nharuGetRSAModulus(long handle);
 	private static native byte[] nharuGetRSAPrivateExponent(long handle);
 	private static native byte[] nharuRSASign(long handle, byte[] data, int mechanism) throws InvalidKeyException;
 	private static native int nharuRSASignatureLength(long handle);
+	private static native byte[] nharuRSADecrypt(long handle, byte[] data, int mechanism) throws InvalidKeyException;
 }

@@ -1,6 +1,6 @@
 package org.crypthing.security.x509;
 
-interface NativeParent
+public interface NativeParent
 {
 	enum X509FieldName
 	{

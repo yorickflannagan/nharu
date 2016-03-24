@@ -4,12 +4,12 @@
 	<Project>
 		<Option title="nharu-jca" />
 		<Option makefile_is_custom="1" />
-		<Option execution_dir="../../../nharu/jca/native" />
+		<Option execution_dir="../../../jca/native" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="../../../nharu/jca/dist/debug/nharujca" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../jca/dist/debug/nharujca" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/debug/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -28,7 +28,7 @@
 				</MakeCommands>
 			</Target>
 			<Target title="Release">
-				<Option output="../../../nharu/jca/dist/release/nharujca" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../jca/dist/release/nharujca" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/release/" />
 				<Option type="3" />
 				<Option compiler="gcc" />
@@ -53,43 +53,43 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../../../nharu/jca/native/8x256_tables.c">
+		<Unit filename="../../../jca/native/8x256_tables.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/b64/cdecode.h">
+		<Unit filename="../../../jca/native/b64/cdecode.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/b64/cencode.h">
+		<Unit filename="../../../jca/native/b64/cencode.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/cdecode.c">
+		<Unit filename="../../../jca/native/cdecode.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/cencode.c">
+		<Unit filename="../../../jca/native/cencode.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/cms_glue.c">
+		<Unit filename="../../../jca/native/cms_glue.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/crc.c">
+		<Unit filename="../../../jca/native/crc.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/general.c">
+		<Unit filename="../../../jca/native/general.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/jca.h">
+		<Unit filename="../../../jca/native/jca.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/jcms.h">
+		<Unit filename="../../../jca/native/jcms.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/sb8/crc.h">
+		<Unit filename="../../../jca/native/sb8/crc.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/x509.h">
+		<Unit filename="../../../jca/native/x509.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../nharu/jca/native/x509_glue.c">
+		<Unit filename="../../../jca/native/x509_glue.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

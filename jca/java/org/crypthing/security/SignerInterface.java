@@ -1,4 +1,4 @@
-package org.crypthing.security.cms;
+package org.crypthing.security;
 
 import java.security.GeneralSecurityException;
 

@@ -91,6 +91,7 @@
 #define J_CMS_SIG_EX			"org/crypthing/security/cms/CMSSignatureException"
 #define J_CMS_VALIDATE_EX		"org/crypthing/security/cms/CMSInvalidAttributesException"
 #define J_KEY_EX				"java/security/KeyException"
+#define J_INVALID_KEY_EX		"java/security/InvalidKeyException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */
@@ -140,6 +141,92 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_util_NharuArrays_nhFromBase64(JN
  * Signature: ([B)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_util_NharuArrays_nhToBase64(JNIEnv*, jclass, jbyteArray);
+
+
+/** ******************************
+ *  NharuPublicKey interface
+ *  ******************************/
+/*
+ * Class:     org_crypthing_security_NharuPublicKey
+ * Method:    nhixGetPublicKeyInfo
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyInfo(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuPublicKey
+ * Method:    nhixGetPublicKeyType
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyType(JNIEnv *, jclass, jlong);
+
+/** ******************************
+ *  NharuRSAPublicKey interface
+ *  ******************************/
+/*
+ * Class:     org_crypthing_security_NharuRSAPublicKey
+ * Method:    nhixGetRSAKeyModulus
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyModulus(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPublicKey
+ * Method:    nhixGetRSAKeyPublicExponent
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPublicKey
+ * Method:    nhixGetPublicKeyHandle
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyHandle(JNIEnv *, jclass, jlong);
+
+
+/** ****************************
+ *  RSA private key operations
+ *  ****************************/
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuNewRSAPrivateKey
+ * Signature: ([B)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuNewRSAPrivateKey(JNIEnv *, jclass, jbyteArray);
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuReleaseRSAPrivateKey
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuReleaseRSAPrivateKey(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuRSASign
+ * Signature: (J[BI)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSASign(JNIEnv *, jclass, jlong, jbyteArray, jint);
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuRSASignatureLength
+ * Signature: (J)I
+ */
+JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSASignatureLength(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuGetRSAModulus
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuGetRSAModulus(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuGetRSAPrivateExponent
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuGetRSAPrivateExponent(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPrivateKey
+ * Method:    nharuRSADecrypt
+ * Signature: (J[BI)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSADecrypt(JNIEnv *, jclass, jlong, jbyteArray, jint);
 
 
 #ifdef __cplusplus

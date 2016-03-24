@@ -33,6 +33,7 @@ import java.util.TimeZone;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.util.NharuArrays;
 import org.crypthing.util.NharuCommon;

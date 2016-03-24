@@ -4,10 +4,13 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
+import java.security.UnrecoverableKeyException;
 
+import org.crypthing.security.DecryptInterface;
 import org.crypthing.security.provider.NharuProvider;
+import org.crypthing.security.x509.NativeParent;
 
-public final class CMSEnvelopedData
+public final class CMSEnvelopedData implements NativeParent
 {
 	static { NharuProvider.isLoaded(); }
 	private long hHandle;
@@ -17,18 +20,30 @@ public final class CMSEnvelopedData
 
 	private static native long nhcmsParseEnvelopedData(byte[] encoding) throws CMSParsingException;
 	private static native void nhcmsReleaseHandle(long handle);
+	private static native long nhcmsGetIssuerNode(long handle);
+	private static native byte[] nhcmsDecrypt(long handle, DecryptInterface decrypt) throws CMSException;
+	private native IssuerAndSerialNumber getRID(long handle) throws CMSParsingException;
 
+	/**
+	 * Creates a new CMSEnvelopedData instance. Only key transport recipients is supported.
+	 * @param encoding: document DER encoding
+	 * @throws CMSParsingException
+	 */
 	public CMSEnvelopedData(final byte[] encoding) throws CMSParsingException
 	{
 		if (encoding == null) throw new NullPointerException("Encoding argument must not be null");
 		hHandle = nhcmsParseEnvelopedData(encoding);
 	}
 
-	public RecipientInfoType getRecipType()
-	{
-		return RecipientInfoType.KeyTransRecipientInfo;	// Only key transport envelope is supported
-	}
+	/**
+	 * Get the type of this RecipientInfo
+	 * @return the type. Only key transport envelope is supported.
+	 */
+	public RecipientInfoType getRecipType() { return RecipientInfoType.KeyTransRecipientInfo;	}
 
+	/**
+	 * Releases this object. Must be called when object is no more needed 
+	 */
 	public void releaseDocument()
 	{
 		if (hHandle != 0)
@@ -37,6 +52,30 @@ public final class CMSEnvelopedData
 			hHandle = 0;
 		}
 	}
+
+	@Override
+	public long getParentHandle(final X509FieldName node)
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return nhcmsGetIssuerNode(hHandle);
+	}
+
+	/**
+	 * Get enveloped plain text.
+	 * @param store: key store that should be used for RSA private decryption.
+	 * @return plain text as is.
+	 * @throws UnrecoverableKeyException 
+	 * @throws CMSException 
+	 */
+	public byte[] decrypt(final NharuKeyStore store) throws UnrecoverableKeyException, CMSException
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		if (store == null) throw new NullPointerException("Argument must not be null");
+		final DecryptInterface decrypt = store.getDecrypt(getRID(hHandle));
+		if (decrypt == null) throw new UnrecoverableKeyException("Key store does not have a private key capable to decrypt this document");
+		return nhcmsDecrypt(hHandle, decrypt);
+	}
+
 	public enum RecipientInfoType
 	{
 		KeyTransRecipientInfo,

@@ -3,6 +3,11 @@ package org.crypthing.security.cms;
 import org.crypthing.security.x509.NharuX509Name;
 import org.crypthing.util.NharuArrays;
 
+/**
+ * Implements an RFC 3852 IssuerAndSerialNumber type
+ * @author magut
+ *
+ */
 public final class IssuerAndSerialNumber
 {
 	private final NharuX509Name issuer;

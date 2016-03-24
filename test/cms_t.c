@@ -639,12 +639,21 @@ static unsigned char privkey_info[] =
 	0x82, 0x09, 0x4D, 0xC6, 0xB0, 0xA1, 0xA0, 0x2D, 0x5B, 0x66, 0x08, 0xFF, 0x96, 0x63, 0x2D, 0x79
 };
 #define PLAINTEXT		"Plain text\n"
+NH_RV decrypt(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _IN_ void *params, _OUT_ unsigned char *plaintext, _INOUT_ size_t *plainSize)
+{
+	NH_RV rv;
+	NH_RSA_PRIVKEY_HANDLER hKey;
+
+	if (NH_FAIL(rv = NH_new_RSA_privkey_handler(&hKey))) return rv;
+	if (NH_SUCCESS(rv = hKey->from_privkey_info(hKey, privkey_info, sizeof(privkey_info)))) rv = hKey->decrypt(hKey, mechanism, data->data, data->length, plaintext, plainSize);
+	NH_release_RSA_privkey_handler(hKey);
+	return rv;
+}
 int test_openssl_cms_enveloped_data()
 {
 	NH_RV rv;
 	NH_CMS_ENV_PARSER hHandler;
 	NH_CMS_ISSUER_SERIAL rid;
-	NH_RSA_PRIVKEY_HANDLER hKey;
 	char *plaintext = PLAINTEXT;
 
 	printf("Testing CMS EnvelopedData parsing... ");
@@ -652,12 +661,9 @@ int test_openssl_cms_enveloped_data()
 	{
 		if (NH_SUCCESS(rv = hHandler->get_rid(hHandler, 0, &rid)))
 		{
-			if (NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hKey)))
+			if (NH_SUCCESS(rv = hHandler->decrypt(hHandler, 0, decrypt, NULL)))
 			{
-				rv = hKey->from_privkey_info(hKey, privkey_info, sizeof(privkey_info));
-				if (NH_SUCCESS(rv)) rv = hHandler->decrypt(hHandler, 0, hKey);
-				if (NH_SUCCESS(rv)) rv = hHandler->plaintext.length == strlen(plaintext) && memcmp(hHandler->plaintext.data, plaintext, hHandler->plaintext.length) == 0 ? NH_OK : NH_PKIX_ERROR;
-				NH_release_RSA_privkey_handler(hKey);
+				rv = hHandler->plaintext.length == strlen(plaintext) && memcmp(hHandler->plaintext.data, plaintext, hHandler->plaintext.length) == 0 ? NH_OK : NH_PKIX_ERROR;
 			}
 		}
 		NH_cms_release_env_parser(hHandler);

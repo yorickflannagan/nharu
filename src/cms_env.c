@@ -15,16 +15,17 @@ NH_UTILITY(NH_RV, cms_env_get_rid)(_IN_ NH_CMS_ENV_PARSER_STR *self, _IN_ size_t
 }
 
 
-NH_UTILITY(NH_RV, cms_env_decrypt)(_INOUT_ NH_CMS_ENV_PARSER_STR *self, _IN_ size_t idx, _IN_ NH_RSA_PRIVKEY_HANDLER hKey)
+NH_UTILITY(NH_RV, cms_env_decrypt)(_INOUT_ NH_CMS_ENV_PARSER_STR *self, _IN_ size_t idx, _IN_ NH_CMS_PDEC_FUNCTION callback, _IN_ void *params)
 {
 	NH_ASN1_PNODE node, encryptedContent;
 	CK_MECHANISM_TYPE mechanism;
 	NH_RV rv, gRV;
-	NH_SYMKEY key = { NULL, 0 };
+	NH_SYMKEY cipherKey,  key = { NULL, 0 };
 	NH_IV iv;
 	NH_SYMKEY_HANDLER hCipher;
 
 	if (self->plaintext.data) return NH_OK;
+	if (!callback) return NH_INVALID_ARG;
 	if (idx >= self->count || !self->recips) return NH_INVALID_SIGNER_ERROR;
 	if (!(encryptedContent = self->hParser->sail(self->content, (NH_SAIL_SKIP_SOUTH << 24) | ((NH_PARSE_EAST | 3) << 16) | (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2)))) return NH_CMS_ENV_NOECONTENT_ERROR;
 	if (!(node = self->hParser->sail(self->recips[idx], (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) || !node->child) return NH_CANNOT_SAIL;
@@ -34,9 +35,11 @@ NH_UTILITY(NH_RV, cms_env_decrypt)(_INOUT_ NH_CMS_ENV_PARSER_STR *self, _IN_ siz
 	else if (NH_match_oid(node->child->value, node->child->valuelen, rsa_x509_oid, NHC_RSA_X509_OID_COUNT)) mechanism = CKM_RSA_X_509;
 	else return NH_UNSUPPORTED_MECH_ERROR;
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-	if (NH_FAIL(rv = hKey->decrypt(hKey, mechanism, node->value, node->valuelen, NULL, &key.length))) return rv;
+	cipherKey.data = node->value;
+	cipherKey.length = node->valuelen;
+	if (NH_FAIL(rv = callback(&cipherKey, mechanism, params, NULL, &key.length))) return rv;
 	if (!(key.data = (unsigned char*) malloc(key.length))) return NH_OUT_OF_MEMORY_ERROR;
-	rv = hKey->decrypt(hKey, mechanism, node->value, node->valuelen, key.data, &key.length);
+	rv = callback(&cipherKey, mechanism, params, key.data, &key.length);
 
 	if (NH_SUCCESS(rv)) rv = (node = self->hParser->sail(self->content, (NH_SAIL_SKIP_SOUTH << 24) | ((NH_PARSE_EAST | 3) << 16) | (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST))  && node->child && node->child->next ? NH_OK : NH_UNEXPECTED_ENCODING;
 	if (NH_SUCCESS(rv)) rv = (mechanism = NH_oid_to_mechanism(node->child->value, node->child->valuelen)) != CK_UNAVAILABLE_INFORMATION ? NH_OK : NH_UNSUPPORTED_MECH_ERROR;

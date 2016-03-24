@@ -10,7 +10,9 @@ public final class NharuX509Name
 	private final NativeParent.X509FieldName node;
 
 	private int hash = 0;
-	NharuX509Name(final NativeParent parent, final NharuX509Certificate.X509FieldName node)
+
+	public NharuX509Name(final NativeParent parent) { this (parent, NativeParent.X509FieldName.ISSUER); }
+	public NharuX509Name(final NativeParent parent, final NharuX509Certificate.X509FieldName node)
 	{
 		this.parent = parent;
 		this.node = node;

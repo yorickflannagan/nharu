@@ -6,9 +6,9 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.security.cert.X509Certificate;
 
+import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.cert.NharuCertStore;
 import org.crypthing.security.provider.NharuProvider;
-import org.crypthing.security.x509.NharuRSAPublicKey;
 import org.crypthing.security.x509.NharuX509Certificate;
 
 public final class CMSSignedData

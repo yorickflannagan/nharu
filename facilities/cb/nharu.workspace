@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_workspace_file>
 	<Workspace title="nharu">
-		<Project filename="../../../kiripema/facilities/cb/nharu-test/nharu-test.cbp" />
-		<Project filename="../../../kiripema/facilities/cb/nharu-jca/nharu-jca.cbp" />
-		<Project filename="../../../kiripema/facilities/cb/nharu-lib/nharu-lib.cbp" />
+		<Project filename="nharu-test/nharu-test.cbp">
+			<Depends filename="nharu-lib/nharu-lib.cbp" />
+		</Project>
+		<Project filename="nharu-lib/nharu-lib.cbp" />
+		<Project filename="nharu-jca/nharu-jca.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

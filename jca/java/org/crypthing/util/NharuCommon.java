@@ -128,6 +128,9 @@ public final class NharuCommon
 	public static final int CKM_SHA384_RSA_PKCS = 0x00000041;
 	public static final int CKM_SHA512_RSA_PKCS = 0x00000042;
 	public static final int CKM_MD5_RSA_PKCS = 0x00000005;
+	public static final int CKM_RSA_PKCS = 0x00000001;
+	public static final int CKM_RSA_PKCS_OAEP = 0x00000009;
+	public static final int CKM_RSA_X_509 = 0x00000003;
 	public static int getAlgorithmConstant(final String algorithm) throws NoSuchAlgorithmException
 	{
 		if ("SHA1withRSA".equalsIgnoreCase(algorithm)) return CKM_SHA1_RSA_PKCS;
@@ -135,6 +138,9 @@ public final class NharuCommon
 		if ("SHA384withRSA".equalsIgnoreCase(algorithm)) return CKM_SHA384_RSA_PKCS;
 		if ("SHA512withRSA".equalsIgnoreCase(algorithm)) return CKM_SHA512_RSA_PKCS;
 		if ("MD5withRSA".equalsIgnoreCase(algorithm)) return CKM_MD5_RSA_PKCS;
+		if ("PKCS1Padding".equalsIgnoreCase(algorithm)) return CKM_RSA_PKCS;
+		if ("OAEPPadding".equalsIgnoreCase(algorithm)) return CKM_RSA_PKCS_OAEP;
+		if ("NoPadding".equalsIgnoreCase(algorithm)) return CKM_RSA_X_509;
 		throw new NoSuchAlgorithmException("Unsupported algorithm");
 	}
 

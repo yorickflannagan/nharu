@@ -4,15 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Enumeration;
 
 import org.crypthing.security.cert.DERX509CollectionParams;
 import org.crypthing.security.cert.NharuCertStore;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.security.x509.NharuX509Certificate;
-import org.crypthing.security.x509.NharuX509Factory;
 import org.crypthing.util.NharuArrays;
 
 public abstract class CMSDocument
@@ -48,7 +45,8 @@ public abstract class CMSDocument
 	{
 		switch (CMSContentType.getContentType(nhcmsDiscover(encoding)))
 		{
-		case NH_SIGNED_DATA_CTYPE:return (T) new CMSSignedData(encoding);
+		case NH_SIGNED_DATA_CTYPE: return (T) new CMSSignedData(encoding);
+		case NH_ENVELOPED_DATA_CTYPE: return (T) new CMSEnvelopedData(encoding);
 		case NH_UNKNOWN_CTYPE: throw new CMSParsingException("Invalid CMS document");
 		default: throw new UnsupportedCMSTypeException();
 		}
@@ -623,26 +621,13 @@ public abstract class CMSDocument
 		System.out.print("CMSSignedData generation test... ");
 		try
 		{
-			final NharuKeyStore signer = new NharuKeyStore();
+			final NharuKeyStore signer = NharuKeyStore.getInstance();
 			try
 			{
 				final CMSSignedDataBuilder builder = new CMSSignedDataBuilder("eContent".getBytes(), true);
 				try
 				{
-					NharuX509Certificate[] chain = null;
-					final KeyStore repo = signer.getKeyStore();
-					final Enumeration<String> aliases = repo.aliases();
-					while (aliases.hasMoreElements())
-					{
-						final String alias = aliases.nextElement();
-						if (repo.isKeyEntry(alias))
-						{
-							final Certificate[] certs = repo.getCertificateChain(alias);
-							chain = new NharuX509Certificate[certs.length];
-							for (int i = 0; i < certs.length; i++) chain[i] = NharuX509Factory.generateCertificate(((X509Certificate) certs[i]).getEncoded());
-							break;
-						}
-					}
+					final NharuX509Certificate[] chain = signer.getSignerChain();
 					if (chain == null) throw new RuntimeException("BlindSigner not configured properly");
 					builder.addCertificates(chain);
 					builder.sign("SHA1withRSA", chain[0], signer);

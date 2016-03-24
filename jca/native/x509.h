@@ -82,46 +82,6 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_x509_NharuX509Name_nhixGetNam
 
 
 /** ******************************
- *  NharuPublicKey interface
- *  ******************************/
-/*
- * Class:     org_crypthing_security_x509_NharuPublicKey
- * Method:    nhixGetPublicKeyInfo
- * Signature: (J)[B
- */
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuPublicKey_nhixGetPublicKeyInfo(JNIEnv*, jclass, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuPublicKey
- * Method:    nhixGetPublicKeyType
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_org_crypthing_security_x509_NharuPublicKey_nhixGetPublicKeyType(JNIEnv*, jclass, jlong);
-
-
-/** ******************************
- *  NharuRSAPublicKey interface
- *  ******************************/
-/*
- * Class:     org_crypthing_security_x509_NharuRSAPublicKey
- * Method:    nhixGetRSAKeyModulus
- * Signature: (J)[B
- */
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuRSAPublicKey_nhixGetRSAKeyModulus(JNIEnv*, jclass, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuRSAPublicKey
- * Method:    nhixGetRSAKeyPublicExponent
- * Signature: (J)[B
- */
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent(JNIEnv*, jclass, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuRSAPublicKey
- * Method:    nhixGetPublicKeyHandle
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuRSAPublicKey_nhixGetPublicKeyHandle(JNIEnv*, jclass, jlong);
-
-
-/** ******************************
  *  NharuX509Certificate interface
  *  ******************************/
 /*

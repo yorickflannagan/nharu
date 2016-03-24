@@ -1,4 +1,5 @@
 #include "jca.h"
+#include "x509.h"
 #include "b64/cdecode.h"
 #include "b64/cencode.h"
 #include "sb8/crc.h"
@@ -199,6 +200,268 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_util_NharuArrays_nhToBase64(JNIE
 			free(out);
 		}
 		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		(*env)->ReleaseByteArrayElements(env, data, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+	return ret;
+}
+
+
+/** ******************************
+ *  NharuPublicKey interface
+ *  ******************************/
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyInfo
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	return get_node_encoding(env, ((JNH_CERTIFICATE_HANDLER) handle)->hCert->pubkey);
+}
+
+JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyType
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
+	NH_ASN1_PNODE node;
+	jint ret = 0L;
+
+	if ((node = hHandler->hCert->hParser->sail(hHandler->hCert->pubkey, NH_PARSE_SOUTH | 2)))
+	{
+		if (NH_match_oid(rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT, (unsigned int*) node->value, node->valuelen)) ret = NHIX_RSA_ALGORITHM;
+		else if (NH_match_oid(ecPublicKey_oid, NHC_ECDSA_PUBKEY_OID_COUNT, (unsigned int*) node->value, node->valuelen)) ret = NHIX_EC_ALGORITHM;
+		else if (NH_match_oid(dsa_oid, NHC_DSA_OID_COUNT, (unsigned int*) node->value, node->valuelen)) ret = NHIX_DSA_ALGORITHM;
+	}
+	else throw_new(env, J_RUNTIME_EX, J_PARSE_ERROR, 0);
+	return ret;
+}
+
+
+/** ******************************
+ *  NharuRSAPublicKey interface
+ *  ******************************/
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyHandle
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	return (jlong) ((JNH_CERTIFICATE_HANDLER) handle)->hCert->pubkey;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyModulus
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
+	NH_ASN1_PNODE node;
+	jbyteArray ret = NULL;
+
+	if ((node = hHandler->hCert->hParser->sail(hHandler->hCert->pubkey, (NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | (NH_PARSE_SOUTH | 2))))
+	{
+		ret = get_node_value(env, node);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_PARSE_ERROR, 0);
+	return ret;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
+	NH_ASN1_PNODE node;
+	jbyteArray ret = NULL;
+
+	if ((node = hHandler->hCert->hParser->sail(hHandler->hCert->pubkey, (NH_SAIL_SKIP_SOUTH << 24) | (NH_SAIL_SKIP_EAST << 16) | ((NH_PARSE_SOUTH | 2) << 8) | NH_SAIL_SKIP_EAST)))
+	{
+		ret = get_node_value(env, node);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_PARSE_ERROR, 0);
+	return ret;
+}
+
+
+/** ****************************
+ *  RSA private key operations
+ *  ****************************/
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuNewRSAPrivateKey
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jbyteArray encoding
+)
+{
+	jlong ret = 0L;
+	jbyte *jbuffer;
+	jsize len;
+	NH_RV rv = NH_OK;
+	NH_RSA_PRIVKEY_HANDLER hKey = NULL;
+
+	len = (*env)->GetArrayLength(env, encoding);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, encoding, NULL)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hKey)) &&
+			NH_SUCCESS(rv = hKey->from_privkey_info(hKey, (unsigned char*) jbuffer, len))
+		)	ret = (jlong) hKey;
+		else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
+		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+	if (NH_FAIL(rv) && hKey) NH_release_RSA_privkey_handler(hKey);
+	return ret;
+}
+
+JNIEXPORT void JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuReleaseRSAPrivateKey
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	NH_release_RSA_privkey_handler((NH_RSA_PRIVKEY_HANDLER) handle);
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSASign
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle,
+	jbyteArray data,
+	jint mechanism
+)
+{
+	NH_RSA_PRIVKEY_HANDLER hKey = (NH_RSA_PRIVKEY_HANDLER) handle;
+	jbyte *jbuffer;
+	jsize len;
+	jbyteArray ret = NULL;
+	NH_RV rv;
+	unsigned char *signature;
+	size_t size;
+
+	len = (*env)->GetArrayLength(env, data);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, data, NULL)))
+	{
+		if (NH_SUCCESS(rv = hKey->sign(hKey, mechanism, (unsigned char*) jbuffer, len, NULL, &size)))
+		{
+			if ((signature = (unsigned char*) malloc(size)))
+			{
+				if (NH_SUCCESS(rv = hKey->sign(hKey, mechanism, (unsigned char*) jbuffer, len, signature, &size)))
+				{
+					if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) signature);
+					else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				}
+				else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
+				free(signature);
+			}
+			else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		}
+		else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
+		(*env)->ReleaseByteArrayElements(env, data, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+	return ret;
+}
+
+JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSASignatureLength
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	return RSA_size(((NH_RSA_PRIVKEY_HANDLER) handle)->key);
+}
+
+NH_UTILITY(jbyteArray, bignum_to_java_array)(JNIEnv *env, _IN_ BIGNUM *n)
+{
+	unsigned char *buffer;
+	size_t num_bytes, offset;
+	jbyteArray ret = NULL;
+
+	num_bytes = BN_num_bytes(n);
+	offset = (BN_num_bits(n) == num_bytes * 8) ? 1 : 0;
+	if ((buffer = (unsigned char*) malloc(num_bytes + offset)))
+	{
+		memset(buffer, 0, num_bytes + offset);
+		BN_bn2bin(n, buffer + offset);
+		if ((ret = (*env)->NewByteArray(env, num_bytes + offset))) (*env)->SetByteArrayRegion(env, ret, 0L, num_bytes + offset, (jbyte*) buffer);
+		else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+		free(buffer);
+	}
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+	return ret;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuGetRSAModulus
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	return bignum_to_java_array(env, ((NH_RSA_PRIVKEY_HANDLER) handle)->key->n);
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuGetRSAPrivateExponent
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	return bignum_to_java_array(env, ((NH_RSA_PRIVKEY_HANDLER) handle)->key->d);
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSADecrypt
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle,
+	jbyteArray data,
+	jint mechanism
+)
+{
+	NH_RSA_PRIVKEY_HANDLER hKey = (NH_RSA_PRIVKEY_HANDLER) handle;
+	jbyte *jbuffer;
+	jsize len;
+	jbyteArray ret = NULL;
+	NH_RV rv;
+	unsigned char *plaintext;
+	size_t size;
+
+	len = (*env)->GetArrayLength(env, data);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, data, NULL)))
+	{
+		if (NH_SUCCESS(rv = hKey->decrypt(hKey, mechanism, (unsigned char*) jbuffer, len, NULL, &size)))
+		{
+			if ((plaintext = (unsigned char*) malloc(size)))
+			{
+				if (NH_SUCCESS(rv = hKey->decrypt(hKey, mechanism, (unsigned char*) jbuffer, len, plaintext, &size)))
+				{
+					if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) plaintext);
+					else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				}
+				else throw_new(env, J_INVALID_KEY_EX, J_KEY_ERROR, rv);
+				free(plaintext);
+			}
+			else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		}
+		else throw_new(env, J_INVALID_KEY_EX, J_KEY_ERROR, rv);
 		(*env)->ReleaseByteArrayElements(env, data, jbuffer, JNI_ABORT);
 	}
 	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);

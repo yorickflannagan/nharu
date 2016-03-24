@@ -54,6 +54,10 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSDocument_nhcmsDiscover
 	return ret;
 }
 
+
+/** *********************************
+ *  CMS SignedData parsing operations
+ *  *********************************/
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsParseSignedData
 (
 	JNIEnv *env,
@@ -65,7 +69,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsParse
 	jsize len, elen;
 	NH_RV rv;
 	NH_CMS_SD_PARSER hCMS = NULL;
-	JNH_CMS_PARSING_HANDLER hHandler;
+	JNH_CMSSD_PARSING_HANDLER hHandler;
 	jlong ret = 0L;
 
 	len = (*env)->GetArrayLength(env, encoding);
@@ -77,7 +81,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsParse
 			elen = pem_to_DER(copy, len);
 			if (NH_SUCCESS(rv = NH_cms_parse_signed_data((unsigned char*) copy, elen, &hCMS)))
 			{
-				if ((hHandler = (JNH_CMS_PARSING_HANDLER) malloc(sizeof(JNH_CMS_PARSING_HANDLER_STR))))
+				if ((hHandler = (JNH_CMSSD_PARSING_HANDLER) malloc(sizeof(JNH_CMSSD_PARSING_HANDLER_STR))))
 				{
 					hHandler->encoding = copy;
 					hHandler->len = elen;
@@ -107,7 +111,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsReleas
 	jlong handle
 )
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) handle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
 	if (hHandler)
 	{
 		if (hHandler->hCMS) NH_cms_release_sd_parser(hHandler->hCMS);
@@ -118,7 +122,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsReleas
 
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetContent(JNIEnv *env, _UNUSED_ jclass c, jlong handle)
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) handle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jbyteArray ret = NULL;
 
@@ -133,7 +137,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcms
 
 JNIEXPORT jlongArray JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetCertificates(JNIEnv *env, _UNUSED_ jclass c, jlong handle)
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) handle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jsize count = 0;
 	NH_RV rv;
@@ -181,7 +185,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsVerify
 	jlong keyHandle
 )
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) cmsHandle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) cmsHandle;
 	NH_ASN1_PNODE pubkeyInfo = (NH_ASN1_PNODE) keyHandle;
 	NH_RV rv;
 
@@ -196,7 +200,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsValida
 	jbyteArray eContent
 )
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) handle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
 	jbyte *jbuffer;
 	jsize len;
 	NH_RV rv;
@@ -212,14 +216,14 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsValida
 
 JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsValidateAttached(JNIEnv *env, _UNUSED_ jclass c, jlong handle)
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) handle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
 	NH_RV rv;
 	if (NH_FAIL(rv = hHandler->hCMS->validate_attached(hHandler->hCMS))) throw_new(env, J_CMS_VALIDATE_EX, J_CMS_VALIDATE_ERROR, rv);
 }
 
 JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsCountSigners(_UNUSED_ JNIEnv *env, _UNUSED_ jclass c, jlong handle)
 {
-	return ((JNH_CMS_PARSING_HANDLER) handle)->hCMS->count;
+	return ((JNH_CMSSD_PARSING_HANDLER) handle)->hCMS->count;
 }
 
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerCertificate
@@ -230,7 +234,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSi
 	jint idx
 )
 {
-	JNH_CMS_PARSING_HANDLER hHandler = (JNH_CMS_PARSING_HANDLER) handle;
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
 	NH_CMS_ISSUER_SERIAL sid;
 	NH_CERTIFICATE_HANDLER hCert;
 	jlong ret = 0L;
@@ -244,100 +248,9 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSi
 }
 
 
-
-
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsNewRSAPrivateKey
-(
-	JNIEnv *env,
-	_UNUSED_ jclass c,
-	jbyteArray encoding
-)
-{
-	jlong ret = 0L;
-	jbyte *jbuffer;
-	jsize len;
-	NH_RV rv = NH_OK;
-	NH_RSA_PRIVKEY_HANDLER hKey = NULL;
-
-	len = (*env)->GetArrayLength(env, encoding);
-	if ((jbuffer = (*env)->GetByteArrayElements(env, encoding, NULL)))
-	{
-		if
-		(
-			NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hKey)) &&
-			NH_SUCCESS(rv = hKey->from_privkey_info(hKey, (unsigned char*) jbuffer, len))
-		)	ret = (jlong) hKey;
-		else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
-		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
-	if (NH_FAIL(rv) && hKey) NH_release_RSA_privkey_handler(hKey);
-	return ret;
-}
-
-JNIEXPORT void JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsReleaseRSAPrivateKey
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass c,
-	jlong handle
-)
-{
-	NH_release_RSA_privkey_handler((NH_RSA_PRIVKEY_HANDLER) handle);
-}
-
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsRSASign
-(
-	JNIEnv *env,
-	_UNUSED_ jclass c,
-	jlong handle,
-	jbyteArray data,
-	jint mechanism
-)
-{
-	NH_RSA_PRIVKEY_HANDLER hKey = (NH_RSA_PRIVKEY_HANDLER) handle;
-	jbyte *jbuffer;
-	jsize len;
-	jbyteArray ret = NULL;
-	NH_RV rv;
-	unsigned char *signature;
-	size_t size;
-
-	len = (*env)->GetArrayLength(env, data);
-	if ((jbuffer = (*env)->GetByteArrayElements(env, data, NULL)))
-	{
-		if (NH_SUCCESS(rv = hKey->sign(hKey, mechanism, (unsigned char*) jbuffer, len, NULL, &size)))
-		{
-			if ((signature = (unsigned char*) malloc(size)))
-			{
-				if (NH_SUCCESS(rv = hKey->sign(hKey, mechanism, (unsigned char*) jbuffer, len, signature, &size)))
-				{
-					if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) signature);
-					else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-				}
-				else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
-				free(signature);
-			}
-			else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
-		}
-		else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
-		(*env)->ReleaseByteArrayElements(env, data, jbuffer, JNI_ABORT);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
-	return ret;
-}
-
-JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_BlindSigner_nhcmsRSASignatureLength
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass c,
-	jlong handle
-)
-{
-	return RSA_size(((NH_RSA_PRIVKEY_HANDLER) handle)->key);
-}
-
-
-
+/** *********************************
+ *  CMS SignedData building operations
+ *  *********************************/
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsNewSignedDataBuilder
 (
 	JNIEnv *env,
@@ -433,7 +346,7 @@ NH_RV sign_callback
 	_INOUT_ size_t *sigSize
 )
 {
-	JNH_SIGNER_CALLBACK callback = (JNH_SIGNER_CALLBACK) params;
+	JNH_RSA_CALLBACK callback = (JNH_RSA_CALLBACK) params;
 	jmethodID methodID;
 	jbyteArray buffer;
 	jint size = 0;
@@ -445,7 +358,7 @@ NH_RV sign_callback
 	{
 		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "signatureLength", "(Ljava/lang/String;)I")))
 		{
-			size = (*callback->env)->CallLongMethod(callback->env, callback->signer, methodID, callback->algorithm);
+			size = (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
 			*sigSize = size;
 		}
 		else rv = JCLASS_ACCESS_ERROR;
@@ -457,7 +370,7 @@ NH_RV sign_callback
 			if ((buffer = (*callback->env)->NewByteArray(callback->env, data->length)))
 			{
 				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
-				ret = (*callback->env)->CallObjectMethod(callback->env, callback->signer, methodID, buffer, callback->algorithm);
+				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
 				size = (*callback->env)->GetArrayLength(callback->env, ret);
 				if (*sigSize < size) rv = NH_BUF_TOO_SMALL;
 				else
@@ -492,7 +405,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcm
 	JNH_CERTIFICATE_HANDLER jCert = (JNH_CERTIFICATE_HANDLER) certHandle;
 	const char *algorithm;
 	NH_CMS_ISSUER_SERIAL_STR sid = { NULL, NULL, NULL };
-	JNH_SIGNER_CALLBACK_STR callback;
+	JNH_RSA_CALLBACK_STR callback;
 	NH_RV rv;
 
 	switch (mechanism)
@@ -518,8 +431,8 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcm
 	}
 	callback.env = env;
 	callback.algorithm = (*env)->NewStringUTF(env, algorithm);
-	callback.signer = signer;
-	callback.clazz = (*env)->FindClass(env, "org/crypthing/security/cms/SignerInterface");
+	callback.iface = signer;
+	callback.clazz = (*env)->FindClass(env, "org/crypthing/security/SignerInterface");
 	if (callback.algorithm && callback.clazz)
 	{
 		sid.name = jCert->hCert->issuer;
@@ -556,4 +469,72 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilde
 	}
 	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
 	return ret;
+}
+
+
+/** ************************************
+ *  CMS EnvelopedData parsing operations
+ *  ************************************/
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsParseEnvelopedData
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jbyteArray encoding
+)
+{
+	jbyte *jbuffer, *copy;
+	jsize len, elen;
+	NH_RV rv;
+	NH_CMS_ENV_PARSER hCMS = NULL;
+	JNH_CMSENV_PARSING_HANDLER hHandler;
+	jlong ret = 0L;
+
+	len = (*env)->GetArrayLength(env, encoding);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, encoding, NULL)))
+	{
+		if ((copy = (jbyte*) malloc(len)))
+		{
+			memcpy(copy, jbuffer, len * sizeof(jbyte));
+			elen = pem_to_DER(copy, len);
+			if (NH_SUCCESS(rv = NH_cms_parse_enveloped_data((unsigned char*) copy, elen, &hCMS)))
+			{
+				if ((hHandler = (JNH_CMSENV_PARSING_HANDLER) malloc(sizeof(JNH_CMSENV_PARSING_HANDLER_STR))))
+				{
+					hHandler->encoding = copy;
+					hHandler->len = elen;
+					hHandler->hCMS = hCMS;
+					ret = (jlong) hHandler;
+				}
+				else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+			}
+			else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+			if (NH_FAIL(rv))
+			{
+				free(copy);
+				if (hCMS) NH_cms_release_env_parser(hCMS);
+			}
+		}
+		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+	return ret;
+
+}
+
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsReleaseHandle
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	JNH_CMSENV_PARSING_HANDLER hHandler = (JNH_CMSENV_PARSING_HANDLER) handle;
+	if (hHandler)
+	{
+		if (hHandler->hCMS) NH_cms_release_env_parser(hHandler->hCMS);
+		if (hHandler->encoding) free (hHandler->encoding);
+		free(hHandler);
+	}
+
 }

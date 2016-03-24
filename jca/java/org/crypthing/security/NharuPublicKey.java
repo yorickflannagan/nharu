@@ -1,4 +1,4 @@
-package org.crypthing.security.x509;
+package org.crypthing.security;
 
 import java.io.IOException;
 import java.io.NotSerializableException;
@@ -6,11 +6,11 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.security.PublicKey;
 
+import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuArrays;
 
 public class NharuPublicKey implements PublicKey
 {
-
 	/*
 	 * java.security.KeyPairGenerator algorithm constants.
 	 */
@@ -23,7 +23,7 @@ public class NharuPublicKey implements PublicKey
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
 
-	static PublicKey newInstance(final NharuX509Certificate parent)
+	public static PublicKey newInstance(final NharuX509Certificate parent)
 	{
 		PublicKey ret = null;
 		final int type = nhixGetPublicKeyType(parent.getCertificateHandle());
@@ -88,26 +88,6 @@ public class NharuPublicKey implements PublicKey
 		return hash;
 	}
 
-
-	/**
-	 * Get complete DER encoding of certificate SubjectPublicKeyInfo field.
-	 * @param handle - certificate handle.
-	 * @return a copy of the field.
-	 */
 	private static native byte[] nhixGetPublicKeyInfo(long handle);
-
-
-	/**
-	 * Get certificate subject public key type.
-	 * @param handle - certificate handle.
-	 * @return one of the following values:
-	 * <ul>
-	 * <li>0: Unknown key;</li>
-	 * <li>1: DSA key;</li>
-	 * <li>2: RSA key;</li>
-	 * <li>3: EC key.</li>
-	 * </ul>
-	 */
 	private static native int nhixGetPublicKeyType(long handle);
-
 }
