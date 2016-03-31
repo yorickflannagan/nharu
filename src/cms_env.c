@@ -14,6 +14,27 @@ NH_UTILITY(NH_RV, cms_env_get_rid)(_IN_ NH_CMS_ENV_PARSER_STR *self, _IN_ size_t
 	return NH_cms_get_rid(self->hParser, self->mutex, node, ret);
 }
 
+NH_UTILITY(NH_RV, cms_env_key_encryption_algorithm)
+(
+	_IN_ NH_CMS_ENV_PARSER_STR *self,
+	_IN_ size_t idx,
+	_OUT_ NH_ASN1_PNODE *alg_id,
+	_OUT_ CK_MECHANISM_TYPE_PTR alg
+)
+{
+	NH_ASN1_PNODE node;
+	CK_MECHANISM_TYPE mechanism;
+
+	if (idx >= self->count || !self->recips) return NH_INVALID_SIGNER_ERROR;
+	if (!(node = self->hParser->sail(self->recips[idx], (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) || !node->child) return NH_CANNOT_SAIL;
+	if (NH_match_oid(node->child->value, node->child->valuelen, rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT)) mechanism = CKM_RSA_PKCS;
+	else if (NH_match_oid(node->child->value, node->child->valuelen, rsaes_oaep_oid, NHC_RSAES_OAEP_OID_COUNT)) mechanism = CKM_RSA_PKCS_OAEP;
+	else if (NH_match_oid(node->child->value, node->child->valuelen, rsa_x509_oid, NHC_RSA_X509_OID_COUNT)) mechanism = CKM_RSA_X_509;
+	else return NH_UNSUPPORTED_MECH_ERROR;
+	*alg_id = node;
+	*alg = mechanism;
+	return NH_OK;
+}
 
 NH_UTILITY(NH_RV, cms_env_decrypt)(_INOUT_ NH_CMS_ENV_PARSER_STR *self, _IN_ size_t idx, _IN_ NH_CMS_PDEC_FUNCTION callback, _IN_ void *params)
 {
@@ -28,12 +49,7 @@ NH_UTILITY(NH_RV, cms_env_decrypt)(_INOUT_ NH_CMS_ENV_PARSER_STR *self, _IN_ siz
 	if (!callback) return NH_INVALID_ARG;
 	if (idx >= self->count || !self->recips) return NH_INVALID_SIGNER_ERROR;
 	if (!(encryptedContent = self->hParser->sail(self->content, (NH_SAIL_SKIP_SOUTH << 24) | ((NH_PARSE_EAST | 3) << 16) | (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2)))) return NH_CMS_ENV_NOECONTENT_ERROR;
-	if (!(node = self->hParser->sail(self->recips[idx], (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) || !node->child) return NH_CANNOT_SAIL;
-
-	if (NH_match_oid(node->child->value, node->child->valuelen, rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT)) mechanism = CKM_RSA_PKCS;
-	else if (NH_match_oid(node->child->value, node->child->valuelen, rsaes_oaep_oid, NHC_RSAES_OAEP_OID_COUNT)) mechanism = CKM_RSA_PKCS_OAEP;
-	else if (NH_match_oid(node->child->value, node->child->valuelen, rsa_x509_oid, NHC_RSA_X509_OID_COUNT)) mechanism = CKM_RSA_X_509;
-	else return NH_UNSUPPORTED_MECH_ERROR;
+	if (NH_FAIL(rv = self->key_encryption_algorithm(self, idx, &node, &mechanism))) return rv;
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
 	cipherKey.data = node->value;
 	cipherKey.length = node->valuelen;
@@ -78,6 +94,7 @@ const static NH_CMS_ENV_PARSER_STR defCMS_env_parser =
 	{ NULL, 0 },	/* plaintext */
 
 	cms_env_get_rid,
+	cms_env_key_encryption_algorithm,
 	cms_env_decrypt
 };
 

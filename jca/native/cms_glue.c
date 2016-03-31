@@ -538,3 +538,174 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsRel
 	}
 
 }
+
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsGetIssuerNode
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	JNH_CMSENV_PARSING_HANDLER hHandler = (JNH_CMSENV_PARSING_HANDLER) handle;
+	NH_CMS_ISSUER_SERIAL issuer;
+	NH_RV rv;
+	jlong ret = 0L;
+
+	if (NH_SUCCESS(rv = hHandler->hCMS->get_rid(hHandler->hCMS, 0, &issuer))) ret = (jlong) issuer->name;
+	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+	return ret;
+}
+
+JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_getRID
+(
+	JNIEnv *env,
+	jobject instance,
+	jlong handle
+)
+{
+	JNH_CMSENV_PARSING_HANDLER hHandler = (JNH_CMSENV_PARSING_HANDLER) handle;
+	NH_CMS_ISSUER_SERIAL issuer;
+	NH_RV rv;
+	jbyteArray serial;
+	jclass namez, issuerz;
+	jmethodID ctorName, ctorIssuer;
+	jobject ret = NULL, namenew;
+
+	if (NH_SUCCESS(rv = hHandler->hCMS->get_rid(hHandler->hCMS, 0, &issuer)))
+	{
+		if ((serial = get_node_value(env, issuer->serial)))
+		{
+			if
+			(
+				(namez = (*env)->FindClass(env, "org/crypthing/security/x509/NharuX509Name")) &&
+				(issuerz = (*env)->FindClass(env, "org/crypthing/security/cms/IssuerAndSerialNumber"))
+			)
+			{
+				if
+				(
+					(ctorName = (*env)->GetMethodID(env, namez, "<init>", "(Lorg/crypthing/security/x509/NativeParent;)V")) &&
+					(ctorIssuer = (*env)->GetMethodID(env, issuerz, "<init>", "(Lorg/crypthing/security/x509/NharuX509Name;[B)V"))
+
+				)
+				{
+					if
+					(
+						!(namenew = (*env)->NewObject(env, namez, ctorName, instance)) ||
+						!(ret = (*env)->NewObject(env, issuerz, ctorIssuer, namenew, serial))
+					)	throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				}
+				else throw_new(env, J_METH_NOT_FOUND_EX, J_METH_NOT_FOUND_ERROR, 0);
+			}
+			else throw_new(env, J_CLASS_NOT_FOUND_EX, J_CLASS_NOT_FOUND_ERROR, 0);
+		}
+	}
+	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+	return ret;
+}
+
+NH_RV decrypt_callback
+(
+	_IN_ NH_BLOB *data,
+	_UNUSED_ _IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ void *params,
+	_OUT_ unsigned char *plaintext,
+	_INOUT_ size_t *plainSize
+)
+{
+	JNH_RSA_CALLBACK callback = (JNH_RSA_CALLBACK) params;
+	jmethodID methodID;
+	jbyteArray buffer;
+	jint size = 0;
+	jobject ret;
+	jbyte *jBuffer;
+	NH_RV rv = NH_OK;
+
+	if (!plaintext)
+	{
+		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "plainTextLength", "(Ljava/lang/String;)I")))
+		{
+			size = (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
+			*plainSize = size;
+		}
+		else rv = JCLASS_ACCESS_ERROR;
+	}
+	else
+	{
+		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "decrypt", "([BLjava/lang/String;)[B")))
+		{
+			if ((buffer = (*callback->env)->NewByteArray(callback->env, data->length)))
+			{
+				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
+				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
+				size = (*callback->env)->GetArrayLength(callback->env, ret);
+				if (*plainSize < size) rv = NH_BUF_TOO_SMALL;
+				else
+				{
+					if ((jBuffer = (*callback->env)->GetByteArrayElements(callback->env, ret, NULL)))
+					{
+						memcpy(plaintext, jBuffer, size);
+						*plainSize = size;
+						(*callback->env)->ReleaseByteArrayElements(callback->env, ret, jBuffer, JNI_ABORT);
+					}
+					else rv = JRUNTIME_ERROR;
+				}
+			}
+			else rv = JRUNTIME_ERROR;
+		}
+		else rv = JCLASS_ACCESS_ERROR;
+
+	}
+	return rv;
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsDecrypt
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle,
+	jobject decrypt
+)
+{
+	JNH_CMSENV_PARSING_HANDLER hHandler = (JNH_CMSENV_PARSING_HANDLER) handle;
+	NH_RV rv;
+	NH_ASN1_PNODE node;
+	CK_MECHANISM_TYPE mechanism;
+	const char *algorithm;
+	JNH_RSA_CALLBACK_STR callback;
+	jbyteArray ret = NULL;
+
+	if (NH_SUCCESS(rv = hHandler->hCMS->key_encryption_algorithm(hHandler->hCMS, 0, &node, &mechanism)))
+	{
+		switch (mechanism)
+		{
+		case CKM_RSA_PKCS:
+			algorithm = "PKCS1Padding";
+			break;
+		case CKM_RSA_PKCS_OAEP:
+			algorithm = "OAEPPadding";
+			break;
+		case CKM_RSA_X_509:
+			algorithm = "NoPadding";
+			break;
+		default:
+			throw_new(env, J_CMS_DECRYPT_EX, J_CMS_DECRYPT_ERROR, NH_UNSUPPORTED_MECH_ERROR);
+			return ret;
+		}
+		callback.env = env;
+		callback.algorithm = (*env)->NewStringUTF(env, algorithm);
+		callback.iface = decrypt;
+		callback.clazz = (*env)->FindClass(env, "org/crypthing/security/DecryptInterface");
+		if (callback.algorithm && callback.clazz)
+		{
+			if (NH_SUCCESS(rv = hHandler->hCMS->decrypt(hHandler->hCMS, 0, decrypt_callback, &callback)))
+			{
+				if ((ret = (*env)->NewByteArray(env, hHandler->hCMS->plaintext.length))) (*env)->SetByteArrayRegion(env, ret, 0L, hHandler->hCMS->plaintext.length, (jbyte*) hHandler->hCMS->plaintext.data);
+				else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+			}
+			else throw_new(env, J_CMS_DECRYPT_EX, J_CMS_DECRYPT_ERROR, rv);
+		}
+		else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+	}
+	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+	return ret;
+}

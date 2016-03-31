@@ -76,6 +76,7 @@
 #define J_CMS_VALIDATE_ERROR		"Invalid CMS SignedData document"
 #define J_KEY_ERROR			"Invalid cryptographic key"
 #define J_CMS_SIGFAIL_ERROR		"Could not sign CMS SignedData document"
+#define J_CMS_DECRYPT_ERROR		"Could not decrypt CMS EnvelopedData document"
 
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
 #define J_OUTOFMEM_EX			"java/lang/OutOfMemoryError"
@@ -92,6 +93,7 @@
 #define J_CMS_VALIDATE_EX		"org/crypthing/security/cms/CMSInvalidAttributesException"
 #define J_KEY_EX				"java/security/KeyException"
 #define J_INVALID_KEY_EX		"java/security/InvalidKeyException"
+#define J_CMS_DECRYPT_EX		"org/crypthing/security/cms/CMSDecryptException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */
@@ -100,6 +102,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+/*
+ * Class:     org_crypthing_security_provider_NharuProvider
+ * Method:    nharuInitPRNG
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_nharuInitPRNG(JNIEnv *, jclass);
 
 
 /** ****************************

@@ -1,0 +1,11 @@
+{
+   <RSA_new>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:CRYPTO_malloc
+   ...
+   fun:RSA_new
+   ...
+}
+

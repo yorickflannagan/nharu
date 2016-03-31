@@ -10,6 +10,11 @@ import org.crypthing.security.DecryptInterface;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.security.x509.NativeParent;
 
+/**
+ * Parses a CMS EnvelopedData document. Only a single KeyTransRecipientInfo recipient is currently supported.
+ * @author magut
+ *
+ */
 public final class CMSEnvelopedData implements NativeParent
 {
 	static { NharuProvider.isLoaded(); }
@@ -24,6 +29,7 @@ public final class CMSEnvelopedData implements NativeParent
 	private static native byte[] nhcmsDecrypt(long handle, DecryptInterface decrypt) throws CMSException;
 	private native IssuerAndSerialNumber getRID(long handle) throws CMSParsingException;
 
+	private byte[] eContent;
 	/**
 	 * Creates a new CMSEnvelopedData instance. Only key transport recipients is supported.
 	 * @param encoding: document DER encoding
@@ -69,11 +75,16 @@ public final class CMSEnvelopedData implements NativeParent
 	 */
 	public byte[] decrypt(final NharuKeyStore store) throws UnrecoverableKeyException, CMSException
 	{
-		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		if (store == null) throw new NullPointerException("Argument must not be null");
-		final DecryptInterface decrypt = store.getDecrypt(getRID(hHandle));
-		if (decrypt == null) throw new UnrecoverableKeyException("Key store does not have a private key capable to decrypt this document");
-		return nhcmsDecrypt(hHandle, decrypt);
+		if (eContent == null)
+		{
+			if (hHandle == 0) throw new IllegalStateException("Object already released");
+			IssuerAndSerialNumber issuer = getRID(hHandle);
+			final DecryptInterface decrypt = store.getDecrypt(issuer);
+			if (decrypt == null) throw new UnrecoverableKeyException("Key store does not have a private key capable to decrypt this document");
+			eContent = nhcmsDecrypt(hHandle, decrypt);
+		}
+		return eContent;
 	}
 
 	public enum RecipientInfoType

@@ -125,11 +125,9 @@ NH_FUNCTION(NH_RV, NH_new_noise_device)(_OUT_ NH_NOISE_HANDLER *self)
 	return NH_OK;
 }
 
-NH_FUNCTION(NH_RV, NH_release_noise_device)(_IN_ NH_NOISE_HANDLER self)
+NH_FUNCTION(void, NH_release_noise_device)(_IN_ NH_NOISE_HANDLER self)
 {
-	if (!self) return NH_INVALID_ARG;
-	free(self);
-	return NH_OK;
+	if (self) free(self);
 }
 
 

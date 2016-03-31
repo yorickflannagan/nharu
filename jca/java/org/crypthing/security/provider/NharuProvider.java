@@ -31,6 +31,7 @@ public final class NharuProvider extends Provider
 	public static final String NHARU_PROVIDER_NAME = "Nharu";
 	public static final double NHARU_VERSION = 2.0;
 
+	private static native void nharuInitPRNG();
 	static
 	{
 		try { System.loadLibrary("nharujca"); }
@@ -77,6 +78,7 @@ public final class NharuProvider extends Provider
 				throw f;
 			}
 		}
+		nharuInitPRNG();
 	}
 	public static boolean isLoaded() { return true; }
 
@@ -268,6 +270,12 @@ public final class NharuProvider extends Provider
 			System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
 			CMSDocument.main(new String[0]);
 			System.out.println("====================================================================");
+			org.crypthing.security.x509.CacheCleaner.debugShutDown();
+			try { Thread.sleep(1000); }
+			catch (final InterruptedException e) { /* */ }
+			System.gc();
+			try { Thread.sleep(1000); }
+			catch (final InterruptedException e) { /* */ }
 		}
 	}
 }

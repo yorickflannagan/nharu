@@ -13,7 +13,7 @@ import static org.crypthing.security.LogDevice.LOG_LEVEL_WARNING;
 import static org.crypthing.security.LogDevice.LOG_LEVEL_ERROR;
 
 
-class CacheCleaner extends Thread
+public class CacheCleaner extends Thread
 {
 	private static final String MSG_RUN = "CacheCleaner is now running";
 	private static final String MSG_PARAMETERS = "CacheCleaner was loaded with parameters:\n";
@@ -78,12 +78,25 @@ class CacheCleaner extends Thread
 					e.printStackTrace();
 				}
 				if (cache.size() == 0) isRunning = false;
+				if (LOG_LEVEL < LOG_LEVEL_DEBUG) if (mustShutDown) isRunning = false;
 			}
 		}
 		finally
 		{
+			if (LOG_LEVEL < LOG_LEVEL_DEBUG)
+			{
+				final Iterator<Entry<NharuArray, NharuX509Certificate>> set = cache.entrySet().iterator();
+				while (set.hasNext())
+				{
+					final Entry<NharuArray, NharuX509Certificate> it = set.next();
+					set.remove();
+					it.getValue().closeHandle();
+				}
+			}
 			if (LOG_LEVEL < LOG_LEVEL_ERROR) LOG.warning(INFO_INTERRUPTED);
 			NharuX509Factory.blackHawkIsDown();
 		}
 	}
+	private static boolean mustShutDown = false;
+	public static void debugShutDown() { mustShutDown = true; }
 }

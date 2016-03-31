@@ -6,6 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
+JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_nharuInitPRNG(_UNUSED_ JNIEnv *env, _UNUSED_ jclass c)
+{
+	NH_NOISE_HANDLER hNoise;
+	if (NH_SUCCESS(NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
+}
+
 
 /** ****************************
  *  Utilities

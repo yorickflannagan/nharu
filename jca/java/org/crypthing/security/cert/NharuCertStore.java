@@ -157,13 +157,18 @@ public final class NharuCertStore extends CertStoreSpi
 	 */
 	public boolean isTrusted(final NharuX509Certificate cert)
 	{
+		return isTrusted(cert, true);
+	}
+
+	public boolean isTrusted(final NharuX509Certificate cert, boolean checkValidity)
+	{
 		boolean ret = false;
 		final NharuX509Certificate entry = certStore.get(cert.getIssuer());
 		if (entry != null)
 		{
 			try
 			{
-				cert.checkValidity();
+				if (checkValidity) cert.checkValidity();
 				cert.verify(entry.getPublicKey());
 				ret = true;
 			}
@@ -363,13 +368,9 @@ public final class NharuCertStore extends CertStoreSpi
 			try
 			{
 				final NharuX509Certificate cert = NharuX509Factory.generateCertificate(CERT.getBytes());
-				try
-				{
-					System.out.print("Validating an end-user certificate... ");
-					if (!store.isTrusted(cert)) System.err.println("Failed!");
-					else System.out.println("Done!");
-				}
-				finally { cert.closeHandle(); }
+				System.out.print("Validating an end-user certificate... ");
+				if (!store.isTrusted(cert, false)) System.err.println("Failed!");
+				else System.out.println("Done!");
 			}
 			catch (final CertificateException e) { e.printStackTrace(); }
 		}

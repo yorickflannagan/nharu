@@ -1560,7 +1560,7 @@ NH_FUNCTION(NH_RV, NH_new_noise_device)(_OUT_ NH_NOISE_HANDLER*);
  ******
  *
  */
-NH_FUNCTION(NH_RV, NH_release_noise_device)(_IN_ NH_NOISE_HANDLER);
+NH_FUNCTION(void, NH_release_noise_device)(_IN_ NH_NOISE_HANDLER);
 
 
 /** *****************************

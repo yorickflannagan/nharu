@@ -183,6 +183,24 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsPa
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsReleaseHandle(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedData
+ * Method:    nhcmsGetIssuerNode
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsGetIssuerNode(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedData
+ * Method:    getRID
+ * Signature: (J)Lorg/crypthing/security/cms/IssuerAndSerialNumber;
+ */
+JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_getRID(JNIEnv *, jobject, jlong);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedData
+ * Method:    nhcmsDecrypt
+ * Signature: (JLorg/crypthing/security/DecryptInterface;)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsDecrypt(JNIEnv *, jclass, jlong, jobject);
 
 
 #ifdef __cplusplus

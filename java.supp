@@ -1,0 +1,214 @@
+{
+   <CreateJavaVM-Cond>
+   Memcheck:Cond
+   ...
+   fun:JNI_CreateJavaVM
+   ...
+}
+{
+   <CreateJavaVM-leak>
+   Memcheck:Leak
+   ...
+   fun:JNI_CreateJavaVM
+   ...
+}
+{
+   <CreateJavaVM-Addr4>
+   Memcheck:Addr4
+   ...
+   fun:JNI_CreateJavaVM
+   ...
+}
+{
+   <CreateJavaVM-Free>
+   Memcheck:Free
+   ...
+   fun:JNI_CreateJavaVM
+   ...
+}
+{
+   <InitArgsPb-Addr4>
+   Memcheck:Addr4
+   ...
+   fun:_ZN7Threads9create_vmEP14JavaVMInitArgsPb
+}
+{
+   <InitArgsPb-Leak>
+   Memcheck:Leak
+   ...
+   fun:_ZN7Threads9create_vmEP14JavaVMInitArgsPb
+}
+{
+   <clone-Cond>
+   Memcheck:Cond
+   ...
+   fun:clone
+}
+{
+   <clone-Leak>
+   Memcheck:Leak
+   ...
+   fun:clone
+}
+{
+   <P6Thread-Leak>
+   Memcheck:Leak
+   ...
+   fun:_ZN16SystemDictionary30resolve_instance_class_or_nullEP6Symbol6HandleS2_P6Thread
+   ...
+}
+{
+   <dl_catch_error>
+   Memcheck:Leak
+   ...
+   fun:_dl_catch_error
+   ...
+}
+{
+   <implE19instanceKlassHandlebP6Thread>
+   Memcheck:Leak
+   ...
+   fun:_ZN13instanceKlass15link_class_implE19instanceKlassHandlebP6Thread
+   ...
+}
+{
+   <KlassHandleP6Thread-Leak>
+   Memcheck:Leak
+   ...
+   fun:_ZN13instanceKlass15initialize_implE19instanceKlassHandleP6Thread
+   ...
+}
+{
+   <KlassHandleP6Thread-Addr4>
+   Memcheck:Addr4
+   ...
+   fun:_ZN13instanceKlass15initialize_implE19instanceKlassHandleP6Thread
+   ...
+}
+{
+   <StartThread-Leak>
+   Memcheck:Leak
+   ...
+   fun:JVM_StartThread
+   ...
+}
+{
+   <StartThread-Cond>
+   Memcheck:Cond
+   ...
+   fun:JVM_StartThread
+   ...
+}
+{
+   <methodEP5ciEnvP8ciMethodi-Leak>
+   Memcheck:Leak
+   ...
+   fun:_ZN10C2Compiler14compile_methodEP5ciEnvP8ciMethodi
+   ...
+}
+{
+   <methodEP5ciEnvP8ciMethodi-Cond>
+   Memcheck:Cond
+   ...
+   fun:_ZN10C2Compiler14compile_methodEP5ciEnvP8ciMethodi
+   ...
+}
+{
+   <FailEnumE>
+   Memcheck:Leak
+   ...
+   fun:_ZN9ChunkPool8allocateEjN17AllocFailStrategy13AllocFailEnumE
+   ...
+}
+{
+   <OopDesc6HandleS3_S4_>
+   Memcheck:Leak
+   ...
+   fun:_ZN21LoaderConstraintTable9add_entryEP6SymbolP12klassOopDesc6HandleS3_S4_
+   ...
+}
+{
+   <ZN8CHeapObjILt1792EEnwEjPh>
+   Memcheck:Leak
+   ...
+   fun:_ZN8CHeapObjILt1792EEnwEjPh
+   ...
+}
+{
+   <ZN6SymbolnwEjiP6Thread>
+   Memcheck:Leak
+   ...
+   fun:_ZN6SymbolnwEjiP6Thread
+   ...
+}
+{
+   <JLI_Launch>
+   Memcheck:Leak
+   ...
+   fun:JLI_Launch
+   ...
+}
+{
+   <ZN5ParseC1EP8JVMStateP8ciMethodf>
+   Memcheck:Cond
+   ...
+   fun:_ZN5ParseC1EP8JVMStateP8ciMethodf
+   ...
+}
+{
+   <ArgumentPusherP6Thread>
+   Memcheck:Addr4
+   ...
+   fun:_ZL17jni_invoke_staticP7JNIEnv_P9JavaValueP8_jobject11JNICallTypeP10_jmethodIDP18JNI_ArgumentPusherP6Thread
+   ...
+}
+{
+   <DoPrivileged>
+   Memcheck:Addr4
+   ...
+   fun:JVM_DoPrivileged
+   ...
+}
+{
+   <initProperties-Leak>
+   Memcheck:Leak
+   ...
+   fun:Java_java_lang_System_initProperties
+   ...
+}
+{
+   <initProperties-Addr4>
+   Memcheck:Addr4
+   ...
+   fun:Java_java_lang_System_initProperties
+   ...
+}
+{
+   <ZIP_Put_In_Cache0>
+   Memcheck:Leak
+   ...
+   fun:ZIP_Put_In_Cache0
+   ...
+}
+{
+   <entryEjS1>
+   Memcheck:Leak
+   ...
+   fun:_ZN9HashtableIP7oopDescLt2304EE9new_entryEjS1_
+   ...
+}
+{
+   <ZN8CHeapObjILt256EEnwEjPh>
+   Memcheck:Leak
+   ...
+   fun:_ZN8CHeapObjILt256EEnwEjPh
+   ...
+}
+{
+   <ZN2os6mallocEjtPh>
+   Memcheck:Leak
+   ...
+   fun:_ZN2os6mallocEjtPh
+   ...
+}
+

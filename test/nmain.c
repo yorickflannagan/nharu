@@ -3,7 +3,7 @@
 
 int main(int argv, char **argc)
 {
-	int rv;
+	int rv = NH_OK;
 	printf("Testing Nharu Library...\n");
 	rv = test_encoder();
 	if (NH_SUCCESS(rv)) rv = test_secret_sharing();

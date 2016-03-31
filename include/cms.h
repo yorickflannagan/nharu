@@ -384,6 +384,31 @@ typedef struct NH_CMS_ENV_PARSER_STR	NH_CMS_ENV_PARSER_STR;
 typedef NH_METHOD(NH_RV, NH_CMSENV_RID_FUNCTION)(_IN_ NH_CMS_ENV_PARSER_STR*, _IN_ size_t, _OUT_ NH_CMS_ISSUER_SERIAL*);
 
 /*
+ ****f* NH_CMS_ENV_PARSER/key_encryption_algorithm
+ *
+ * NAME
+ *	key_encryption_algorithm
+ *
+ * PURPOSE
+ *	Gets the KeyEncryptionAlgorithmIdentifier node of the specified KeyTransRecipientInfo
+ *
+ * ARGUMENTS
+ *	_IN_ NH_CMS_ENV_PARSER *self: the handler
+ *	_IN_ size_t idx: RecipientInfo index. Must be a value between 0 and count.
+ *	_OUT_ NH_ASN1_PNODE *alg_id: KeyEncryptionAlgorithmIdentifier node.
+ *	_OUT_ CK_MECHANISM_TYPE_PTR alg: key encryption PKCS #11 mechanism
+ *
+ * RESULT
+ *	NH_INVALID_SIGNER_ERROR
+ *	NH_CANNOT_SAIL
+ *	NH_UNSUPPORTED_MECH_ERROR
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSENV_KALG_FUNCTION)(_IN_ NH_CMS_ENV_PARSER_STR*, _IN_ size_t, _OUT_ NH_ASN1_PNODE*, _OUT_ CK_MECHANISM_TYPE_PTR);
+
+/*
  ****f* NH_CMS_ENV_PARSER/NH_CMS_PDEC_FUNCTION
  *
  * NAME
@@ -445,13 +470,14 @@ struct NH_CMS_ENV_PARSER_STR
 	NH_MUTEX_HANDLE		mutex;
 	NH_ASN1_PARSER_HANDLE	hParser;
 
-	NH_ASN1_PNODE		content;		/* Shortcut to CMSSignedData root node */
-	NH_ASN1_PNODE*		recips;		/* Array of shortcuts to KeyTransRecipientInfo nodes */
-	size_t			count;		/* Count of recips */
-	NH_BLOB			plaintext;		/* Decrypted EncryptedContentInfo */
+	NH_ASN1_PNODE		content;				/* Shortcut to CMSSignedData root node */
+	NH_ASN1_PNODE*		recips;				/* Array of shortcuts to KeyTransRecipientInfo nodes */
+	size_t			count;				/* Count of recips */
+	NH_BLOB			plaintext;				/* Decrypted EncryptedContentInfo */
 
-	NH_CMSENV_RID_FUNCTION	get_rid;		/* Gets the RecipientIdentifier CMS field for the specified KeyTransRecipientInfo. */
-	NH_CMSENV_DEC_FUNCTION	decrypt;		/* Decrypts EncryptedContentInfo, if present */
+	NH_CMSENV_RID_FUNCTION	get_rid;				/* Gets the RecipientIdentifier CMS field for the specified KeyTransRecipientInfo. */
+	NH_CMSENV_KALG_FUNCTION	key_encryption_algorithm;	/* Gets the KeyEncryptionAlgorithmIdentifier node of the specified KeyTransRecipientInfo */
+	NH_CMSENV_DEC_FUNCTION	decrypt;				/* Decrypts EncryptedContentInfo, if present */
 };
 /* ****** */
 typedef struct NH_CMS_ENV_PARSER_STR*	NH_CMS_ENV_PARSER;

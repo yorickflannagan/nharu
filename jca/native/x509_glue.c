@@ -72,7 +72,11 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nh
 					hHandler->hCert = hCert;
 					ret = (jlong) hHandler;
 				}
-				else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+				else
+				{
+					rv = NH_OUT_OF_MEMORY_ERROR;
+					throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+				}
 			}
 			else throw_new(env, J_CERTIFICATE_EX, J_CERT_PARSE_ERROR, rv);
 			if (NH_FAIL(rv))
@@ -453,7 +457,7 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhi
 	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	NH_RV rv;
-	jint ret;
+	jint ret = 0;
 
 	if (NH_SUCCESS(rv = hHandler->hCert->signature_mech(hHandler->hCert, &node)))
 	{
@@ -998,29 +1002,30 @@ JNIEXPORT jobject JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_
 INLINE NH_UTILITY(jlong, parse_pkibr_extension)(JNIEnv *env, _IN_ unsigned char *buffer, _IN_ size_t size)
 {
 	NH_RV rv;
-	NH_PKIBR_EXTENSION hExt;
 	JNH_PKIBR_HANDLER hHandler = NULL;
 
-	if (NH_SUCCESS(rv = NH_parse_pkibr_extension(buffer, size, &hExt)))
+	if ((hHandler = (JNH_PKIBR_HANDLER) malloc(sizeof(JNH_PKIBR_HANDLER_STR))))
 	{
-            if ((hHandler = (JNH_PKIBR_HANDLER) malloc(sizeof(JNH_PKIBR_HANDLER_STR))))
+		if ((hHandler->encoding = (jbyte*) malloc(size)))
 		{
-			if ((hHandler->encoding = (jbyte*) malloc(size)))
+			memcpy(hHandler->encoding, buffer, size);
+			hHandler->len = size;
+			if (NH_FAIL(rv = NH_parse_pkibr_extension((unsigned char*) hHandler->encoding, hHandler->len, &hHandler->hExt)))
 			{
-				memcpy(hHandler->encoding, buffer, size);
-				hHandler->len = size;
-				hHandler->hExt = hExt;
-			}
-			else
-			{
+				free(hHandler->encoding);
 				free(hHandler);
 				hHandler = NULL;
-				throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+				throw_new(env, J_RUNTIME_EX, J_CERT_PARSE_ERROR, rv);
 			}
 		}
-		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		else
+		{
+			free(hHandler);
+			hHandler = NULL;
+			throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		}
 	}
-	else throw_new(env, J_RUNTIME_EX, J_CERT_PARSE_ERROR, rv);
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
 	return (jlong) hHandler;
 }
 static NH_NODE_WAY extnValue[] = {{ NH_PARSE_ROOT, NH_ASN1_OCTET_STRING, NULL, 0 }};
@@ -1059,7 +1064,6 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuPKIBRParser_nhixPK
 			NH_release_parser(hParser);
 		}
 		else throw_new(env, J_RUNTIME_EX, J_CERT_PARSE_ERROR, rv);
-
 		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
 	}
 	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
