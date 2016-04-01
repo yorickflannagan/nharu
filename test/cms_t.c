@@ -470,7 +470,7 @@ int test_cms_signed_data()
 	NH_CMS_SD_PARSER hCMSParser;
 
 	printf("Testing CMS SignedData encoding... ");
-	if (NH_SUCCESS(rv = NH_cms_encode_signed_data(&hCMSEncoder, &eContent)))
+	if (NH_SUCCESS(rv = NH_cms_encode_signed_data(&eContent, &hCMSEncoder)))
 	{
 		rv = hCMSEncoder->data_ctype(hCMSEncoder, CK_TRUE);
 		if (NH_SUCCESS(rv))
@@ -669,6 +669,50 @@ int test_openssl_cms_enveloped_data()
 		NH_cms_release_env_parser(hHandler);
 	}
 
+	if (NH_SUCCESS(rv)) printf("Done!\n");
+	else printf("Failed\n");
+	return rv;
+}
+
+int test_enveloped_data()
+{
+	NH_RV rv;
+	NH_CMS_ENV_ENCODER hHandler;
+	NH_CERTIFICATE_HANDLER hCert;
+	unsigned char *encoding = NULL;
+	size_t size;
+	NH_CMS_ENV_PARSER hParser;
+
+	printf("Testing CMS EnvelopedData encoding... ");
+	if (NH_SUCCESS(rv = NH_cms_encode_encode_enveloped_data(&eContent, &hHandler)))
+	{
+		if (NH_SUCCESS(rv = hHandler->encrypt(hHandler, CKM_DES3_KEY_GEN, 24, CKM_DES3_CBC)))
+		{
+			if (NH_SUCCESS(rv = NH_parse_certificate(sign_cert, sizeof(sign_cert), &hCert)))
+			{
+				if
+				(
+					NH_SUCCESS(rv = hHandler->key_trans_recip(hHandler, hCert, CKM_RSA_PKCS_OAEP)) &&
+					(size = hHandler->hEncoder->encoded_size(hHandler->hEncoder, hHandler->hEncoder->root)) &&
+					NH_SUCCESS(rv = (encoding = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				)	rv = hHandler->hEncoder->encode(hHandler->hEncoder, hHandler->hEncoder->root, encoding);
+				NH_release_certificate(hCert);
+			}
+		}
+		NH_cms_release_env_encoder(hHandler);
+	}
+	if (NH_SUCCESS(rv))
+	{
+		if (NH_SUCCESS(rv = NH_cms_parse_enveloped_data(encoding, size, &hParser)))
+		{
+			if (NH_SUCCESS(rv = hParser->decrypt(hParser, 0, decrypt, NULL)))
+			{
+				rv = hParser->plaintext.length == eContent.length && memcmp(hParser->plaintext.data, eContent.data, hParser->plaintext.length) == 0 ? NH_OK : NH_PKIX_ERROR;
+			}
+			NH_cms_release_env_parser(hParser);
+		}
+	}
+	if (encoding) free(encoding);
 	if (NH_SUCCESS(rv)) printf("Done!\n");
 	else printf("Failed\n");
 	return rv;

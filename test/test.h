@@ -13,5 +13,6 @@ int test_crl();
 int parse_openssl_cms_signed_data();
 int test_cms_signed_data();
 int test_openssl_cms_enveloped_data();
+int test_enveloped_data();
 
 #endif

@@ -32,6 +32,7 @@ public final class NharuProvider extends Provider
 	public static final double NHARU_VERSION = 2.0;
 
 	private static native void nharuInitPRNG();
+	private static native void leakageStop();
 	static
 	{
 		try { System.loadLibrary("nharujca"); }
@@ -276,6 +277,7 @@ public final class NharuProvider extends Provider
 			System.gc();
 			try { Thread.sleep(1000); }
 			catch (final InterruptedException e) { /* */ }
+			leakageStop();
 		}
 	}
 }

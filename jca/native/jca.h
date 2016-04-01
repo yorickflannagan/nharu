@@ -238,6 +238,13 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSADecrypt(JNIEnv *, jclass, jlong, jbyteArray, jint);
 
+/*
+ * Class:     org_crypthing_security_provider_NharuProvider
+ * Method:    leakageStop
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_leakageStop(JNIEnv *, jclass);
+
 
 #ifdef __cplusplus
 }

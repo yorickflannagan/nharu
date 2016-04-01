@@ -470,7 +470,7 @@ struct NH_CMS_ENV_PARSER_STR
 	NH_MUTEX_HANDLE		mutex;
 	NH_ASN1_PARSER_HANDLE	hParser;
 
-	NH_ASN1_PNODE		content;				/* Shortcut to CMSSignedData root node */
+	NH_ASN1_PNODE		content;				/* Shortcut to CMSEnvelopedData root node */
 	NH_ASN1_PNODE*		recips;				/* Array of shortcuts to KeyTransRecipientInfo nodes */
 	size_t			count;				/* Count of recips */
 	NH_BLOB			plaintext;				/* Decrypted EncryptedContentInfo */
@@ -481,6 +481,82 @@ struct NH_CMS_ENV_PARSER_STR
 };
 /* ****** */
 typedef struct NH_CMS_ENV_PARSER_STR*	NH_CMS_ENV_PARSER;
+
+
+typedef struct NH_CMS_ENV_ENCODER_STR	NH_CMS_ENV_ENCODER_STR;
+/*
+ ****f* NH_CMS_ENV_PARSER/encrypt
+ *
+ * NAME
+ *	encrypt
+ *
+ * PURPOSE
+ *	Encrypts content. The content-encryption key is generated at random. The EncryptedContentInfo ContentType will be data...
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_ENV_ENCODER_STR *self: the handler
+ *	_IN_ CK_MECHANISM_TYPE keyGen: key generation mechanism (see PKCS #11)
+ *	_IN_ size_t keySize: size of generated key (unit depends on keyGen)
+ *	_IN_ CK_MECHANISM_TYPE cipher: symetric encryption mechanism
+ *
+ * RESULT
+ *	NH_CMS_ALREADYSET_ERROR
+ *	NH_SYMKEY_HANDLER return codes
+ *	NH_OUT_OF_MEMORY_ERROR
+ *	NH_CANNOT_SAIL
+ *	NH_UNSUPPORTED_MECH_ERROR
+ *	NH_ASN1_ENCODER_HANDLE return codes
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSENV_ENC_FUNCTION)(_INOUT_ NH_CMS_ENV_ENCODER_STR*, _IN_ CK_MECHANISM_TYPE, _IN_ size_t, _IN_ CK_MECHANISM_TYPE);
+
+/*
+ ****f* NH_CMS_ENV_PARSER/key_trans_recip
+ *
+ * NAME
+ *	key_trans_recip
+ *
+ * PURPOSE
+ *	Adds a new KeyTransRecipientInfo using specified X.509 certificate.
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_ENV_ENCODER_STR *self: the handler
+ *	_IN_ NH_CERTIFICATE_HANDLER hCert: certificate handler
+ *	_IN_ CK_MECHANISM_TYPE mechanism: key encryption mechanism
+ *
+ * RESULT
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSENV_RCP_FUNCTION)(_INOUT_ NH_CMS_ENV_ENCODER_STR*, _IN_ NH_CERTIFICATE_HANDLER, _IN_ CK_MECHANISM_TYPE);
+
+/*
+ ****s* CMS/NH_CMS_ENV_PARSER
+ *
+ * NAME
+ *	NH_CMS_ENV_PARSER
+ *
+ * PURPOSE
+ *
+ *
+ * SYNOPSIS
+ */
+struct NH_CMS_ENV_ENCODER_STR
+{
+	NH_ASN1_ENCODER_HANDLE	hEncoder;
+
+	NH_ASN1_PNODE		content;		/* Shortcut to CMSEnvelopedData root node */
+	NH_BLOB			plainContent;	/* Contents to be encrypted */
+	NH_BLOB			key;			/* Encryption key */
+
+	NH_CMSENV_ENC_FUNCTION	encrypt;		/* Encrypts content. The content-encryption key is generated at random. The EncryptedContentInfo ContentType will be data... */
+	NH_CMSENV_RCP_FUNCTION	key_trans_recip;
+};
+/* ****** */
+typedef struct NH_CMS_ENV_ENCODER_STR*	NH_CMS_ENV_ENCODER;
 
 
 #if defined(__cplusplus)
@@ -617,8 +693,8 @@ NH_FUNCTION(void, NH_cms_release_sd_parser)(_INOUT_ NH_CMS_SD_PARSER);
  *	Initializes a CMS SignedData encoder
  *
  * ARGUMENTS
- *	_OUT_ NH_CMS_SD_ENCODER *hHandler: the encoding handler
  *	_IN_ NH_BLOB *eContent: the encapsulated content info to be encoded.
+ *	_OUT_ NH_CMS_SD_ENCODER *hHandler: the encoding handler
  *
  * RESULT
  *	NH_ASN1_ENCODER_HANDLE retur codes
@@ -627,7 +703,7 @@ NH_FUNCTION(void, NH_cms_release_sd_parser)(_INOUT_ NH_CMS_SD_PARSER);
  ******
  *
  */
-NH_FUNCTION(NH_RV, NH_cms_encode_signed_data)(_OUT_ NH_CMS_SD_ENCODER*, _IN_ NH_BLOB*);
+NH_FUNCTION(NH_RV, NH_cms_encode_signed_data)(_IN_ NH_BLOB*, _OUT_ NH_CMS_SD_ENCODER*);
 
 /*
  ****f* CMS/NH_cms_release_sd_encoder
@@ -771,6 +847,45 @@ NH_FUNCTION(NH_RV, NH_cms_parse_enveloped_data)(_IN_ unsigned char*, _IN_ size_t
  */
 NH_FUNCTION(void, NH_cms_release_env_parser)(_INOUT_ NH_CMS_ENV_PARSER);
 
+/*
+ ****f* CMS/NH_cms_encode_encode_enveloped_data
+ *
+ * NAME
+ *	NH_cms_encode_encode_enveloped_data
+ *
+ * PURPOSE
+ *	Initializes a CMS EnvelopedData encoder
+ *
+ * ARGUMENTS
+ *	_IN_ NH_BLOB *eContent: the plain text to be encrypted.
+ *	_OUT_ NH_CMS_ENV_ENCODER *hHandler: the encoding handler
+ *
+ * RESULT
+ *	NH_ASN1_ENCODER_HANDLE retur codes
+ *	NH_OUT_OF_MEMORY_ERROR
+ *
+ ******
+ *
+ */
+NH_FUNCTION(NH_RV, NH_cms_encode_encode_enveloped_data)(_IN_ NH_BLOB*, _OUT_ NH_CMS_ENV_ENCODER*);
+
+/*
+ ****f* CMS/NH_cms_release_env_encoder
+ *
+ * NAME
+ *	NH_cms_release_env_encoder
+ *
+ * PURPOSE
+ *	Releases CMS EnvelopedData encoder
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_ENV_ENCODER hHandler: the handler itself
+ *
+ ******
+ *
+ */
+NH_FUNCTION(void, NH_cms_release_env_encoder)(_INOUT_ NH_CMS_ENV_ENCODER);
+
 
 #if defined(__cplusplus)
 }
@@ -785,8 +900,16 @@ NH_FUNCTION(void, NH_cms_release_env_parser)(_INOUT_ NH_CMS_ENV_PARSER);
  */
 EXTERN NH_NODE_WAY cms_issuer_serial[];
 #define CMS_ISSUERSERIAL_MAP_COUNT		3
+EXTERN NH_NODE_WAY issuer_serial_map[];
+#define ISSUER_SERIAL_MAP_COUNT		1
 
 EXTERN NH_NODE_WAY cms_map[];
 #define CMS_MAP					3
+
+EXTERN unsigned int cms_enveloped_data_ct_oid[];
+#define CMS_ENVELOPED_DATA_OID_COUNT	7
+
+EXTERN unsigned int cms_data_ct_oid[];
+#define CMS_DATA_CTYPE_OID_COUNT		7
 
 #endif /* __CMS_H__ */

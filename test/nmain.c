@@ -15,5 +15,6 @@ int main(int argv, char **argc)
 	if (NH_SUCCESS(rv)) rv = parse_openssl_cms_signed_data();
 	if (NH_SUCCESS(rv)) rv = test_cms_signed_data();
 	if (NH_SUCCESS(rv)) rv = test_openssl_cms_enveloped_data();
+	if (NH_SUCCESS(rv)) rv = test_enveloped_data();
 	return rv;
 }

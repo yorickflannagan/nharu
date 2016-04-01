@@ -17,3 +17,4 @@ docs/
 sources
 facilities/eclipse/
 LogDevice.java
+*.cscope_file_list

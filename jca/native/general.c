@@ -473,3 +473,10 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
 	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
 	return ret;
 }
+
+JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_leakageStop(_UNUSED_ JNIEnv *env, _UNUSED_ jclass c)
+{
+#ifdef _DEBUG_
+	printf("Debug stop only\n");
+#endif
+}

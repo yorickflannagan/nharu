@@ -1823,6 +1823,17 @@ EXTERN unsigned int sha512_oid[];
 #define NHC_SHA512_OID_COUNT			9
 EXTERN unsigned int md5_oid[];
 #define NHC_MD5_OID_COUNT			6
+EXTERN unsigned int rc2_cbc_oid[];
+#define NHC_RC2_CBC_OID_COUNT			6
+EXTERN unsigned int des3_cbc_oid[];
+#define NHC_DES3_CBC_OID_COUNT		6
+EXTERN unsigned int aes128_cbc_oid[];
+#define NHC_AES128_CBC_OID_COUNT		9
+EXTERN unsigned int aes192_cbc_oid[];
+#define AES192_CBC_OID_COUNT			9
+EXTERN unsigned int aes256_cbc_oid[];
+#define AES256_CBC_OID_COUNT			9
+
 
 /* Unsupported. Used only for Java compatibility */
 EXTERN unsigned int dsa_oid[];

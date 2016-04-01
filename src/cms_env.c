@@ -274,7 +274,6 @@ const static NH_NODE_WAY cms_enveloped_data_map[] =
 		0
 	}
 };
-
 NH_FUNCTION(NH_RV, NH_cms_parse_enveloped_data)(_IN_ unsigned char *encoding, _IN_ size_t size, _OUT_ NH_CMS_ENV_PARSER *hHandler)
 {
 	NH_RV rv;
@@ -354,6 +353,308 @@ NH_FUNCTION(void, NH_cms_release_env_parser)(_INOUT_ NH_CMS_ENV_PARSER hHandler)
 		if (hHandler->mutex) NH_release_mutex(hHandler->mutex);
 		if (hHandler->hParser) NH_release_parser(hHandler->hParser);
 		if (hHandler->plaintext.data) free(hHandler->plaintext.data);
+		free(hHandler);
+	}
+}
+
+
+/** ****************************
+ *  CMS EnvelopedData encoding
+ *  ****************************/
+NH_UTILITY(NH_RV, put_EncryptedContentInfo)
+(
+	_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder,
+	_IN_ NH_ASN1_PNODE from,
+	_IN_ CK_MECHANISM_TYPE cipher,
+	_IN_ size_t keySize,
+	_IN_ NH_BLOB *iv,
+	_IN_ NH_BLOB *cipherText
+)
+{
+	NH_ASN1_PNODE node;
+	unsigned int *oid;
+	size_t oidCount;
+	NH_RV rv;
+
+	if (!from || !(node = from->child)) return NH_CANNOT_SAIL;
+	switch (cipher)
+	{
+	case CKM_RC2_CBC:
+		oid = rc2_cbc_oid;
+		oidCount = NHC_RC2_CBC_OID_COUNT;
+		break;
+	case CKM_DES3_CBC:
+		oid = des3_cbc_oid;
+		oidCount = NHC_DES3_CBC_OID_COUNT;
+		break;
+	case CKM_AES_CBC:
+		switch (keySize)
+		{
+		case 16:
+			oid = aes128_cbc_oid;
+			oidCount = NHC_AES128_CBC_OID_COUNT;
+			break;
+		case 24:
+			oid = aes192_cbc_oid;
+			oidCount = AES192_CBC_OID_COUNT;
+			break;
+		case 32:
+			oid = aes256_cbc_oid;
+			oidCount = AES256_CBC_OID_COUNT;
+			break;
+		default: return NH_UNSUPPORTED_MECH_ERROR;
+		}
+		break;
+	default: return NH_UNSUPPORTED_MECH_ERROR;
+	}
+	if (NH_FAIL(rv = hEncoder->put_objectid(hEncoder, node, cms_data_ct_oid, CMS_DATA_CTYPE_OID_COUNT, CK_FALSE))) return rv;
+	if (!(node = hEncoder->sail(node, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH))) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = hEncoder->put_objectid(hEncoder, node, oid, oidCount, CK_FALSE))) return rv;
+	if (!(node = node->next)) return NH_CANNOT_SAIL;
+	*node->identifier = NH_ASN1_OCTET_STRING;
+	node->knowledge = NH_ASN1_OCTET_STRING;
+	if (NH_FAIL(rv = hEncoder->put_octet_string(hEncoder, node, iv->data, iv->length))) return rv;
+	if (!(node = hEncoder->sail(from, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2)))) return NH_CANNOT_SAIL;
+	hEncoder->register_optional(node);
+	return hEncoder->put_octet_string(hEncoder, node, cipherText->data, cipherText->length);
+}
+NH_UTILITY(NH_RV, cms_env_encrypt)
+(
+	_INOUT_ NH_CMS_ENV_ENCODER_STR *self,
+	_IN_ CK_MECHANISM_TYPE keyGen,
+	_IN_ size_t keySize,
+	_IN_ CK_MECHANISM_TYPE cipher
+)
+{
+	NH_RV rv;
+	NH_SYMKEY_HANDLER hKey;
+	NH_IV *iv;
+	NH_BLOB cipherText;
+
+	if (self->key.data) return NH_CMS_ALREADYSET_ERROR;
+	if (NH_SUCCESS(rv = NH_new_symkey_handler(keyGen, &hKey)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hKey->generate(hKey, keySize)) &&
+			NH_SUCCESS(rv = (self->key.data = (unsigned char*) malloc(hKey->key->length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if (NH_SUCCESS(rv = hKey->new_iv(cipher, &iv)))
+			{
+				if
+				(
+					NH_SUCCESS(rv = hKey->encrypt_init(hKey, cipher, iv)) &&
+					NH_SUCCESS(rv = hKey->encrypt(hKey, self->plainContent.data, self->plainContent.length, NULL, &cipherText.length)) &&
+					NH_SUCCESS(rv = (cipherText.data = (unsigned char*) malloc(cipherText.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				)
+				{
+					if
+					(
+						NH_SUCCESS(rv = hKey->encrypt
+						(
+							hKey,
+							self->plainContent.data,
+							self->plainContent.length,
+							cipherText.data,
+							&cipherText.length
+						))
+					)	rv = put_EncryptedContentInfo
+						(
+							self->hEncoder,
+							self->hEncoder->sail(self->content, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3)),
+							cipher,
+							keySize,
+							iv,
+							&cipherText
+						);
+					free(cipherText.data);
+				}
+				hKey->release_iv(iv);
+			}
+			if (NH_SUCCESS(rv))
+			{
+				memcpy(self->key.data, hKey->key->data, hKey->key->length);
+				self->key.length = hKey->key->length;
+			}
+		}
+		NH_release_symkey_handler(hKey);
+	}
+	return rv;
+}
+
+const static NH_NODE_WAY key_trans_recip_map[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	}
+};
+NH_UTILITY(NH_RV, cms_env_key_trans_recip)
+(
+	_INOUT_ NH_CMS_ENV_ENCODER_STR *self,
+	_IN_ NH_CERTIFICATE_HANDLER hCert,
+	_IN_ CK_MECHANISM_TYPE mechanism
+)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE node, rsakey;
+	unsigned int *oid;
+	size_t oidCount;
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_BIG_INTEGER n, e;
+	unsigned char *buffer;
+	size_t buflen;
+
+	if (!self->key.data) return NH_CMS_ENV_NOKEY_ERROR;
+	if (!hCert) return NH_INVALID_ARG;
+	if (NH_oid_to_mechanism(hCert->pubkey->child->child->value, hCert->pubkey->child->child->valuelen) != CKM_RSA_PKCS_KEY_PAIR_GEN) return NH_UNSUPPORTED_MECH_ERROR;
+	switch (mechanism)
+	{
+	case CKM_RSA_PKCS_OAEP:
+		oid = rsaes_oaep_oid;
+		oidCount = NHC_RSAES_OAEP_OID_COUNT;
+		break;
+	case CKM_RSA_PKCS:
+		oid = rsaEncryption_oid;
+		oidCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	case CKM_RSA_X_509:
+		oid = rsa_x509_oid;
+		oidCount = NHC_RSA_X509_OID_COUNT;
+		break;
+	default: return NH_UNSUPPORTED_MECH_ERROR;
+	}
+	if (!(node = self->hEncoder->sail(self->content, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2)))) return NH_CANNOT_SAIL;
+	if (!(node = self->hEncoder->add_to_set(self->hEncoder->container, node))) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, key_trans_recip_map, ASN_NODE_WAY_COUNT(key_trans_recip_map)))) return rv;
+	if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, key_trans_recip_info, ASN_NODE_WAY_COUNT(key_trans_recip_info)))) return rv;
+	if (!(node = node->child)) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = self->hEncoder->put_little_integer(self->hEncoder, node, 0))) return rv;
+	if (!(node = node->next)) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, issuer_serial_map, ISSUER_SERIAL_MAP_COUNT))) return rv;
+	if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, cms_issuer_serial, CMS_ISSUERSERIAL_MAP_COUNT))) return rv;
+	if (!node->child) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = NH_asn_clone_node(self->hEncoder->container, hCert->issuer->node, &node->child))) return rv;
+	if (!node->child->next) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = self->hEncoder->put_integer(self->hEncoder, node->child->next, hCert->serialNumber->value, hCert->serialNumber->valuelen))) return rv;
+	if (!(node = node->next) || !(node->child)) return NH_CANNOT_SAIL;
+	if (NH_FAIL(rv = self->hEncoder->put_objectid(self->hEncoder, node->child, oid, oidCount, CK_FALSE))) return rv;
+	if (mechanism == CKM_RSA_PKCS_OAEP)
+	{
+		if (!(node->child->next)) return NH_CANNOT_SAIL;
+		*node->child->next->identifier = NH_ASN1_SEQUENCE;
+	}
+	if (!(node = node->next)) return NH_CANNOT_SAIL;
+
+	rsakey = hCert->pubkey->child->next->child;
+	if (NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&hPubKey)))
+	{
+		buffer = rsakey->child->value;
+		buflen = rsakey->child->valuelen;
+		if (!buffer[0])
+		{
+			buffer++;
+			buflen--;
+		}
+		n.data = buffer;
+		n.length = buflen;
+		buffer = rsakey->child->next->value;
+		buflen = rsakey->child->next->valuelen;
+		if (!buffer[0])
+		{
+			buffer++;
+			buflen--;
+		}
+		e.data = buffer;
+		e.length = buflen;
+		if
+		(
+			NH_SUCCESS(rv = hPubKey->create(hPubKey, &n, &e)) &&
+			NH_SUCCESS(rv = hPubKey->encrypt(hPubKey, mechanism, self->key.data, self->key.length, NULL, &buflen)) &&
+			NH_SUCCESS(rv = (buffer = (unsigned char*) malloc(buflen)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if
+			(
+				NH_SUCCESS(rv = hPubKey->encrypt(hPubKey, mechanism, self->key.data, self->key.length, buffer, &buflen))
+			)	rv = self->hEncoder->put_octet_string(self->hEncoder, node, buffer, buflen);
+			free(buffer);
+		}
+		NH_release_RSA_pubkey_handler(hPubKey);
+	}
+	return rv;
+}
+
+const static NH_CMS_ENV_ENCODER_STR defCMS_ENV_encoder =
+{
+	NULL,			/* hEncoder */
+	NULL,			/* content */
+	{ NULL, 0 },	/* plainContent */
+	{ NULL, 0 },	/* key */
+
+	cms_env_encrypt,
+	cms_env_key_trans_recip
+};
+
+NH_FUNCTION(NH_RV, NH_cms_encode_encode_enveloped_data)(_IN_ NH_BLOB *eContent, _OUT_ NH_CMS_ENV_ENCODER *hHandler)
+{
+	NH_RV rv;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	NH_ASN1_PNODE node, content;
+	NH_CMS_ENV_ENCODER ret = NULL;
+
+	if (!eContent || !eContent->data) return NH_INVALID_ARG;
+	if (NH_FAIL(rv = NH_new_encoder(64, 4096, &hEncoder))) return rv;
+	rv = hEncoder->chart(hEncoder, cms_map, CMS_MAP, &node);
+
+	if (NH_SUCCESS(rv)) rv = hEncoder->put_objectid(hEncoder, node->child, cms_enveloped_data_ct_oid, CMS_ENVELOPED_DATA_OID_COUNT, CK_FALSE);
+	if (NH_SUCCESS(rv)) rv = (content = hEncoder->sail(node, (NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_CANNOT_SAIL;
+
+	if (NH_SUCCESS(rv)) rv = hEncoder->chart_from(hEncoder, content, cms_enveloped_data_map, ASN_NODE_WAY_COUNT(cms_enveloped_data_map));
+	if (NH_SUCCESS(rv)) rv = (node = content->child) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = hEncoder->put_little_integer(hEncoder, node, 0);
+	if (NH_SUCCESS(rv)) rv = (ret = malloc(sizeof(NH_CMS_ENV_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
+	if (NH_SUCCESS(rv))
+	{
+		memcpy(ret, &defCMS_ENV_encoder, sizeof(NH_CMS_ENV_ENCODER_STR));
+		if (eContent && NH_SUCCESS(rv = (ret->plainContent.data = (unsigned char*) malloc(eContent->length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+		{
+			memcpy(ret->plainContent.data, eContent->data, eContent->length);
+			ret->plainContent.length = eContent->length;
+		}
+	}
+	if (NH_SUCCESS(rv))
+	{
+		ret->hEncoder = hEncoder;
+		ret->content = content;
+		*hHandler = ret;
+	}
+	else
+	{
+		if (ret)
+		{
+			if (ret->plainContent.data) free(ret->plainContent.data);
+			free(ret);
+		}
+		NH_release_encoder(hEncoder);
+	}
+	return rv;
+}
+
+NH_FUNCTION(void, NH_cms_release_env_encoder)(_INOUT_ NH_CMS_ENV_ENCODER hHandler)
+{
+	if (hHandler)
+	{
+		if (hHandler->plainContent.data) free(hHandler->plainContent.data);
+		if (hHandler->hEncoder) NH_release_encoder(hHandler->hEncoder);
+		if (hHandler->key.data)
+		{
+			NH_safe_zeroize(hHandler->key.data, hHandler->key.length);
+			free(hHandler->key.data);
+		}
 		free(hHandler);
 	}
 }

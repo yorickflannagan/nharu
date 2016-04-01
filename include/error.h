@@ -90,9 +90,10 @@ typedef int					NH_SYSRV;
 #define NH_CMS_MD_NOMATCH_ERROR	(NH_CMS_ERROR + 8)	/* Signed Message Digest does not match CMS SignedData document */
 #define NH_CMS_SD_SIGATT_ERROR	(NH_CMS_ERROR + 9)	/* Critical signed attribute not found */
 #define NH_CMS_SD_NOECONTENT_ERROR	(NH_CMS_ERROR + 10)	/* EncapsulatedContentInfo misses eContent */
-#define NH_CMS_SD_ALREADYSET_ERROR	(NH_CMS_ERROR + 11)	/* Requested field was already setted */
+#define NH_CMS_ALREADYSET_ERROR	(NH_CMS_ERROR + 11)	/* Requested field was already setted */
 #define NH_CMS_UNSUP_RECIP_ERROR	(NH_CMS_ERROR + 12)	/* Unsupported RecipientInfo choice */
 #define NH_CMS_ENV_NOECONTENT_ERROR	(NH_CMS_ERROR + 13)	/* EncryptedContentInfo misses encryptedContent */
+#define NH_CMS_ENV_NOKEY_ERROR	(NH_CMS_ERROR + 14)	/* A symetric key was not generated to be encrypted to recip */
 /* ****** */
 
 #define NH_VENDOR_DEFINED_ERROR	(NH_CMS_ERROR + 32)	/* Slot for new range of error codes consistent with this library */

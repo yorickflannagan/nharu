@@ -1,3 +1,4 @@
+#!/bin/bash
 source nharu-env
 addSources()
 {
@@ -43,6 +44,6 @@ then
 fi
 
 
-#gdb --args $TEST_TARGET/debug/$NTEST_PRJ 
-gdb --args  $JAVA_HOME/bin/java -cp $ECLIPSE_WRKSPC/jca-provider/bin org.crypthing.security.provider.NharuProvider $ECLIPSE_WRKSPC/jca-provider/signer.p12
+gdb --args $TEST_TARGET/debug/$NTEST_PRJ 
+#gdb --args  $JAVA_HOME/bin/java -cp $ECLIPSE_WRKSPC/jca-provider/bin org.crypthing.security.provider.NharuProvider $ECLIPSE_WRKSPC/jca-provider/signer.p12
 

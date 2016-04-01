@@ -399,11 +399,13 @@ NH_UTILITY(CK_BBOOL, match_subject)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _IN_ 
 NH_UTILITY(NH_RV, check_validity)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _IN_ NH_PTIME instant)
 {
 	time_t before, after, current;
-	NH_TIME tmp;
+	NH_TIME tmp, ext;
 	NH_ASN1_PNODE node;
 
 	if (!(node = self->hParser->sail(self->hParser->root, ((NH_PARSE_SOUTH | 2) << 8) | (NH_PARSE_EAST | 4)))) return NH_CANNOT_SAIL;
 	if (!ASN_TAG_IS_PRESENT(node, NH_ASN1_SEQUENCE) || !ASN_IS_PARSED(node->child)) return NH_UNEXPECTED_ENCODING;
+	memset(&ext, 0, sizeof(NH_TIME));
+	memcpy(&ext, instant, sizeof(NH_TIME));
 	memset(&tmp, 0, sizeof(NH_TIME));
 	memcpy(&tmp, node->child->value, sizeof(NH_TIME));
 	before = mktime(&tmp);
@@ -411,7 +413,7 @@ NH_UTILITY(NH_RV, check_validity)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _IN_ NH
 	if (!ASN_IS_PARSED(node)) return NH_UNEXPECTED_ENCODING;
 	memcpy(&tmp, node->value, sizeof(NH_TIME));
 	after = mktime(&tmp);
-	current = mktime(instant);
+	current = mktime(&ext);
 	if (current > after) return NH_CERT_EXPIRE_ERROR;
 	if (current < before) return NH_CERT_NOT_VALID_ERROR;
 	return NH_OK;

@@ -274,7 +274,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhc
 			{
 				memcpy(hRet->eContent.data, jbuffer, len);
 				hRet->eContent.length = len;
-				if (NH_SUCCESS(rv = NH_cms_encode_signed_data(&hRet->hBuilder, &hRet->eContent)))
+				if (NH_SUCCESS(rv = NH_cms_encode_signed_data(&hRet->eContent, &hRet->hBuilder)))
 				{
 					if (NH_SUCCESS(rv = hRet->hBuilder->data_ctype(hRet->hBuilder, attach))) ret = (jlong) hRet;
 					else

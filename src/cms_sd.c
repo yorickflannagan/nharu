@@ -7,9 +7,9 @@
 /** ****************************
  *  CMS SignedData discovery
  *  ****************************/
-const static unsigned int cms_data_ct_oid[]			= { 1, 2, 840, 113549, 1, 7, 1 };
+unsigned int cms_data_ct_oid[]					= { 1, 2, 840, 113549, 1, 7, 1 };
 const static unsigned int cms_signed_data_ct_oid[]		= { 1, 2, 840, 113549, 1, 7, 2 };
-const static unsigned int cms_enveloped_data_ct_oid[]		= { 1, 2, 840, 113549, 1, 7, 3 };
+unsigned int cms_enveloped_data_ct_oid[]				= { 1, 2, 840, 113549, 1, 7, 3 };
 const static unsigned int cms_digested_data_ct_oid[]		= { 1, 2, 840, 113549, 1, 7, 5 };
 const static unsigned int cms_encrypted_data_ct_oid[]		= { 1, 2, 840, 113549, 1, 7, 6 };
 const static unsigned int cms_authenticated_data_ct_oid[]	= { 1, 2, 840, 113549, 1, 9, 16, 1, 2 };
@@ -636,7 +636,7 @@ NH_UTILITY(NH_RV, cms_sd_data_ctype)(_INOUT_ NH_CMS_SD_ENCODER_STR *self, _IN_ C
 
 	if (!self->eContent.data) return NH_CMS_SD_NOECONTENT_ERROR;
 	if (!(node = self->hEncoder->sail(self->content, (NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 2) << 8) |  NH_SAIL_SKIP_SOUTH))) return NH_CANNOT_SAIL;
-	if (ASN_IS_PARSED(node)) return NH_CMS_SD_ALREADYSET_ERROR;
+	if (ASN_IS_PARSED(node)) return NH_CMS_ALREADYSET_ERROR;
 	if (NH_FAIL(rv = self->hEncoder->put_objectid(self->hEncoder, node, cms_data_ct_oid, NHC_OID_COUNT(cms_data_ct_oid), FALSE))) return rv;
 	if (attach && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL))
 	{
@@ -669,7 +669,7 @@ const static NH_NODE_WAY subkeyid_map[] =
 		0
 	}
 };
-const static NH_NODE_WAY issuer_serial_map[] =
+NH_NODE_WAY issuer_serial_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -905,7 +905,7 @@ const static NH_CMS_SD_ENCODER_STR defCMS_SD_encoder =
 	cms_sd_sign		/* sign */
 };
 
-NH_FUNCTION(NH_RV, NH_cms_encode_signed_data)(_OUT_ NH_CMS_SD_ENCODER *hHandler, _IN_ NH_BLOB *eContent)
+NH_FUNCTION(NH_RV, NH_cms_encode_signed_data)(_IN_ NH_BLOB *eContent, _OUT_ NH_CMS_SD_ENCODER *hHandler)
 {
 	NH_RV rv;
 	NH_ASN1_ENCODER_HANDLE hEncoder;
