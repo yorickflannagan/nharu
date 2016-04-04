@@ -1,5 +1,10 @@
 package org.crypthing.security.cms;
 
+/**
+ * Thrown if a given certificate is not trusted.
+ * @author magut
+ *
+ */
 public class UntrustedCertificateException extends CMSException
 {
 	private static final long serialVersionUID = -5897490058255066427L;

@@ -25,6 +25,11 @@ import org.crypthing.security.SignerInterface;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.security.x509.NharuX509Factory;
 
+/**
+ * Implements a private key store. This store mantains a signer PrivateKey and any mumber of private decryption keys...
+ * @author magut
+ *
+ */
 public class NharuKeyStore implements SignerInterface
 {
 	private static final String KEY_STORE_ENTRY = "javax.net.ssl.keyStore";
@@ -33,6 +38,12 @@ public class NharuKeyStore implements SignerInterface
 	private static final String KEY_STORE_TYPE_ENTRY = "javax.net.ssl.keyStoreType";
 	private static final String KEY_ALIAS_ENTRY = "org.crypthing.security.cms.NharuKeyStore.key";
 
+	/**
+	 * Creates a new NharuKeyStore instance using environment (javax.net.ssl.* entries) definitions.
+	 * @return the key store instance.
+	 * @throws KeyStoreException
+	 * @throws UnrecoverableKeyException
+	 */
 	public static NharuKeyStore getInstance() throws KeyStoreException, UnrecoverableKeyException
 	{
 		String entry = System.getProperty(KEY_STORE_PROV_ENTRY);
@@ -56,6 +67,16 @@ public class NharuKeyStore implements SignerInterface
 		catch (final NoSuchAlgorithmException | NoSuchProviderException | CertificateException | IOException e) { throw new KeyStoreException(e); } 
 	}
 
+	/**
+	 * Creates a new NharuKeyStore instance from this java.security.KeyStore.
+	 * @param from: the Java key store
+	 * @param pwd: key store (and private key entries) password.
+	 * @return the new key store.
+	 * @throws KeyStoreException
+	 * @throws UnrecoverableKeyException
+	 * @throws CertificateEncodingException
+	 * @throws CertificateException
+	 */
 	public static NharuKeyStore getInstance(final KeyStore from, final char[] pwd) throws KeyStoreException, UnrecoverableKeyException, CertificateEncodingException, CertificateException
 	{
 		if (from == null) throw new NullPointerException("Argument must not be null");
@@ -131,7 +152,18 @@ public class NharuKeyStore implements SignerInterface
 		final Iterator<IssuerAndSerialNumber> it = recips.keySet().iterator();
 		while (it.hasNext()) recips.get(it.next()).releaseObject();
 	}
+
+	/**
+	 * Gets the certificate chain associated to signer PrivateKey.
+	 * @return the chain or null, if it is not present.
+	 */
 	public NharuX509Certificate[] getSignerChain() { return signer.getChain(); }
+
+	/**
+	 * Gets decryption private key associated to specified issuer and serial number.
+	 * @param issuer: the issuer to search.
+	 * @return decrypt implementation or null if issuer and serial number was not found.
+	 */
 	public DecryptInterface getDecrypt(final IssuerAndSerialNumber issuer) { return recips.get(issuer); }
 
 	@Override public byte[] sign(final byte[] data, final String algorithm) throws GeneralSecurityException { return signer.sign(data, algorithm); }

@@ -352,28 +352,31 @@ public final class NharuCertStore extends CertStoreSpi
 		"-----END CERTIFICATE-----";
 	public static void main(final String[] args)
 	{
-		class CertificateReader implements X509CertificateReader
+		if (LOG_LEVEL < LOG_LEVEL_INFO)
 		{
-			private int i = 0;
-			private final String[] list = { ROOT_CA, INTER_CA, FINAL_CA };
-			@Override public boolean hasNext() { return i < list.length; }
-			@Override public byte[] readNext() throws IOException { return list[i++].getBytes(); }
-		}
-		System.out.println("NharuCertStore basic test");
-		try
-		{
-			System.out.print("Creating a trusted certificate store... ");
-			final NharuCertStore store = new NharuCertStore(new DERX509CollectionParams(new CertificateReader(), null));
-			System.out.println("Done!");
+			class CertificateReader implements X509CertificateReader
+			{
+				private int i = 0;
+				private final String[] list = { ROOT_CA, INTER_CA, FINAL_CA };
+				@Override public boolean hasNext() { return i < list.length; }
+				@Override public byte[] readNext() throws IOException { return list[i++].getBytes(); }
+			}
+			System.out.println("NharuCertStore basic test");
 			try
 			{
-				final NharuX509Certificate cert = NharuX509Factory.generateCertificate(CERT.getBytes());
-				System.out.print("Validating an end-user certificate... ");
-				if (!store.isTrusted(cert, false)) System.err.println("Failed!");
-				else System.out.println("Done!");
+				System.out.print("Creating a trusted certificate store... ");
+				final NharuCertStore store = new NharuCertStore(new DERX509CollectionParams(new CertificateReader(), null));
+				System.out.println("Done!");
+				try
+				{
+					final NharuX509Certificate cert = NharuX509Factory.generateCertificate(CERT.getBytes());
+					System.out.print("Validating an end-user certificate... ");
+					if (!store.isTrusted(cert, false)) System.err.println("Failed!");
+					else System.out.println("Done!");
+				}
+				catch (final CertificateException e) { e.printStackTrace(); }
 			}
-			catch (final CertificateException e) { e.printStackTrace(); }
+			catch (final InvalidAlgorithmParameterException | IOException e) { e.printStackTrace(); }
 		}
-		catch (final InvalidAlgorithmParameterException | IOException e) { e.printStackTrace(); }
 	}
 }

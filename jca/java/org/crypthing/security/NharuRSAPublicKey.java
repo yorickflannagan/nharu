@@ -9,7 +9,11 @@ import java.security.interfaces.RSAPublicKey;
 
 import org.crypthing.security.x509.NharuX509Certificate;
 
-
+/**
+ * RSA PublicKey implementation
+ * @author magut
+ *
+ */
 public final class NharuRSAPublicKey extends NharuPublicKey implements RSAPublicKey
 {
 	private static final long serialVersionUID = 6023121324073746434L;

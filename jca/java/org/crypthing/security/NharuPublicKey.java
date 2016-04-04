@@ -9,6 +9,11 @@ import java.security.PublicKey;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuArrays;
 
+/**
+ * Nharu Public Key implementation
+ * @author magut
+ *
+ */
 public class NharuPublicKey implements PublicKey
 {
 	/*
@@ -23,6 +28,11 @@ public class NharuPublicKey implements PublicKey
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
 
+	/**
+	 * Creates a new java.security.PublicKey instance from this certificate PublicKeyInfo
+	 * @param parent
+	 * @return
+	 */
 	public static PublicKey newInstance(final NharuX509Certificate parent)
 	{
 		PublicKey ret = null;

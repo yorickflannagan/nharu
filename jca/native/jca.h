@@ -71,12 +71,13 @@
 #define J_CLASS_NOT_FOUND_ERROR	"Could not find Java class"
 #define J_METH_NOT_FOUND_ERROR	"Could not find Java method"
 #define J_CRL_PARSE_ERROR		"Could not parse CRL"
-#define J_CMS_PARSE_ERROR		"Could not parse CMS SignedData document"
+#define J_CMS_PARSE_ERROR		"Could not parse CMS document"
 #define J_CMS_SIG_ERROR			"Invalid signature"
 #define J_CMS_VALIDATE_ERROR		"Invalid CMS SignedData document"
 #define J_KEY_ERROR			"Invalid cryptographic key"
 #define J_CMS_SIGFAIL_ERROR		"Could not sign CMS SignedData document"
 #define J_CMS_DECRYPT_ERROR		"Could not decrypt CMS EnvelopedData document"
+#define J_CMS_ENCRYPT_ERROR		"Could not encrypt CMS contents"
 
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
 #define J_OUTOFMEM_EX			"java/lang/OutOfMemoryError"
@@ -94,6 +95,7 @@
 #define J_KEY_EX				"java/security/KeyException"
 #define J_INVALID_KEY_EX		"java/security/InvalidKeyException"
 #define J_CMS_DECRYPT_EX		"org/crypthing/security/cms/CMSDecryptException"
+#define J_CMS_ENCRYPT_EX		"org/crypthing/security/cms/CMSEncryptException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */

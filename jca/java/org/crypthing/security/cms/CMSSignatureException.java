@@ -1,5 +1,10 @@
 package org.crypthing.security.cms;
 
+/**
+ * Thrown if CMS SignedData signature does not match
+ * @author magut
+ *
+ */
 public class CMSSignatureException extends CMSException
 {
 	private static final long serialVersionUID = 3078760401353993634L;

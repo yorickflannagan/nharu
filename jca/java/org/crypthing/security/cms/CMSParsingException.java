@@ -1,5 +1,10 @@
 package org.crypthing.security.cms;
 
+/**
+ * Thrown if could not parse (or encode) CMS document
+ * @author magut
+ *
+ */
 public class CMSParsingException extends CMSException
 {
 	private static final long serialVersionUID = -6540983145518911979L;

@@ -1,5 +1,8 @@
 package org.crypthing.util;
 
+import static org.crypthing.security.LogDevice.LOG_LEVEL;
+import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
+
 import java.util.HashSet;
 
 import org.crypthing.security.provider.NharuProvider;
@@ -58,10 +61,13 @@ public class NharuArrays
 	};
 	public static void main(final String[] args)
 	{
-		HashSet<NharuArray> set = new HashSet<>();
-		set.add(new NharuArray(ANAME));
-		if (!set.contains(new NharuArray(ANAME))) throw new RuntimeException("Hash code and equals test failed for NharuArrays");
-		if (!NharuArrays.equals(ANAME, NharuArrays.fromBase64(NharuArrays.toBase64(ANAME)))) throw new RuntimeException("Base64 conversion failed for NharuArrays");
-		System.out.println("NharuArrays test succeeded");
+		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		{
+			HashSet<NharuArray> set = new HashSet<>();
+			set.add(new NharuArray(ANAME));
+			if (!set.contains(new NharuArray(ANAME))) throw new RuntimeException("Hash code and equals test failed for NharuArrays");
+			if (!NharuArrays.equals(ANAME, NharuArrays.fromBase64(NharuArrays.toBase64(ANAME)))) throw new RuntimeException("Base64 conversion failed for NharuArrays");
+			System.out.println("NharuArrays test succeeded");
+		}
 	}
 }

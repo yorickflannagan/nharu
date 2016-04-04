@@ -115,6 +115,9 @@
 		<Unit filename="../../../src/parser.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../../src/pkibr.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../../src/pkix.c">
 			<Option compilerVar="CC" />
 		</Unit>

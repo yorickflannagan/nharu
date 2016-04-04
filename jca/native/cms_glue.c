@@ -709,3 +709,129 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nh
 	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
 	return ret;
 }
+
+
+/** *************************************
+ *  CMS EnvelopedData building operations
+ *  *************************************/
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsNewEnvelopedDataBuilder
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jbyteArray content
+)
+{
+	jlong ret = 0L;
+	jbyte *jbuffer;
+	jsize len;
+	NH_RV rv;
+	JNH_CMSENV_ENCODING_HANDLER hRet;
+
+	len = (*env)->GetArrayLength(env, content);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, content, NULL)))
+	{
+		if ((hRet = (JNH_CMSENV_ENCODING_HANDLER) malloc(sizeof(JNH_CMSENV_ENCODING_HANDLER_STR))))
+		{
+			if ((hRet->eContent.data = (unsigned char*) malloc(len)))
+			{
+				memcpy(hRet->eContent.data, jbuffer, len);
+				hRet->eContent.length = len;
+				if (NH_SUCCESS(rv = NH_cms_encode_encode_enveloped_data(&hRet->eContent, &hRet->hBuilder))) ret = (jlong) hRet;
+				else
+				{
+					free(hRet->eContent.data);
+					free(hRet);
+					throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+				}
+			}
+			else
+			{
+				free(hRet);
+				throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+			}
+
+		}
+		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+		(*env)->ReleaseByteArrayElements(env, content, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+	return ret;
+}
+
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsReleaseEnvelopedDataBuilder
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	JNH_CMSENV_ENCODING_HANDLER hHandler = (JNH_CMSENV_ENCODING_HANDLER) handle;
+	if (hHandler)
+	{
+		if (hHandler->hBuilder) NH_cms_release_env_encoder(hHandler->hBuilder);
+		if (hHandler->eContent.data) free(hHandler->eContent.data);
+		free(hHandler);
+	}
+}
+
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsEncrypt
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle,
+	jint keyGenAlgorithm,
+	jint keySize,
+	jint cipherAlgorithm
+)
+{
+	NH_RV rv;
+	JNH_CMSENV_ENCODING_HANDLER hHandler = (JNH_CMSENV_ENCODING_HANDLER) handle;
+
+	rv = hHandler->hBuilder->encrypt(hHandler->hBuilder, keyGenAlgorithm, keySize, cipherAlgorithm);
+	if (NH_FAIL(rv)) throw_new(env, J_CMS_ENCRYPT_EX, J_CMS_ENCRYPT_ERROR, rv);
+}
+
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsAddKeyTransRecip
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong cmsHandle,
+	jlong certHandle,
+	jint padding
+)
+{
+	NH_RV rv;
+	JNH_CMSENV_ENCODING_HANDLER hHandler = (JNH_CMSENV_ENCODING_HANDLER) cmsHandle;
+	JNH_CERTIFICATE_HANDLER hCertHandler = (JNH_CERTIFICATE_HANDLER) certHandle;
+
+	rv = hHandler->hBuilder->key_trans_recip(hHandler->hBuilder, hCertHandler->hCert, padding);
+	if (NH_FAIL(rv)) throw_new(env, J_CMS_ENCRYPT_EX, J_CMS_ENCRYPT_ERROR, rv);
+}
+
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsEncode
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	JNH_CMSENV_ENCODING_HANDLER hHandler = (JNH_CMSENV_ENCODING_HANDLER) handle;
+	unsigned char *encoding;
+	size_t size;
+	NH_RV rv;
+	jbyteArray ret = NULL;
+
+	size = hHandler->hBuilder->hEncoder->encoded_size(hHandler->hBuilder->hEncoder, hHandler->hBuilder->hEncoder->root);
+	if ((encoding = malloc(size)))
+	{
+		if (NH_SUCCESS(rv = hHandler->hBuilder->hEncoder->encode(hHandler->hBuilder->hEncoder, hHandler->hBuilder->hEncoder->root, encoding)))
+		{
+			if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) encoding);
+			else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+		}
+		else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+		free(encoding);
+	}
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+	return ret;
+}

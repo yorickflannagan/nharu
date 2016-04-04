@@ -59,6 +59,13 @@ typedef struct JNH_CMSENV_PARSING_HANDLER_STR
 
 } JNH_CMSENV_PARSING_HANDLER_STR, *JNH_CMSENV_PARSING_HANDLER;
 
+typedef struct JNH_CMSENV_ENCODING_HANDLER_STR
+{
+	NH_BLOB			eContent;
+	NH_CMS_ENV_ENCODER	hBuilder;
+
+} JNH_CMSENV_ENCODING_HANDLER_STR, *JNH_CMSENV_ENCODING_HANDLER;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -201,6 +208,41 @@ JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_getRI
  * Signature: (JLorg/crypthing/security/DecryptInterface;)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsDecrypt(JNIEnv *, jclass, jlong, jobject);
+
+
+/** *************************************
+ *  CMS EnvelopedData building operations
+ *  *************************************/
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedDataBuilder
+ * Method:    nhcmsNewEnvelopedDataBuilder
+ * Signature: ([B)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsNewEnvelopedDataBuilder(JNIEnv *, jclass, jbyteArray);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedDataBuilder
+ * Method:    nhcmsReleaseenvelopedDataBuilder
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsReleaseEnvelopedDataBuilder(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedDataBuilder
+ * Method:    nhcmsEncrypt
+ * Signature: (JIII)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsEncrypt(JNIEnv *, jclass, jlong, jint, jint, jint);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedDataBuilder
+ * Method:    nhcmsAddKeyTransRecip
+ * Signature: (JJI)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsAddKeyTransRecip(JNIEnv *, jclass, jlong, jlong, jint);
+/*
+ * Class:     org_crypthing_security_cms_CMSEnvelopedDataBuilder
+ * Method:    nhcmsEncode
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_nhcmsEncode(JNIEnv *, jclass, jlong);
 
 
 #ifdef __cplusplus

@@ -131,6 +131,12 @@ public final class NharuCommon
 	public static final int CKM_RSA_PKCS = 0x00000001;
 	public static final int CKM_RSA_PKCS_OAEP = 0x00000009;
 	public static final int CKM_RSA_X_509 = 0x00000003;
+	public static final int CKM_DES3_KEY_GEN = 0x00000131;
+	public static final int CKM_RC2_KEY_GEN = 0x00000100;
+	public static final int CKM_AES_KEY_GEN = 0x00001080;
+	public static final int CKM_DES3_CBC = 0x00000133;
+	public static final int CKM_RC2_CBC = 0x00000102;
+	public static final int CKM_AES_CBC = 0x00001082;
 	public static int getAlgorithmConstant(final String algorithm) throws NoSuchAlgorithmException
 	{
 		if ("SHA1withRSA".equalsIgnoreCase(algorithm)) return CKM_SHA1_RSA_PKCS;
@@ -141,6 +147,12 @@ public final class NharuCommon
 		if ("PKCS1Padding".equalsIgnoreCase(algorithm)) return CKM_RSA_PKCS;
 		if ("OAEPPadding".equalsIgnoreCase(algorithm)) return CKM_RSA_PKCS_OAEP;
 		if ("NoPadding".equalsIgnoreCase(algorithm)) return CKM_RSA_X_509;
+		if ("DESede".equalsIgnoreCase(algorithm)) return CKM_DES3_KEY_GEN;
+		if ("RC2".equalsIgnoreCase(algorithm)) return CKM_RC2_KEY_GEN;
+		if ("AES".equalsIgnoreCase(algorithm)) return CKM_AES_KEY_GEN;
+		if ("DESede-CBC".equalsIgnoreCase(algorithm)) return CKM_DES3_CBC;
+		if ("RC2-CBC".equalsIgnoreCase(algorithm)) return CKM_RC2_CBC;
+		if ("AES-CBC".equalsIgnoreCase(algorithm)) return CKM_AES_CBC;
 		throw new NoSuchAlgorithmException("Unsupported algorithm");
 	}
 

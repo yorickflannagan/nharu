@@ -1,5 +1,10 @@
 package org.crypthing.security.cms;
 
+/**
+ * Thrown if an unsupported CMS document type is given for parsing.
+ * @author magut
+ *
+ */
 public class UnsupportedCMSTypeException extends CMSException
 {
 	private static final long serialVersionUID = -590800782721596873L;

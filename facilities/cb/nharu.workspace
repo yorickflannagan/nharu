@@ -5,6 +5,8 @@
 			<Depends filename="nharu-lib/nharu-lib.cbp" />
 		</Project>
 		<Project filename="nharu-lib/nharu-lib.cbp" />
-		<Project filename="nharu-jca/nharu-jca.cbp" />
+		<Project filename="nharu-jca/nharu-jca.cbp">
+			<Depends filename="nharu-lib/nharu-lib.cbp" />
+		</Project>
 	</Workspace>
 </CodeBlocks_workspace_file>
