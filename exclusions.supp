@@ -82,15 +82,7 @@
    fun:_ZN7Monitor7TrySpinEP6Thread
    fun:_ZN7Monitor5ILockEP6Thread
    fun:_ZN7Monitor28lock_without_safepoint_checkEv
-   fun:_ZN20SafepointSynchronize5blockEP10JavaThread
-   fun:_ZN10JavaThread44check_safepoint_and_suspend_for_native_transEPS_
-   fun:_ZN10JavaThread40check_special_condition_for_native_transEPS_
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
-   obj:*
+   ...
 }
 {
    <00024NativeLibrary>
