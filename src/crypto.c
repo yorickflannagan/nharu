@@ -11,6 +11,9 @@
 #else
 #define RND_SOURCE			"/dev/random"
 #endif
+#else
+#include <windows.h>
+#include <wincrypt.h>
 #endif
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -61,8 +64,29 @@ NH_UTILITY(NH_RV, NH_noise)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 	if (fread(buffer, sizeof(unsigned char), len, rdev) != len) rv = (S_SYSERROR(ferror(rdev)) | NH_DEV_RND_ERROR);
 	fclose(rdev);
 #else
-	/* TODO: Implement NH_noise under Windows
-	 */
+	DWORD cbSize;
+	LPTSTR pszName;
+	HCRYPTPROV hProv;
+
+	if (CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_USER_DEFAULT, NULL, &cbSize))
+	{
+		if ((pszName = (LPTSTR) malloc(cbSize)))
+		{
+			if
+			(
+				CryptGetDefaultProvider(PROV_RSA_FULL, NULL, CRYPT_USER_DEFAULT, pszName, &cbSize) &&
+				CryptAcquireContext(&hProv, NULL, pszName, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)
+			)
+			{
+				if (!CryptGenRandom(hProv, buffer, len)) rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
+				CryptReleaseContext(hProv, 0);
+			}
+			else rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
+			free(pszName);
+		}
+		else rv = NH_OUT_OF_MEMORY_ERROR;
+	}
+	else rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
 #endif
 	return rv;
 }
