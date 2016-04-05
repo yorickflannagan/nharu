@@ -4,75 +4,63 @@
 	<!-- run from configure script -->
 	<environment scriptfile="nharu-env">
 
-		<!-- Native projects -->
-		<env name="NHARU_PRJ" value="nharu" />		<!-- Nharu security library -->
-		<env name="NTEST_PRJ" value="ntest-app" />	<!-- Nharu test app -->
-		<env name="JCA_PRJ" value="jca" />			<!-- Nharu JCA implementation -->
-
 		<!-- Targets -->
 		<env name="NHARU_DIR" value="$CURRENT_DIR" />
-		<env name="NHARU_TARGET" value="$NHARU_DIR/dist" />
-		<env name="TEST_DIR" value="$NHARU_DIR/test" />
-		<env name="TEST_TARGET" value="$TEST_DIR/dist" />
-		<env name="ECLIPSE_WRKSPC" value="$NHARU_DIR/facilities/eclipse" />
-		<env name="JCA_TARGET" value="$NHARU_DIR/$JCA_PRJ" export="false" />
+		<env name="ECLIPSE_WRKSPC" value="$NHARU_DIR/facilities/eclipse" export="false" />
+		<env name="JCA_PRJ" value="$NHARU_DIR/jca" export="false" />
+		<env name="NHARU_TARGET" value="$NHARU_DIR/libs" export="false" />
+		<env name="JCA_TARGET" value="$NHARU_DIR/libs" export="false" />
+		<env name="TEST_TARGET" value="$NHARU_DIR/bin" export="false" />
 
 		<!-- Dependencies -->
 		<env name="TD_DIR" value="$TRD_DIR" export="false" />
-		<env name="DLA_DIR" value="" cmd="dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen)" />
-		<env name="CRYPTOKI" value="" cmd="dirname $(find $NHARU_DIR -name cryptoki.h)" />
 		<env name="OPENSSL_HOME" value="" cmd="dirname $(dirname $(find $TD_DIR -name c_rehash | grep bin))" export="false" />
-		<env name="OPENSSL_LIB" value="" cmd="dirname $(find $OPENSSL_HOME -name libcrypto.a)" />
 		<env name="OPENSSL_INCLUDE" value="" cmd="dirname $(dirname $(find $OPENSSL_HOME -name opensslconf.h))" />
-		<env name="IDN_DIR" value="" cmd="dpkg -L libidn11-dev | grep libidn\\.a | dirname  $(grep -v xen)" />
+		<env name="OPENSSL_LIB" value="" cmd="dirname $(find $OPENSSL_HOME -name libcrypto.a)" />
 		<env name="IDN_INCLUDE" value="" cmd="dpkg -L libidn11-dev | grep stringprep\\.h | dirname  $(grep -v xen)" />
-
-		<env name="JEE_DIR" value="$TD_DIR/jee" />
-		<env name="JAVA_HOME" value="$TD_DIR/jdk" />
+		<env name="IDN_DIR" value="" cmd="dpkg -L libidn11-dev | grep libidn\\.a | dirname  $(grep -v xen)" />
+		<env name="DLA_DIR" value="" cmd="dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen)" />
+		<env name="JAVA_HOME" value="" cmd="dirname $(find $TD_DIR -name jdk.tar.gz)" />
 		<env name="JAVA_INCLUDE" value="$JAVA_HOME/include" />
 		<env name="JAVA_PLATFORM" value="$JAVA_INCLUDE/linux" />
-		<env name="ANT_HOME" value="$TD_DIR/ant" />
-		<env name="ANT_CONTRIB_HOME" value="$TD_DIR/ant-contrib" export="false"/>
-		<env name="ANT_CONTRIB_LIB" value="$ANT_CONTRIB_HOME/ant-contrib.jar" />
+		<env name="ANT_HOME" value="t" cmd="dirname $(dirname $(find $TD_DIR -name ant-bootstrap.jar | grep -v eclipse))" />
+		<env name="ANT_CONTRIB_LIB" value="$ANT_CONTRIB_HOME/ant-contrib.jar" cmd="dirname $(find $TD_DIR -name ant-contrib.jar)" />
 
 		<!-- Paths & environment -->
 		<env name="USR_PATH" value="$USR_PATH" export="false" />
-		<env name="LD_LIBRARY_PATH" value="$NHARU_DIR/$JCA_PRJ/dist/debug" />
-		<env name="PATH" value="$JAVA_HOME/bin:$USR_PATH" />
+		<env name="LD_LIBRARY_PATH" value="$JCA_TARGET" />
+		<env name="PATH" value="$JAVA_HOME/bin:$ANT_HOME/bin:$USR_PATH" />
 	</environment>
 
 	<resources>
-		<dir name="$NHARU_TARGET/debug" />
-		<dir name="$NHARU_TARGET/release" />
-		<dir name="$TEST_TARGET/debug" />
 		<dir name="$ECLIPSE_WRKSPC" />
-		<dir name="$JCA_TARGET/dist/debug" />
-		<dir name="$JCA_TARGET/java-bin" />
+		<dir name="$JCA_PRJ/java-bin" />
+		<dir name="$NHARU_TARGET" />
+		<dir name="$TEST_TARGET" />
 	</resources>
 
 	<tests>
-		<test eval="exist_dir" value="$NHARU_DIR" />
-		<test eval="exist_dir" value="$DLA_DIR" />
-		<test eval="exist_file" value="$CRYPTOKI/cryptoki.h" />
 		<test eval="exist_file" value="$OPENSSL_LIB/libcrypto.a" />
 		<test eval="exist_file" value="$OPENSSL_INCLUDE/openssl/opensslconf.h" />
-	
-		<test eval="exist_dir" value="$JEE_DIR"/>
+		<test eval="exist_file" value="$ANT_CONTRIB_LIB"/>
+		<test eval="exist_dir" value="$DLA_DIR" />
+		<test eval="exist_dir" value="$IDN_DIR"/>
+		<test eval="exist_dir" value="$IDN_INCLUDE"/>
 		<test eval="exist_dir" value="$JAVA_HOME"/>
 		<test eval="exist_dir" value="$JAVA_INCLUDE"/>
 		<test eval="exist_dir" value="$JAVA_PLATFORM"/>
 		<test eval="exist_dir" value="$ANT_HOME"/>
-		<test eval="exist_dir" value="$ANT_CONTRIB_HOME"/>
-		<test eval="exist_file" value="$ANT_CONTRIB_LIB"/>
-		<test eval="exist_dir" value="$IDN_DIR"/>
-		<test eval="exist_dir" value="$IDN_INCLUDE"/>
+		<test eval="echo_cmd" value="$OPENSSL_HOME/bin/openssl version"/>
+		<test eval="echo_cmd" value="$JAVA_HOME/bin/java -version"/>
+		<test eval="echo_cmd" value="$ANT_HOME/bin/ant -version"/>
+		<test eval="command_output" value="unzip -u $JAVA_HOME/jre/lib/rt.jar sun/security/ec/ECPublicKeyImpl.class -d $TD_DIR/javaextract" />
 	</tests>
 
 	<projects>
 		
 		<project name="jca-provider" dir="$ECLIPSE_WRKSPC/jca-provider" out="bin">
-			<sources native="$JCA_TARGET/dist/debug">
-				<source dir="$JCA_TARGET/java" />
+			<sources native="$JCA_TARGET">
+				<source dir="$JCA_PRJ/java" />
 			</sources>
 			<preferences	version="1" 
 						inlineJsrBytecode="enabled" 

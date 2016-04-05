@@ -3,15 +3,11 @@
 # Copyleft (C) 2015 by The Crypthing Initiative
 #
 # Required environment (run source kiripema-env)
-#	NTEST_PRJ: test application name
-#	TEST_TARGET: app distribution directory
-#	NHARU_DIR: Nharu project directory
 #	OPENSSL_INCLUDE: OpenSSl include files directory
-#	CRYPTOKI: pkcs#11 include files directory
-#	NHARU_PRJ: Nharu library
-#	NHARU_TARGET: Nharu library distribution directory
-#	OPENSSL_LIB: OpenSSL static libraries directory
-#	DLA_DIR: libdl.so library directory
+#	IDN_INCLUDE: GNU Libidn include files directory
+#	OPENSSL_LIB: OpenSSL static library location
+#	IDN_DIR: Libdn static library location
+#	DLA_DIR: GNU development library location
 #
 
 SHELL         = /bin/sh
@@ -19,15 +15,15 @@ FILES        := $(shell find . -name '*.c')
 CC            = gcc
 CXX           = $(CC)
 
-TARGET_NAME    = $(NTEST_PRJ)
-OUTPUT_DIR    = $(TEST_TARGET)/debug
+TARGET_NAME    = ntest-app
+OUTPUT_DIR    = ../bin
 CFLAGS        = -pedantic-errors -pedantic -Wall -ansi -ggdb3 -D_DEBUG_ -O0 -save-temps
-INCLUDES      = -I. -I$(NHARU_DIR)/include -I$(OPENSSL_INCLUDE) -I$(CRYPTOKI) -I$(IDN_INCLUDE)
+INCLUDES      = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .:$(OUTPUT_DIR)
 CXXFLAGS      = 
-IMP_LIBS      = -Wl,-Bstatic -l$(NHARU_PRJ) -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
-LDLIBS        = -L$(NHARU_TARGET)/debug -L$(OPENSSL_LIB) -L$(IDN_DIR) -L$(DLA_DIR)
+IMP_LIBS      = -Wl,-Bstatic -lnharu -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
+LDLIBS        = -L../libs -L$(OPENSSL_LIB) -L$(IDN_DIR) -L$(DLA_DIR)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $(OUTPUT_DIR)/$@

@@ -1,39 +1,40 @@
 #
-# Makefile inputs for Kiripema Token shared library
+# Makefile Nharu JCA shared library
 # Copyleft (C) 2015 by The Crypthing Initiative
 #
 # Make parameters:
 #	DEBUG=1 or nothing
 #	ALIGN=1 or nothing
 #
-# Required environment (run source kiripema-env)
+# Required environment (run source nharu-env)
+#	OPENSSL_INCLUDE: OpenSSl include files directory
+#	IDN_INCLUDE: GNU Libidn include files directory
+#	JAVA_INCLUDE: JNI include files directory
+#	JAVA_PLATFORM: Platform dependent JNI include files directory
+#	OPENSSL_LIB: OpenSSL static library location
+#	IDN_DIR: Libdn static library location
+#	DLA_DIR: GNU development library location
 #
 SHELL         = /bin/bash
 FILES        := $(shell find . -name '*.c')
 CC            = gcc
 CXX           = $(CC)
 
-TARGET_NAME    = lib$(NHARU_PRJ)$(JCA_PRJ).so
-ifeq ($(DEBUG), 1)
-OUTPUT_DIR    = $(NHARU_DIR)/$(JCA_PRJ)/dist/debug
-else
-OUTPUT_DIR    = $(NHARU_DIR)/$(JCA_PRJ)/dist/release
-endif
+TARGET_NAME    = libnharujca.so
+OUTPUT_DIR    = ../../libs
 CFLAGS        = -pedantic-errors -pedantic -Wall -ansi -pthread -Winline -Wunused-parameter
-INCLUDES      = -I. -I$(NHARU_DIR)/include -I$(CRYPTOKI) -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
+INCLUDES      = -I. -I../../include -I../../pkcs11 -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .:$(OUTPUT_DIR)
 CXXFLAGS      = -shared -shared-libgcc -Xlinker -z -Xlinker defs
-IMP_LIBS      = -Wl,-Bstatic -l$(NHARU_PRJ) -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
-LDLIBS        = -L$(OPENSSL_LIB) -L$(IDN_DIR) -L$(DLA_DIR)
+IMP_LIBS      = -Wl,-Bstatic -lnharu -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
+LDLIBS        = -L$(OPENSSL_LIB) -L$(IDN_DIR) -L$(DLA_DIR) -L.
 
 # Debugging
 ifeq ($(DEBUG), 1)
 CFLAGS       += -ggdb3 -D_DEBUG_ -O0 -save-temps
-LDLIBS       += -L$(NHARU_TARGET)/debug
 else
 CFLAGS       += -O2
-LDLIBS       += -L$(NHARU_TARGET)/release
 endif
 
 # Struct alignment

@@ -6,7 +6,6 @@ files.d
 valgrind.txt
 ValgrindOut.xml
 cachegrind.out.*
-test/dist/
 *.o
 *.a
 *.i
@@ -18,3 +17,5 @@ sources
 facilities/eclipse/
 LogDevice.java
 *.cscope_file_list
+bin
+libs

@@ -1,17 +1,14 @@
 #
-# Makefile inputs for Nharu static library
+# Makefile Nharu static library
 # Copyleft (C) 2015 by The Crypthing Initiative
 #
 # Make parameters:
 #	DEBUG=1 or nothing
 #	ALIGN=1 or nothing
 #
-# Required environment (run source kiripema-env)
-#	NHARU_PRJ: library name
-#	NHARU_TARGET: distribution library
-#	NHARU_DIR: project location
-#	CRYPTOKI: pkcs#11 include files directory
+# Required environment (run source nharu-env)
 #	OPENSSL_INCLUDE: OpenSSl include files directory
+#	IDN_INCLUDE: GNU Libidn include files directory
 #
 
 SHELL         = /bin/bash
@@ -20,14 +17,10 @@ CC            = gcc
 AR            = ar
 
 
-TARGET_NAME   = lib$(NHARU_PRJ).a
-ifeq ($(DEBUG), 1)
-OUTPUT_DIR    = $(NHARU_TARGET)/debug
-else
-OUTPUT_DIR    = $(NHARU_TARGET)/release
-endif
+TARGET_NAME   = libnharu.a
+OUTPUT_DIR    = ../libs
 CFLAGS        = -pedantic-errors -pedantic -Wall -ansi -pthread -Winline -Wunused-parameter
-INCLUDES      = -I. -I$(NHARU_DIR)/include -I$(CRYPTOKI) -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
+INCLUDES      = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .:$(OUTPUT_DIR)
 ARFLAGS       = -r -s
