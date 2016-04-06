@@ -29,7 +29,6 @@
 #define __BASE_H__
 
 #include "cryptoki.h"
-#include <time.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)	/* Do not care Microsoft's deprecations... */
@@ -127,6 +126,7 @@
 #define FALSE				0x00
 #endif
 typedef CK_RV				NH_RV;
+#include <time.h>
 typedef struct tm				NH_TIME;
 typedef NH_TIME*				NH_PTIME;
 typedef struct NH_BLOB
