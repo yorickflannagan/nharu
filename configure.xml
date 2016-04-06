@@ -23,8 +23,8 @@
 		<env name="JAVA_HOME" value="" cmd="dirname $(find $TD_DIR -name jdk.tar.gz)" />
 		<env name="JAVA_INCLUDE" value="$JAVA_HOME/include" />
 		<env name="JAVA_PLATFORM" value="$JAVA_INCLUDE/linux" />
-		<env name="ANT_HOME" value="t" cmd="dirname $(dirname $(find $TD_DIR -name ant-bootstrap.jar | grep -v eclipse))" />
-		<env name="ANT_CONTRIB_LIB" value="$ANT_CONTRIB_HOME/ant-contrib.jar" cmd="dirname $(find $TD_DIR -name ant-contrib.jar)" />
+		<env name="ANT_HOME" value="" cmd="dirname $(dirname $(find $TD_DIR -name ant-bootstrap.jar | grep -v eclipse))" />
+		<env name="ANT_CONTRIB_LIB" value="" cmd="find $TD_DIR -name ant-contrib.jar" />
 
 		<!-- Paths & environment -->
 		<env name="USR_PATH" value="$USR_PATH" export="false" />
@@ -53,7 +53,6 @@
 		<test eval="echo_cmd" value="$OPENSSL_HOME/bin/openssl version"/>
 		<test eval="echo_cmd" value="$JAVA_HOME/bin/java -version"/>
 		<test eval="echo_cmd" value="$ANT_HOME/bin/ant -version"/>
-		<test eval="command_output" value="unzip -u $JAVA_HOME/jre/lib/rt.jar sun/security/ec/ECPublicKeyImpl.class -d $TD_DIR/javaextract" />
 	</tests>
 
 	<projects>

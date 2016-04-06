@@ -1,0 +1,159 @@
+<?xml version = "1.0" encoding = "UTF-8" standalone = "no"?>
+<!--
+	REQUIRED: run source nharu-env
+	ARGUMENTS (-D)
+	DEBUG
+	JAVA_LOG_PATH
+  -->
+<project basedir = "." default = "build" name = "nharu-provider">
+	<target name = "init">
+		<tstamp />
+
+		<property environment = "env"/>
+
+		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
+			<classpath>
+				<pathelement location="${env.ANT_CONTRIB_LIB}"/>
+			</classpath>
+		</taskdef>
+
+		<property name = "provider.version" value = "2.0" />
+		<property name = "src.dir" value = "java" />
+		<property name = "bin.dir" value = "java-bin" />
+		<property name = "dist.dir" value = "../libs" />
+		<property name = "target.file" value = "nharujca.jar" />
+		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
+			<and>
+				<equals arg1="${DEBUG}" arg2="1" />
+				<isset property="DEBUG" />
+			</and>
+		</condition>
+		<property name = "target" value = "1.7"/>
+		<property name = "source" value = "1.7"/>
+
+		<condition property = "log.package" value = "${JAVA_LOG_PATH}" else = "org.crypthing">
+			<isset property = "JAVA_LOG_PATH" />
+		</condition>
+		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
+
+	</target>
+
+	<target name = "check" depends = "init">
+		<fail message = "Could not build provider because native implementation does not exist.">
+			<condition>
+				<or>
+					<and>
+						<not>
+							<available file = "${dist.dir}/libnharujca.so" />
+						</not>
+						<os family="unix"/>
+					</and>
+					<and>
+						<not>
+							<available file = "${dist.dir}/nharujca.dll" />
+						</not>
+						<os family="windows"/>
+					</and>
+				</or>
+			</condition>
+		</fail>
+
+		<echo message="provider.version"> ${provider.version} </echo>
+		<echo message="src.dir"> ${src.dir} </echo>
+		<echo message="bin.dir"> ${bin.dir} </echo>
+		<echo message="dist.dir"> ${dist.dir} </echo>
+		<echo message="target.file"> ${target.file} </echo>
+		<echo message="target"> ${target} </echo>
+		<echo message="source"> ${source} </echo>
+		<echo message="log.package"> ${log.package} </echo>
+		<echo message="log.dir"> ${log.dir} </echo>
+		<echo message="log.level"> ${log.level} </echo>
+
+		<mkdir dir = "${bin.dir}" />
+		<delete file = "${src.dir}/${log.dir}/LogDevice.java" />
+		<echo file = "${src.dir}/${log.dir}/LogDevice.java">
+package ${log.package};
+import java.util.logging.Level;
+import java.util.logging.Logger;
+public final class LogDevice
+{
+	public static final int LOG_LEVEL_TRACE = 1;
+	public static final int LOG_LEVEL_DEBUG = 2;
+	public static final int LOG_LEVEL_INFO = 3;
+	public static final int LOG_LEVEL_WARNING = 4;
+	public static final int LOG_LEVEL_ERROR = 5;
+	public static final int LOG_LEVEL_FATAL = 6;
+	public static final int LOG_LEVEL_NONE = LOG_LEVEL_FATAL + 1;
+	public static final int LOG_LEVEL = ${log.level};
+	private static final int DEFAULT_STACK_LEVEL = 7;
+	private Logger log;
+	public LogDevice(final String name) { log = Logger.getLogger(name);}
+	public void trace(final String msg) { if (LOG_LEVEL &#60; LOG_LEVEL_DEBUG) log.log(Level.FINER, msg); }
+	public void debug(final String msg) { if (LOG_LEVEL &#60; LOG_LEVEL_INFO) log.log(Level.FINE, msg); }
+	public void info(final String msg) { if (LOG_LEVEL &#60; LOG_LEVEL_WARNING) log.log(Level.CONFIG, msg); }
+	public void warning(final String msg) { if (LOG_LEVEL &#60; LOG_LEVEL_ERROR) log.log(Level.INFO, msg); }
+	public void error(final String msg) { if (LOG_LEVEL &#60; LOG_LEVEL_FATAL) log.log(Level.WARNING, msg); }
+	public void error(final String msg, final Throwable e) { if (LOG_LEVEL &#60; LOG_LEVEL_FATAL) log.log(Level.WARNING, msg, e); }
+	public void fatal(final String msg) { if (LOG_LEVEL &#60; LOG_LEVEL_NONE) log.log(Level.SEVERE, msg); }
+	public void fatal(final String msg, final Throwable e) { if (LOG_LEVEL &#60; LOG_LEVEL_NONE) log.log(Level.SEVERE, msg, e); }
+	public void printStack() { if (LOG_LEVEL &#60; LOG_LEVEL_DEBUG) printStack(DEFAULT_STACK_LEVEL); }
+	public void printStack(int level)
+	{
+		if (LOG_LEVEL &#60; LOG_LEVEL_DEBUG)
+		{
+			Exception e = new Exception();
+			StackTraceElement[] b = e.getStackTrace();
+			StringBuilder sb = new StringBuilder(256);
+			sb.append("Call stack for: ");
+			for(int i = 1; i &#60; level &#38; i &#60; b.length; i++ )
+			{
+				sb.append(b[i].getClassName()).append(".");
+				sb.append(b[i].getMethodName());
+				if(!b[i].getMethodName().equals("&#60;init>")) sb.append("()");
+				if(b[i].isNativeMethod()) sb.append("[native]");
+				else
+				{
+					sb.append("[");
+					sb.append(b[i].getLineNumber());
+					sb.append("]");
+				}
+				sb.append("\n");
+			}
+			System.out.println(sb.toString());
+		}
+	}
+}
+		</echo>
+	</target>
+
+	<target name = "clean" depends = "init">
+		<delete dir = "${bin.dir}" />
+		<delete file = "${dist.dir}/${target.file}" />
+	</target>
+
+	<!--  debug = "true" foi colocado de propósito pois não há vantagem em remover os metadados do arquivo .class -->
+	<target name = "compile" depends = "check">
+		<javac	debug = "true"
+				debuglevel = "source,lines,vars"
+				srcdir = "${src.dir}"
+				destdir = "${bin.dir}"
+				source = "${source}"
+				target = "${target}"
+				includeantruntime = "false">
+			<compilerarg value = "-XDignore.symbol.file" />
+		</javac>
+	</target>
+
+	<target name = "build" depends = "compile">
+		<jar destfile = "${dist.dir}/${target.file}" level = "9" strict = "fail" >
+			<fileset dir = "${bin.dir}" />
+			<fileset file = "${dist.dir}/libnharujca.so" />
+			<fileset file = "${dist.dir}/nharujca.dll" />
+			<manifest>
+				<attribute name = "Implementation-Title" value = "Nharu Provider" />
+				<attribute name = "Implementation-Vendor" value = "The Crypthing Initiative" />
+				<attribute name = "Implementation-Version" value = "${provider.version} ${TODAY}" />
+			</manifest>
+		</jar>
+	</target>
+</project>
