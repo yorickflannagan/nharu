@@ -79,16 +79,16 @@
 		<Unit filename="../../../include/sysservc.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../pkcs#11/cryptoki.h">
+		<Unit filename="../../../pkcs11/cryptoki.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../pkcs#11/pkcs11.h">
+		<Unit filename="../../../pkcs11/pkcs11.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../pkcs#11/pkcs11f.h">
+		<Unit filename="../../../pkcs11/pkcs11f.h">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../../pkcs#11/pkcs11t.h">
+		<Unit filename="../../../pkcs11/pkcs11t.h">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../src/cms_env.c">

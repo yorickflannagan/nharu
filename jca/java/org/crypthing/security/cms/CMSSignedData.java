@@ -7,7 +7,7 @@ import java.io.ObjectStreamException;
 import java.security.cert.X509Certificate;
 
 import org.crypthing.security.NharuRSAPublicKey;
-import org.crypthing.security.cert.NharuCertStore;
+import org.crypthing.security.cert.TrustedStore;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.security.x509.NharuX509Certificate;
 
@@ -81,7 +81,7 @@ public final class CMSSignedData
 	 * @throws UntrustedCertificateException
 	 * @throws CMSSignatureException
 	 */
-	private void verifySignature(final NharuCertStore store) throws UntrustedCertificateException, CMSSignatureException
+	private void verifySignature(final TrustedStore store) throws UntrustedCertificateException, CMSSignatureException
 	{
 		if (store == null) throw new NullPointerException("Argument must not be null");
 		final int count = countSigners();
@@ -100,7 +100,7 @@ public final class CMSSignedData
 	 * @throws CMSSignatureException
 	 * @throws CMSInvalidAttributesException
 	 */
-	public void verify(final NharuCertStore store) throws UntrustedCertificateException, CMSSignatureException, CMSInvalidAttributesException
+	public void verify(final TrustedStore store) throws UntrustedCertificateException, CMSSignatureException, CMSInvalidAttributesException
 	{
 		verifySignature(store);
 		nhcmsValidateAttached(hHandle);
@@ -114,7 +114,7 @@ public final class CMSSignedData
 	 * @throws CMSSignatureException
 	 * @throws CMSInvalidAttributesException
 	 */
-	public void verify(final byte[] eContent, final NharuCertStore store) throws UntrustedCertificateException, CMSSignatureException, CMSInvalidAttributesException
+	public void verify(final byte[] eContent, final TrustedStore store) throws UntrustedCertificateException, CMSSignatureException, CMSInvalidAttributesException
 	{
 		if(eContent == null) throw new NullPointerException("Arguments must not be null");
 		verifySignature(store);

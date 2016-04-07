@@ -40,7 +40,7 @@ import org.crypthing.security.x509.NharuX509Name;
  * @author magut
  *
  */
-public final class NharuCertStore extends CertStoreSpi
+public final class NharuCertStore extends CertStoreSpi implements TrustedStore
 {
 	private static final String ERROR_INVALID_ARGUMENT = "Parameters must be valid Nharu types";
 	private static final String ERROR_INVALID_CHAIN = "An error has occurred while trying to validate certificate chain";
@@ -150,15 +150,8 @@ public final class NharuCertStore extends CertStoreSpi
 		return Collections.unmodifiableCollection(result);
 	}
 
-	/**
-	 * Check if specified certificate is trusted.
-	 * @param cert - the certificate to check.
-	 * @return true if the certificate was signed by a trusted CA present in the CertStore.
-	 */
-	public boolean isTrusted(final NharuX509Certificate cert)
-	{
-		return isTrusted(cert, true);
-	}
+	@Override
+	public boolean isTrusted(final NharuX509Certificate cert) { return isTrusted(cert, true); }
 
 	public boolean isTrusted(final NharuX509Certificate cert, boolean checkValidity)
 	{

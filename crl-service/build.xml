@@ -1,14 +1,13 @@
 <?xml version = "1.0" encoding = "UTF-8" standalone = "no"?>
+<project basedir = "." default = "build" name = "crl-service">
 <!--
 	REQUIRED: run source nharu-env
 	ARGUMENTS (-D)
 	DEBUG
 	JAVA_LOG_PATH
   -->
-<project basedir = "." default = "build" name = "nharu-provider">
 	<target name = "init">
 		<tstamp />
-
 		<property environment = "env"/>
 
 		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -17,23 +16,11 @@
 			</classpath>
 		</taskdef>
 
-		<buildnumber/>
-		<property name = "provider.version" value = "2.0.0" />
-		<property name = "full.version" value = "${provider.version}.${build.number}" />
-		<loadresource property="c_version">
-			<propertyresource name="full.version"/>
-			<filterchain>
-				<tokenfilter>
-					<filetokenizer/>
-					<replacestring from="." to="_"/>
-				</tokenfilter>
-			</filterchain>
-		</loadresource>
-		<property name = "native.dir" value = "native" />
+		<property name = "jar.version" value = "2.0.0" />
 		<property name = "src.dir" value = "java" />
 		<property name = "bin.dir" value = "java-bin" />
-		<property name = "dist.dir" value = "${env.JCA_TARGET}" />
-		<property name = "target.file" value = "nharujca.jar" />
+		<property name = "dist.dir" value = "../libs" />
+		<property name = "target.file" value = "crl-service.jar" />
 		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
 			<and>
 				<equals arg1="${DEBUG}" arg2="1" />
@@ -47,12 +34,16 @@
 		</condition>
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
 
+		<path id="project.class.path">
+			<pathelement location="${env.JEE_LIB}"/>
+			<pathelement location="${env.JCA_TARGET}/nharujca.jar" />
+			<pathelement location="${env.PICKETBOX}" />
+		</path>
+
 	</target>
 
 	<target name = "check" depends = "init">
-		<echo message="provider.version"> ${provider.version} </echo>
-		<echo message="full.version"> ${full.version} </echo>
-		<echo message="native.dir"> ${provider.version} </echo>
+		<echo message="jar.version"> ${jar.version} </echo>
 		<echo message="src.dir"> ${src.dir} </echo>
 		<echo message="bin.dir"> ${bin.dir} </echo>
 		<echo message="dist.dir"> ${dist.dir} </echo>
@@ -118,11 +109,6 @@ import java.util.logging.Logger;
 	}
 }
 		</echo>
-		<delete file = "${native.dir}/version.c" />
-		<echo file = "${native.dir}/version.c">
-const char *NHARU_VERSION_${c_version} = "${full.version}";
-const char *NHARU_getVersion() { return NHARU_VERSION_${c_version}; }
-		</echo>
 	</target>
 
 	<target name = "clean" depends = "init">
@@ -135,22 +121,19 @@ const char *NHARU_getVersion() { return NHARU_VERSION_${c_version}; }
 				debuglevel = "source,lines,vars"
 				srcdir = "${src.dir}"
 				destdir = "${bin.dir}"
+				classpathref = "project.class.path"
 				source = "${source}"
 				target = "${target}"
-				includeantruntime = "false">
-			<compilerarg value = "-XDignore.symbol.file" />
-		</javac>
+				includeantruntime = "false" />
 	</target>
 
 	<target name = "build" depends = "compile">
 		<jar destfile = "${dist.dir}/${target.file}" level = "9" strict = "fail" >
 			<fileset dir = "${bin.dir}" />
-			<fileset file = "${dist.dir}/libnharujca.so" />
-			<fileset file = "${dist.dir}/nharujca.dll" />
 			<manifest>
-				<attribute name = "Implementation-Title" value = "Nharu Provider" />
+				<attribute name = "Implementation-Title" value = "Nharu CRL Checker" />
 				<attribute name = "Implementation-Vendor" value = "The Crypthing Initiative" />
-				<attribute name = "Implementation-Version" value = "${provider.version} ${TODAY}" />
+				<attribute name = "Implementation-Version" value = "${jar.version} ${TODAY}" />
 			</manifest>
 		</jar>
 	</target>

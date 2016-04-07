@@ -8,6 +8,16 @@
 # -c [FILE}: configuration XML (optional). Default configure.xml
 # #############################################################################
 
+if [ -f "nharu-env" ]; then
+	LIST=$(cat nharu-env | awk '{print $2}' | awk -F= '{print$1}')
+	for ITEM in $LIST
+	do
+		if [ "PATH" != "$ITEM" ]; then
+			echo "Unsetting $ITEM"
+			unset $ITEM
+		fi
+	done
+fi
 TRD_DIR="$HOME/development/3rdparty"
 CONF_FILE="configure.xml"
 OPTIND=1
@@ -25,7 +35,7 @@ done
 #libxml-xpath-perl
 #libswitch-perl
 
-PKG_OK=$(dpkg-query -W --showformat='${Status}\n' libxml-libxml-perl|grep "install ok installed")
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' libxml-libxml-perl| grep "install ok installed")
 echo "Checking for perl XML Support: $PKG_OK"
 if [ "" == "$PKG_OK" ]; then
   echo "No perl XML Support. Setting up XML Support."

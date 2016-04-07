@@ -8,8 +8,9 @@
 		<env name="NHARU_DIR" value="$CURRENT_DIR" />
 		<env name="ECLIPSE_WRKSPC" value="$NHARU_DIR/facilities/eclipse" export="false" />
 		<env name="JCA_PRJ" value="$NHARU_DIR/jca" export="false" />
+		<env name="CRL_PRJ" value="$NHARU_DIR/crl-service" export="false" />
 		<env name="NHARU_TARGET" value="$NHARU_DIR/libs" export="false" />
-		<env name="JCA_TARGET" value="$NHARU_DIR/libs" export="false" />
+		<env name="JCA_TARGET" value="$NHARU_DIR/libs" />
 		<env name="TEST_TARGET" value="$NHARU_DIR/bin" export="false" />
 
 		<!-- Dependencies -->
@@ -25,6 +26,8 @@
 		<env name="JAVA_PLATFORM" value="$JAVA_INCLUDE/linux" />
 		<env name="ANT_HOME" value="" cmd="dirname $(dirname $(find $TD_DIR -name ant-bootstrap.jar | grep -v eclipse))" />
 		<env name="ANT_CONTRIB_LIB" value="" cmd="find $TD_DIR -name ant-contrib.jar" />
+		<env name="JEE_LIB" value="" cmd="find $TD_DIR -name javaee-api-6.0.jar" />
+		<env name="PICKETBOX" value="" cmd="find $TD_DIR/ -name picketbox-4*.jar" />
 
 		<!-- Paths & environment -->
 		<env name="USR_PATH" value="$USR_PATH" export="false" />
@@ -35,6 +38,7 @@
 	<resources>
 		<dir name="$ECLIPSE_WRKSPC" />
 		<dir name="$JCA_PRJ/java-bin" />
+		<dir name="$CRL_PRJ/java-bin" />
 		<dir name="$NHARU_TARGET" />
 		<dir name="$TEST_TARGET" />
 	</resources>
@@ -43,6 +47,8 @@
 		<test eval="exist_file" value="$OPENSSL_LIB/libcrypto.a" />
 		<test eval="exist_file" value="$OPENSSL_INCLUDE/openssl/opensslconf.h" />
 		<test eval="exist_file" value="$ANT_CONTRIB_LIB"/>
+		<test eval="exist_file" value="$PICKETBOX"/>
+		<test eval="exist_file" value="$JEE_LIB"/>
 		<test eval="exist_dir" value="$DLA_DIR" />
 		<test eval="exist_dir" value="$IDN_DIR"/>
 		<test eval="exist_dir" value="$IDN_INCLUDE"/>
@@ -61,6 +67,34 @@
 			<sources native="$JCA_TARGET">
 				<source dir="$JCA_PRJ/java" />
 			</sources>
+			<links>
+				<link file="$JCA_PRJ/build.xml" base="build.xml" />
+			</links>
+			<preferences	version="1" 
+						inlineJsrBytecode="enabled" 
+						unusedLocal="preserve"
+						targetPlatform="1.7" 
+						compliance="1.7" 
+						lineNumber="generate"
+						localVariable="generate"
+						sourceFile="generate"
+						assertIdentifier="error" 
+						enumIdentifier="error" 
+						source="1.7" />
+		</project>
+
+		<project name="crl-service" dir="$ECLIPSE_WRKSPC/crl-service" out="bin">
+			<sources>
+				<source dir="$CRL_PRJ/java" />
+			</sources>
+			<classpath>
+				<path type="lib" dir="$JEE_LIB"/>
+				<path type="lib" dir="$PICKETBOX"/>
+				<path type="ref" dir="/jca-provider"/>
+			</classpath>
+			<links>
+				<link file="$CRL_PRJ/build.xml" base="build.xml" />
+			</links>
 			<preferences	version="1" 
 						inlineJsrBytecode="enabled" 
 						unusedLocal="preserve"
