@@ -64,4 +64,4 @@ export CURRENT_DIR=$PWD
 cd -
 export TRD_DIR=$TRD_DIR
 export USR_PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-perl main.pl $CONF_FILE
+perl crypt-cfg.pl $CONF_FILE
