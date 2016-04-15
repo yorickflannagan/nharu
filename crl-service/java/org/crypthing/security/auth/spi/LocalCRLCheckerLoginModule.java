@@ -117,7 +117,7 @@ public class LocalCRLCheckerLoginModule implements LoginModule
 			(
 				status != CertStatus.VALID &&
 				!(
-					status == CertStatus.EXPIRED &&
+					status == CertStatus.EXPIRED_CRL &&
 					Boolean.parseBoolean(options.get(CRLCHECKER_LENIENT_ENTRY))
 				)
 			)
