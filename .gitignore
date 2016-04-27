@@ -21,3 +21,8 @@ bin
 libs
 java-bin
 version.c
+*.obj
+*.lib
+3rdparty
+libidn.mak
+*.pdb
