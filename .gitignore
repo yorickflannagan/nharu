@@ -26,3 +26,8 @@ version.c
 3rdparty
 libidn.mak
 *.pdb
+nharu.mak
+nharujca.mak
+nharulib.mak
+nharujca.dll
+nharujca.exp

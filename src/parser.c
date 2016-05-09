@@ -1179,6 +1179,9 @@ NH_FUNCTION(NH_RV, NH_release_encoder)(_IN_ NH_ASN1_ENCODER_HANDLE hHandle)
 }
 
 
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(NH_RV, NH_asn_clone_node)(_INOUT_ NH_CARGO_CONTAINER container, _IN_ NH_ASN1_PNODE from, _INOUT_ NH_ASN1_PNODE *to)
 {
 	NH_RV rv;

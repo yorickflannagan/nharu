@@ -6,39 +6,40 @@ SRC         = $(PACKAGE)\lib
 SDK_INCLUDE = _SDK_INCLUDE_
 
 include     = /I$(SRC)\gl /I$(SRC) /I$(PACKAGE)\win32\include $(SDK_INCLUDE)
-cvarsdll    = $(cvarsdll) _CVARSDLL_
+cvars       = $(cvarsdll) $(ccommon) _CVARS_
 cdebug      = $(cdebug) _CDEBUG_
-cflags      = $(cflags) _CFLAGS_
-lflags      = _LFLAGS_
+cflags      = $(cflags) $(cvarsmt) _CFLAGS_
+dlllflags   = $(dlllflags) _LFLAGS_ "kernel32.lib" "user32.lib" "gdi32.lib" "winspool.lib" "comdlg32.lib" "advapi32.lib" "shell32.lib" "ole32.lib" "oleaut32.lib" "uuid.lib" "odbc32.lib" "odbccp32.lib"
 
 SRCS      =	$(SRC)\gl\c-ctype.c $(SRC)\gl\c-strcasecmp.c $(SRC)\gl\c-strncasecmp.c           \
 		$(SRC)\gl\striconv.c $(SRC)\gl\strverscmp.c  $(SRC)\idn-free.c $(SRC)\idna.c     \
 		$(SRC)\nfkc.c $(SRC)\pr29.c $(SRC)\profiles.c $(SRC)\punycode.c $(SRC)\rfc3454.c \
 		$(SRC)\strerror-idna.c $(SRC)\strerror-pr29.c $(SRC)\strerror-punycode.c         \
-		$(SRC)\strerror-stringprep.c $(SRC)\strerror-tld.c $(SRC)\stringprep.c           \
-		$(SRC)\tld.c $(SRC)\toutf8.c $(SRC)\version.c 
+		$(SRC)\strerror-stringprep.c $(SRC)\stringprep.c $(SRC)\toutf8.c $(SRC)\version.c 
 HEADERS =	$(PACKAGE)\win32\include\config.h $(SRC)\gl\c-ctype.h $(SRC)\gl\c-strcase.h \
 		$(SRC)\stringprep.h $(SRC)\punycode.h $(SRC)\idna.h $(SRC)\gunicomp.h       \
-		$(SRC)\gunidecomp.h $(SRC)\pr29.h $(SRC)\gl\gettext.h $(SRC)\tld.h          \
-		$(SRC)\gl\striconv.h $(PACKAGE)\win32\include\idn-int.h                     \
-		$(PACKAGE)\win32\include\ac-stdint.h $(SRC)\idn-free.h
+		$(SRC)\gunidecomp.h $(SRC)\pr29.h $(SRC)\gl\gettext.h $(SRC)\gl\striconv.h  \
+		$(PACKAGE)\win32\include\idn-int.h $(PACKAGE)\win32\include\ac-stdint.h     \
+		$(SRC)\idn-free.h $(PACKAGE)\win32\include\unistd.h
 
-build: $(PACKAGE)\libidn.lib
-
-$(PACKAGE)\libidn.lib: $(SRCS:.c=.obj)
-	$(implib) $(lflags) /OUT:$(PACKAGE)\libidn.lib $(SRCS:.c=.obj)
+$(PACKAGE)\libidn.dll: $(SRCS:.c=.obj)
+	$(link) $(ldebug) $(dlllflags) $(conlibsmt) /OUT:$(PACKAGE)\libidn.dll $(SRCS:.c=.obj)
 
 $(SRCS:.c=.obj): $(SRCS)
-	$(cc) $(cdebug) $(cflags) $(cvarsdll) $(include) /Fo$@ %s
+	$(cc) $(cdebug) $(cflags) $(cvars) $(include) /Fo$@ %s
 
 clean:
 	^!rm -f -r $(PREFIX)
 	^!rm -f $(SRCS:.c=.obj)
+	^!rm -f $(PACKAGE)\/libidn.dll
+	^!rm -f $(PACKAGE)\/libidn.dll.manifest
+	^!rm -f $(PACKAGE)\/libidn.exp
 	^!rm -f $(PACKAGE)\/libidn.lib
+	^!rm -f $(PACKAGE)\/libidn.pdb
 
 install:
 	^!mkdir -p $(PREFIX)
 	^!mkdir -p $(PREFIX)\/lib
 	^!mkdir -p $(PREFIX)\/include
 	^!cp -t $(PREFIX)\/include $(HEADERS)
-	^!cp $(PACKAGE)\/libidn.lib $(PREFIX)\/lib
+	^!cp $(PACKAGE)\/libidn.* $(PREFIX)\/lib

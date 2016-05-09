@@ -252,33 +252,30 @@ public final class NharuProvider extends Provider
 	 */
 	public static void main(final String[] args)
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			System.out.println("====================================================================");
-			NharuArrays.main(new String[0]);
-			System.out.println("====================================================================");
-			NharuX509Certificate.main(new String[0]);
-			System.out.println("====================================================================");
-			NharuPKIBRParser.main(new String[0]);
-			System.out.println("====================================================================");
-			NharuX509CRL.main(new String[0]);
-			System.out.println("====================================================================");
-			NharuCertStore.main(new String[0]);
-			System.out.println("====================================================================");
-			final String p12 = args.length == 1 ? args[0] : "signer.p12";
-			System.setProperty("javax.net.ssl.keyStore", p12);
-			System.setProperty("javax.net.ssl.keyStorePassword", "secret");
-			System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
-			CMSDocument.main(new String[0]);
-			System.out.println("====================================================================");
-			org.crypthing.security.x509.CacheCleaner.debugShutDown();
-			try { Thread.sleep(1000); }
-			catch (final InterruptedException e) { /* */ }
-			System.gc();
-			try { Thread.sleep(1000); }
-			catch (final InterruptedException e) { /* */ }
-			leakageStop();
-		}
+		System.out.println("====================================================================");
+		NharuArrays.main(new String[0]);
+		System.out.println("====================================================================");
+		NharuX509Certificate.main(new String[0]);
+		System.out.println("====================================================================");
+		NharuPKIBRParser.main(new String[0]);
+		System.out.println("====================================================================");
+		NharuX509CRL.main(new String[0]);
+		System.out.println("====================================================================");
+		NharuCertStore.main(new String[0]);
+		System.out.println("====================================================================");
+		final String p12 = args.length == 1 ? args[0] : "signer.p12";
+		System.setProperty("javax.net.ssl.keyStore", p12);
+		System.setProperty("javax.net.ssl.keyStorePassword", "secret");
+		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+		CMSDocument.main(new String[0]);
+		System.out.println("====================================================================");
+		org.crypthing.security.x509.CacheCleaner.debugShutDown();
+		try { Thread.sleep(1000); }
+		catch (final InterruptedException e) { /* */ }
+		System.gc();
+		try { Thread.sleep(1000); }
+		catch (final InterruptedException e) { /* */ }
+		leakageStop();
 	}
 }
 

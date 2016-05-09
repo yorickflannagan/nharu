@@ -4,6 +4,7 @@
 	ARGUMENTS (-D)
 	DEBUG
 	JAVA_LOG_PATH
+	ANT_CONTRIB_LIB
   -->
 <project basedir = "." default = "build" name = "nharu-provider">
 	<target name = "init">
@@ -13,22 +14,13 @@
 
 		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 			<classpath>
-				<pathelement location="${env.ANT_CONTRIB_LIB}"/>
+				<pathelement location="${ANT_CONTRIB_LIB}"/>
 			</classpath>
 		</taskdef>
 
 		<buildnumber/>
 		<property name = "provider.version" value = "2.0.0" />
 		<property name = "full.version" value = "${provider.version}.${build.number}" />
-		<loadresource property="c_version">
-			<propertyresource name="full.version"/>
-			<filterchain>
-				<tokenfilter>
-					<filetokenizer/>
-					<replacestring from="." to="_"/>
-				</tokenfilter>
-			</filterchain>
-		</loadresource>
 		<property name = "native.dir" value = "native" />
 		<property name = "src.dir" value = "java" />
 		<property name = "bin.dir" value = "java-bin" />
@@ -117,11 +109,6 @@ import java.util.logging.Logger;
 		}
 	}
 }
-		</echo>
-		<delete file = "${native.dir}/version.c" />
-		<echo file = "${native.dir}/version.c">
-const char *NHARU_VERSION_${c_version} = "${full.version}";
-const char *NHARU_getVersion() { return NHARU_VERSION_${c_version}; }
 		</echo>
 	</target>
 

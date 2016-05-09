@@ -12,7 +12,7 @@
 
 		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 			<classpath>
-				<pathelement location="${env.ANT_CONTRIB_LIB}"/>
+				<pathelement location="${ANT_CONTRIB_LIB}"/>
 			</classpath>
 		</taskdef>
 
@@ -35,9 +35,9 @@
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
 
 		<path id="project.class.path">
-			<pathelement location="${env.JEE_LIB}"/>
-			<pathelement location="${env.JCA_TARGET}/nharujca.jar" />
-			<pathelement location="${env.PICKETBOX}" />
+			<pathelement location="${JEE_LIB}"/>
+			<pathelement location="../libs/nharujca.jar" />
+			<pathelement location="${PICKETBOX}" />
 		</path>
 
 	</target>

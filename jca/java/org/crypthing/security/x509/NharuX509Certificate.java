@@ -1,7 +1,5 @@
 package org.crypthing.security.x509;
 
-import static org.crypthing.security.LogDevice.LOG_LEVEL;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -822,358 +820,349 @@ public final class NharuX509Certificate extends X509Certificate implements Nativ
 
 	private static void basicTest()
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.println("NharuX509Certificate basic test");
+		try
 		{
-			System.out.println("NharuX509Certificate basic test");
+			System.out.print("Parsing end user cert... ");
+			final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
+			System.out.println("Done!");
+
 			try
 			{
-				System.out.print("Parsing end user cert... ");
-				final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
+
+				System.out.print("Checking certificate validity... ");
+				endCert.checkValidity(new Date(INSTANT));
+				System.out.println("Done!");
+
+				System.out.print("Parsing CA cert... ");
+				final NharuX509Certificate caCert = new NharuX509Certificate(CA_CERT);
 				System.out.println("Done!");
 
 				try
 				{
-
-					System.out.print("Checking certificate validity... ");
-					endCert.checkValidity(new Date(INSTANT));
+					System.out.print("Checking issuer using default API... ");
+					if (!endCert.getIssuerX500Principal().equals(caCert.getSubjectX500Principal())) throw new RuntimeException("Certificate issuer does not match");
 					System.out.println("Done!");
 
-					System.out.print("Parsing CA cert... ");
-					final NharuX509Certificate caCert = new NharuX509Certificate(CA_CERT);
+					System.out.print("Checking issuer using internal API... ");
+					if (!endCert.getIssuer().equals(caCert.getSubject())) throw new RuntimeException("Certificate issuer does not match");
 					System.out.println("Done!");
 
-					try
-					{
-						System.out.print("Checking issuer using default API... ");
-						if (!endCert.getIssuerX500Principal().equals(caCert.getSubjectX500Principal())) throw new RuntimeException("Certificate issuer does not match");
-						System.out.println("Done!");
+					System.out.print("Verifying issuer signature... ");
+					endCert.verify(caCert.getPublicKey());
+					System.out.println("Done!");
 
-						System.out.print("Checking issuer using internal API... ");
-						if (!endCert.getIssuer().equals(caCert.getSubject())) throw new RuntimeException("Certificate issuer does not match");
-						System.out.println("Done!");
+					System.out.print("Checking certificate version... ");
+					if (endCert.getVersion() != VERSION) throw new RuntimeException("Certificate version does not match");
+					System.out.println("Done!");
 
-						System.out.print("Verifying issuer signature... ");
-						endCert.verify(caCert.getPublicKey());
-						System.out.println("Done!");
+					System.out.print("Checking certificate signature OID... ");
+					if (!endCert.getSigAlgOID().equals(SIGOID)) throw new RuntimeException("Certificate signature OID does not match");
+					System.out.println("Done!");
 
-						System.out.print("Checking certificate version... ");
-						if (endCert.getVersion() != VERSION) throw new RuntimeException("Certificate version does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking certificate signature OID... ");
-						if (!endCert.getSigAlgOID().equals(SIGOID)) throw new RuntimeException("Certificate signature OID does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking certificate signature algorithm parameters... ");
-						if (endCert.getSigAlgParams() != null) throw new RuntimeException("Certificate signature algorithm parameters do not match");
-						System.out.println("Done!");
-
-						final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
-						fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
-						System.out.print("Checking certificate not before field... ");
-						if (!NOT_BEFORE.equals(fmt.format(endCert.getNotBefore()))) throw new RuntimeException("Certificate not before does not match!");
-						System.out.println("Done!");
-
-						System.out.print("Checking certificate not after field... ");
-						if (!NOT_AFTER.equals(fmt.format(endCert.getNotAfter()))) throw new RuntimeException("Certificate not after does not match!");
-						System.out.println("Done!");
-
-						System.out.print("Checking BasicConstraints extension... ");
-						if (endCert.getBasicConstraints() != -1) throw new RuntimeException("End user certificate BasicConstraints does not match!");
-						if (caCert.getBasicConstraints() != Integer.MAX_VALUE) throw new RuntimeException("CA certificate BasicConstraints does not match!");
-						System.out.println("Done!");
-
-						System.out.print("Checking Extended Key Usage extension... ");
-						final List<String> ext = endCert.getExtendedKeyUsage();
-						for (int i = 0; i < ext.size(); i++) if (!ext.get(i).equals(EXT_KEY_USAGE[i])) throw new RuntimeException("Extended key usage extension does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking Key Usage extension... ");
-						final boolean[] kusage = endCert.getKeyUsage();
-						if (kusage.length != KEY_USAGE.length)  throw new RuntimeException("Key usage extension length does not match");
-						for (int i = 0; i < kusage.length; i++) if (kusage[i] != KEY_USAGE[i])  throw new RuntimeException("Key usage extension does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking serial number... ");
-						if (!endCert.getSerialNumber().equals(BigInteger.ZERO)) throw new RuntimeException("Serial number does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking signature algorithm name... ");
-						if (!SIG_ALG_NAME.equals(endCert.getSigAlgName())) throw new RuntimeException("Signature algorithm name does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking signature bit string... ");
-						if (!Arrays.equals(SIGNATURE, endCert.getSignature())) throw new RuntimeException("Signature bit string does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking Subject Key Identifier extension... ");
-						byte[] extval = endCert.getExtensionValue(SKI_OID);
-						if (!Arrays.equals(SKI, extval)) throw new RuntimeException("Subject Key Identifier does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking Authority Key Identifier extension... ");
-						extval = endCert.getExtensionValue(AKI_OID);
-						if (!Arrays.equals(AKI, extval)) throw new RuntimeException("Authority Key Identifier does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking Subject Alternative Names extension... ");
-						final Collection<List<?>> alt_names = endCert.getSubjectAlternativeNames();
-						if (alt_names == null) throw new RuntimeException("Subject Alternative Names extension does not match");
-						boolean found = false;
-						for (final List<?> name : alt_names)
-						{
-							if (Arrays.equals((byte[]) name.get(1), SUBJECT_ALT_NAMES_0))
-							{
-								found = true;
-								break;
-							}
-						}
-						if (!found) throw new RuntimeException("Subject Alternative Names extension does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking critical extensions... ");
-						Set<String> oids = endCert.getCriticalExtensionOIDs();
-						if (oids == null || !oids.isEmpty()) throw new RuntimeException("Critical extensions do not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking non-critical extensions... ");
-						oids = endCert.getNonCriticalExtensionOIDs();
-						if (oids == null) throw new RuntimeException("Non-critical extensions do not match");
-						for (int i = 0; i < NON_CRITICAL_OIDS.length; i++) if (!oids.contains(NON_CRITICAL_OIDS[i])) throw new RuntimeException("Non-critical extensions do not match");
-						System.out.println("Done!");
-						System.out.println("NharuX509Certificate test succeeded!\n");
-					}
-					finally { caCert.closeHandle(); }
-				}
-				finally { endCert.closeHandle(); }
-			}
-			catch (final Throwable e) { e.printStackTrace(); }
-		}
-	}
-	private static void compatibilityTest()
-	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			System.out.println("NharuX509Certificate compatibility test");
-			try
-			{
-				boolean success = true;
-				int fail = 0;
-				final CertificateFactory cf = CertificateFactory.getInstance("X.509");
-				final X509Certificate sunCert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(PF_CERT));
-				final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
-				try
-				{
-					System.out.print("Checking Basic Constraints extension... ");
-					if (sunCert.getBasicConstraints() != endCert.getBasicConstraints())
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking Extended Key Usage extension... ");
-					final List<String> sunUsage = sunCert.getExtendedKeyUsage();
-					final List<String> nhUsage = endCert.getExtendedKeyUsage();
-					for (int i = 0; i < sunUsage.size(); i++) if (!nhUsage.contains(sunUsage.get(i)))
-					{
-						System.err.println("Test failed!");
-						fail++;
-						success = false;
-						break;
-					}
-					if (success) System.out.println("Done!");
-
-					System.out.print("Checking issuer principal... ");
-					if (!sunCert.getIssuerX500Principal().getName().equals(endCert.getIssuerX500Principal().getName()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking subject principal... ");
-					if (!sunCert.getSubjectX500Principal().getName().equals(endCert.getSubjectX500Principal().getName()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking Key Usage extension... ");
-					if (!Arrays.equals(sunCert.getKeyUsage(), endCert.getKeyUsage()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					System.out.print("Checking certificate signature algorithm parameters... ");
+					if (endCert.getSigAlgParams() != null) throw new RuntimeException("Certificate signature algorithm parameters do not match");
+					System.out.println("Done!");
 
 					final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
 					fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
-					System.out.print("Checking Validity/notBefore field... ");
-					if (!fmt.format(sunCert.getNotBefore()).equals(fmt.format(endCert.getNotBefore())))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					System.out.print("Checking certificate not before field... ");
+					if (!NOT_BEFORE.equals(fmt.format(endCert.getNotBefore()))) throw new RuntimeException("Certificate not before does not match!");
+					System.out.println("Done!");
 
-					System.out.print("Checking Validity/notAfter field... ");
-					if (!fmt.format(sunCert.getNotAfter()).equals(fmt.format(endCert.getNotAfter())))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					System.out.print("Checking certificate not after field... ");
+					if (!NOT_AFTER.equals(fmt.format(endCert.getNotAfter()))) throw new RuntimeException("Certificate not after does not match!");
+					System.out.println("Done!");
 
-					System.out.print("Checking serial number field... ");
-					if (!sunCert.getSerialNumber().equals(endCert.getSerialNumber()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					System.out.print("Checking BasicConstraints extension... ");
+					if (endCert.getBasicConstraints() != -1) throw new RuntimeException("End user certificate BasicConstraints does not match!");
+					if (caCert.getBasicConstraints() != Integer.MAX_VALUE) throw new RuntimeException("CA certificate BasicConstraints does not match!");
+					System.out.println("Done!");
+
+					System.out.print("Checking Extended Key Usage extension... ");
+					final List<String> ext = endCert.getExtendedKeyUsage();
+					for (int i = 0; i < ext.size(); i++) if (!ext.get(i).equals(EXT_KEY_USAGE[i])) throw new RuntimeException("Extended key usage extension does not match");
+					System.out.println("Done!");
+
+					System.out.print("Checking Key Usage extension... ");
+					final boolean[] kusage = endCert.getKeyUsage();
+					if (kusage.length != KEY_USAGE.length)  throw new RuntimeException("Key usage extension length does not match");
+					for (int i = 0; i < kusage.length; i++) if (kusage[i] != KEY_USAGE[i])  throw new RuntimeException("Key usage extension does not match");
+					System.out.println("Done!");
+
+					System.out.print("Checking serial number... ");
+					if (!endCert.getSerialNumber().equals(BigInteger.ZERO)) throw new RuntimeException("Serial number does not match");
+					System.out.println("Done!");
 
 					System.out.print("Checking signature algorithm name... ");
-					if (!sunCert.getSigAlgName().equals(endCert.getSigAlgName()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					if (!SIG_ALG_NAME.equals(endCert.getSigAlgName())) throw new RuntimeException("Signature algorithm name does not match");
+					System.out.println("Done!");
 
-					System.out.print("Checking signature algorithm OID... ");
-					if (!sunCert.getSigAlgOID().equals(endCert.getSigAlgOID()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking signature bitstring... ");
-					if (!Arrays.equals(sunCert.getSignature(), endCert.getSignature()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking TBSCertificate encoding... ");
-					if (!Arrays.equals(sunCert.getTBSCertificate(), endCert.getTBSCertificate()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking version field... ");
-					if (sunCert.getVersion() != endCert.getVersion())
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking certificate encoding... ");
-					if (!Arrays.equals(sunCert.getEncoded(), endCert.getEncoded()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking public key encoding... ");
-					if (!Arrays.equals(sunCert.getPublicKey().getEncoded(), endCert.getPublicKey().getEncoded()))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking Subject Alternative Names extension... ");
-					final Iterator<List<?>> sunIt = sunCert.getSubjectAlternativeNames().iterator();
-					success = true;
-					while (sunIt.hasNext() && success)
-					{
-						final List<?> it = sunIt.next();
-						final Collection<List<?>> alt_names = endCert.getSubjectAlternativeNames();
-						success = false;
-						for (final List<?> name : alt_names)
-						{
-							if (Arrays.equals((byte[]) it.get(1), (byte[]) name.get(1)))
-							{
-								success = true;
-								break;
-							}
-						}
-					}
-					if (!success)
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					System.out.print("Checking signature bit string... ");
+					if (!Arrays.equals(SIGNATURE, endCert.getSignature())) throw new RuntimeException("Signature bit string does not match");
+					System.out.println("Done!");
 
 					System.out.print("Checking Subject Key Identifier extension... ");
-					if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.14"), endCert.getExtensionValue("2.5.29.14")))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					byte[] extval = endCert.getExtensionValue(SKI_OID);
+					if (!Arrays.equals(SKI, extval)) throw new RuntimeException("Subject Key Identifier does not match");
+					System.out.println("Done!");
 
 					System.out.print("Checking Authority Key Identifier extension... ");
-					if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.35"), endCert.getExtensionValue("2.5.29.35")))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					extval = endCert.getExtensionValue(AKI_OID);
+					if (!Arrays.equals(AKI, extval)) throw new RuntimeException("Authority Key Identifier does not match");
+					System.out.println("Done!");
 
-					System.out.print("Checking CRL Distribution Points extension... ");
-					if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.31"), endCert.getExtensionValue("2.5.29.31")))
+					System.out.print("Checking Subject Alternative Names extension... ");
+					final Collection<List<?>> alt_names = endCert.getSubjectAlternativeNames();
+					if (alt_names == null) throw new RuntimeException("Subject Alternative Names extension does not match");
+					boolean found = false;
+					for (final List<?> name : alt_names)
 					{
-						System.err.println("Test failed!");
-						fail++;
+						if (Arrays.equals((byte[]) name.get(1), SUBJECT_ALT_NAMES_0))
+						{
+							found = true;
+							break;
+						}
 					}
-					else System.out.println("Done!");
+					if (!found) throw new RuntimeException("Subject Alternative Names extension does not match");
+					System.out.println("Done!");
 
-					System.out.print("Checking AuthorityInfoAccess extension... ");
-					if (!Arrays.equals(sunCert.getExtensionValue("1.3.6.1.5.5.7.1.1"), endCert.getExtensionValue("1.3.6.1.5.5.7.1.1")))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
+					System.out.print("Checking critical extensions... ");
+					Set<String> oids = endCert.getCriticalExtensionOIDs();
+					if (oids == null || !oids.isEmpty()) throw new RuntimeException("Critical extensions do not match");
+					System.out.println("Done!");
 
-					System.out.print("Checking Certificate Policies extension... ");
-					if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.32"), endCert.getExtensionValue("2.5.29.32")))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking subjectAltName extension... ");
-					if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.17"), endCert.getExtensionValue("2.5.29.17")))
-					{
-						System.err.println("Test failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-					System.out.println("NharuX509Certificate is " + (100 - (100 * fail / 22)) + "% compatible with JDK X509CertImpl!");
+					System.out.print("Checking non-critical extensions... ");
+					oids = endCert.getNonCriticalExtensionOIDs();
+					if (oids == null) throw new RuntimeException("Non-critical extensions do not match");
+					for (int i = 0; i < NON_CRITICAL_OIDS.length; i++) if (!oids.contains(NON_CRITICAL_OIDS[i])) throw new RuntimeException("Non-critical extensions do not match");
+					System.out.println("Done!");
+					System.out.println("NharuX509Certificate test succeeded!\n");
 				}
-				finally { endCert.closeHandle(); }
+				finally { caCert.closeHandle(); }
 			}
-			catch (final Throwable e) { e.printStackTrace(); }
+			finally { endCert.closeHandle(); }
 		}
+		catch (final Throwable e) { e.printStackTrace(); }
+	}
+	private static void compatibilityTest()
+	{
+		System.out.println("NharuX509Certificate compatibility test");
+		try
+		{
+			boolean success = true;
+			int fail = 0;
+			final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			final X509Certificate sunCert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(PF_CERT));
+			final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
+			try
+			{
+				System.out.print("Checking Basic Constraints extension... ");
+				if (sunCert.getBasicConstraints() != endCert.getBasicConstraints())
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Extended Key Usage extension... ");
+				final List<String> sunUsage = sunCert.getExtendedKeyUsage();
+				final List<String> nhUsage = endCert.getExtendedKeyUsage();
+				for (int i = 0; i < sunUsage.size(); i++) if (!nhUsage.contains(sunUsage.get(i)))
+				{
+					System.err.println("Test failed!");
+					fail++;
+					success = false;
+					break;
+				}
+				if (success) System.out.println("Done!");
+
+				System.out.print("Checking issuer principal... ");
+				if (!sunCert.getIssuerX500Principal().getName().equals(endCert.getIssuerX500Principal().getName()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking subject principal... ");
+				if (!sunCert.getSubjectX500Principal().getName().equals(endCert.getSubjectX500Principal().getName()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Key Usage extension... ");
+				if (!Arrays.equals(sunCert.getKeyUsage(), endCert.getKeyUsage()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
+				fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
+				System.out.print("Checking Validity/notBefore field... ");
+				if (!fmt.format(sunCert.getNotBefore()).equals(fmt.format(endCert.getNotBefore())))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Validity/notAfter field... ");
+				if (!fmt.format(sunCert.getNotAfter()).equals(fmt.format(endCert.getNotAfter())))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking serial number field... ");
+				if (!sunCert.getSerialNumber().equals(endCert.getSerialNumber()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking signature algorithm name... ");
+				if (!sunCert.getSigAlgName().equals(endCert.getSigAlgName()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking signature algorithm OID... ");
+				if (!sunCert.getSigAlgOID().equals(endCert.getSigAlgOID()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking signature bitstring... ");
+				if (!Arrays.equals(sunCert.getSignature(), endCert.getSignature()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking TBSCertificate encoding... ");
+				if (!Arrays.equals(sunCert.getTBSCertificate(), endCert.getTBSCertificate()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking version field... ");
+				if (sunCert.getVersion() != endCert.getVersion())
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking certificate encoding... ");
+				if (!Arrays.equals(sunCert.getEncoded(), endCert.getEncoded()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking public key encoding... ");
+				if (!Arrays.equals(sunCert.getPublicKey().getEncoded(), endCert.getPublicKey().getEncoded()))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Subject Alternative Names extension... ");
+				final Iterator<List<?>> sunIt = sunCert.getSubjectAlternativeNames().iterator();
+				success = true;
+				while (sunIt.hasNext() && success)
+				{
+					final List<?> it = sunIt.next();
+					final Collection<List<?>> alt_names = endCert.getSubjectAlternativeNames();
+					success = false;
+					for (final List<?> name : alt_names)
+					{
+						if (Arrays.equals((byte[]) it.get(1), (byte[]) name.get(1)))
+						{
+							success = true;
+							break;
+						}
+					}
+				}
+				if (!success)
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Subject Key Identifier extension... ");
+				if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.14"), endCert.getExtensionValue("2.5.29.14")))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Authority Key Identifier extension... ");
+				if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.35"), endCert.getExtensionValue("2.5.29.35")))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL Distribution Points extension... ");
+				if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.31"), endCert.getExtensionValue("2.5.29.31")))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking AuthorityInfoAccess extension... ");
+				if (!Arrays.equals(sunCert.getExtensionValue("1.3.6.1.5.5.7.1.1"), endCert.getExtensionValue("1.3.6.1.5.5.7.1.1")))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking Certificate Policies extension... ");
+				if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.32"), endCert.getExtensionValue("2.5.29.32")))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking subjectAltName extension... ");
+				if (!Arrays.equals(sunCert.getExtensionValue("2.5.29.17"), endCert.getExtensionValue("2.5.29.17")))
+				{
+					System.err.println("Test failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+				System.out.println("NharuX509Certificate is " + (100 - (100 * fail / 22)) + "% compatible with JDK X509CertImpl!");
+			}
+			finally { endCert.closeHandle(); }
+		}
+		catch (final Throwable e) { e.printStackTrace(); }
 	}
 	public static void main(final String[] args)
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			basicTest();
-			compatibilityTest();
-		}
+		basicTest();
+		compatibilityTest();
 	}
 }

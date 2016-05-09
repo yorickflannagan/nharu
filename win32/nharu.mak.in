@@ -1,0 +1,28 @@
+^!include <win32.mak>
+
+PREFIX = _PREFIX_
+OUTPUT = _OUTPUT_
+LIB_INCLUDE = _APP_INCLUDE_
+SDK_INCLUDE = _SDK_INCLUDE_
+SRCS = _SOURCE_FILES_
+include = $(LIB_INCLUDE) $(SDK_INCLUDE)
+cvars = $(cvars) _CVARS_
+cdebug = $(cdebug) _CDEBUG_
+cflags = $(cflags) _CFLAGS_
+lflags = _LFLAGS_ "libidn.lib" "libeay32.lib"
+
+$(OUTPUT)\nharu.lib: $(SRCS:.c=.obj)
+	$(implib) $(lflags) /OUT:$(OUTPUT)\nharu.lib $(SRCS:.c=.obj)
+
+$(SRCS:.c=.obj): $(SRCS)
+	$(cc) $(cdebug) $(cflags) $(cvars) $(include) /Fo$@ %s
+
+clean:
+	^!rm -f -r $(PREFIX)
+	^!rm -f $(SRCS:.c=.obj)
+	^!rm -f $(OUTPUT)\nharu.lib
+
+install:
+	^!mkdir -p $(PREFIX)
+	^!mkdir -p $(PREFIX)
+	^!cp $(OUTPUT)\nharu.lib $(PREFIX)

@@ -1,0 +1,34 @@
+^!include <win32.mak>
+
+PREFIX = _PREFIX_
+OUTPUT = _OUTPUT_
+LIB_INCLUDE = _APP_INCLUDE_
+SDK_INCLUDE = _SDK_INCLUDE_
+SRCS = _SOURCE_FILES_
+include = $(LIB_INCLUDE) $(SDK_INCLUDE)
+cvars = $(cvars) _CVARS_
+cdebug = $(cdebug) _CDEBUG_
+cflags = $(cflags) $(ccommon) _CFLAGS_
+dlllflags = $(dlllflags) _LFLAGS_ "nharu.lib" "libidn.lib" "libeay32.lib" "ws2_32.lib" "advapi32.lib" "gdi32.lib" "user32.lib"
+
+
+$(OUTPUT)\nharujca.dll: $(SRCS:.c=.obj)
+	$(link) $(ldebug) $(dlllflags) $(conlibsmt) /OUT:$(OUTPUT)\nharujca.dll $(SRCS:.c=.obj)
+
+$(SRCS:.c=.obj): $(SRCS)
+	$(cc) $(cdebug) $(cflags) $(cvars) $(include) /Fo$@ %s
+
+clean:
+	^!rm -f -r $(PREFIX)
+	^!rm -f $(SRCS:.c=.obj)
+	^!rm -f _VERSION_C_
+	^!rm -f $(OUTPUT)\nharujca.dll
+	^!rm -f $(OUTPUT)\nharujca.exp
+	^!rm -f $(OUTPUT)\nharujca.lib
+	^!rm -f $(OUTPUT)\nharujca.pdb
+
+install:
+	^!mkdir -p $(PREFIX)
+	^!mkdir -p $(PREFIX)
+	^!cp $(OUTPUT)\nharujca.lib $(PREFIX)
+	^!cp $(OUTPUT)\nharujca.dll $(PREFIX)

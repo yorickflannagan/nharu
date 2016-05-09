@@ -155,6 +155,10 @@ INLINE NH_UTILITY(NH_RV, prep_name)
 	if (NH_SUCCESS(rv)) *to = str;
 	return rv;
 }
+
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(NH_RV, NHIX_parse_name)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _IN_ NH_ASN1_PNODE from, _OUT_ NH_NAME_NODE *to)
 {
 	NH_ASN1_PNODE set = from->child, att, node;
@@ -283,6 +287,10 @@ INLINE NH_UTILITY(NH_RV, parse_names)(_IN_ NH_ASN1_PARSER_HANDLE hParser, _IN_ N
 	}
 	return rv;
 }
+
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(NH_RV, NHIX_parse_general_name)(_IN_ NH_ASN1_PARSER_HANDLE hParser, _IN_ NH_ASN1_PNODE first)
 {
 	NH_RV rv;
@@ -308,6 +316,9 @@ static NH_NODE_WAY pkix_general_names_map[] =
 	}
 };
 
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(NH_RV, NHIX_parse_general_names)(_IN_ NH_ASN1_PARSER_HANDLE hParser, _IN_ NH_ASN1_PNODE from)
 {
 	NH_RV rv;
@@ -324,6 +335,9 @@ static NH_NODE_WAY pkix_rsa_pubkey[] =
 	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT, NULL, 0 },
 	{ NH_SAIL_SKIP_EAST, NH_ASN1_INTEGER, NULL, 0 }
 };
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(NH_RV, NHIX_parse_pubkey)(_IN_ NH_ASN1_PARSER_HANDLE hParser, _INOUT_ NH_ASN1_PNODE from)
 {
 	CK_MECHANISM_TYPE key;

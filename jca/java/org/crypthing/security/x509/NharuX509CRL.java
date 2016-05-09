@@ -1,8 +1,5 @@
 package org.crypthing.security.x509;
 
-import static org.crypthing.security.LogDevice.LOG_LEVEL;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
@@ -564,297 +561,288 @@ public class NharuX509CRL extends X509CRL implements NativeParent
 
 	private static void basicTest()
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.println("NharuX509CRL basic test");
+		try
 		{
-			System.out.println("NharuX509CRL basic test");
+			System.out.print("Parsing CRL... ");
+			final NharuX509CRL crl = new NharuX509CRL(PFV2_CRL.getBytes());
+			System.out.println("Done!");
 			try
 			{
-				System.out.print("Parsing CRL... ");
-				final NharuX509CRL crl = new NharuX509CRL(PFV2_CRL.getBytes());
+				System.out.print("Parsing CRL issuer certificate... ");
+				final NharuX509Certificate cert = new NharuX509Certificate(PFV2_CER.getBytes());
 				System.out.println("Done!");
 				try
 				{
-					System.out.print("Parsing CRL issuer certificate... ");
-					final NharuX509Certificate cert = new NharuX509Certificate(PFV2_CER.getBytes());
-					System.out.println("Done!");
-					try
-					{
-						System.out.print("Checking issuer principal... ");
-						if (!cert.getSubjectX500Principal().equals(crl.getIssuerX500Principal())) throw new RuntimeException("Issuer principal does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking issuer using internal API... ");
-						if (!cert.getSubject().equals(crl.getIssuer())) throw new RuntimeException("Issuer does not match");
-						System.out.println("Done!");
-
-						System.out.print("Checking issuer signature... ");
-						crl.verify(cert.getPublicKey());
-						System.out.println("Done!");
-					}
-					finally { cert.closeHandle(); }
-
-					final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
-					fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
-					System.out.print("Checking CRL nextUpdate field... ");
-					Date buffer = crl.getNextUpdate();
-					if (buffer == null || !NEXT_UPDATE.equals(fmt.format(buffer))) throw new RuntimeException("CRL next update does not match!");
+					System.out.print("Checking issuer principal... ");
+					if (!cert.getSubjectX500Principal().equals(crl.getIssuerX500Principal())) throw new RuntimeException("Issuer principal does not match");
 					System.out.println("Done!");
 
-					System.out.print("Checking CRL this field... ");
-					if (!THIS_UPDATE.equals(fmt.format(crl.getThisUpdate()))) throw new RuntimeException("CRL this update does not match!");
+					System.out.print("Checking issuer using internal API... ");
+					if (!cert.getSubject().equals(crl.getIssuer())) throw new RuntimeException("Issuer does not match");
 					System.out.println("Done!");
 
-					System.out.print("Checking revoked certificate serial number... ");
-					if (!crl.isRevoked(REVOKED_SERIAL)) throw new RuntimeException("Revoked certificate serial number failed");
-					System.out.println("Done!");
-
-					System.out.print("Checking non-revoked certificate serial number... ");
-					if (crl.isRevoked(VALID_SERIAL)) throw new RuntimeException("Non-revoked certificate serial number failed");
-					System.out.println("Done!");
-
-					System.out.print("Checking signature algorithm name... ");
-					if (!SIG_ALG_NAME.equals(crl.getSigAlgName())) throw new RuntimeException("Signature algorithm name does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking signature algorithm OID... ");
-					if (!SIG_ALG_OID.equals(crl.getSigAlgOID())) throw new RuntimeException("Signature algorithm OID does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checked signature bit string field... ");
-					if (!Arrays.equals(SIGNATURE, crl.getSignature())) throw new RuntimeException("Signature bit string field does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking certificate version... ");
-					if (crl.getVersion() != VERSION) throw new RuntimeException("Certificate version does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking CRLNumber extension... ");
-					final byte[] ext = crl.getExtensionValue(CRL_NUMBER_OID);
-					if (ext == null || !Arrays.equals(CRL_NUMBER, ext)) throw new RuntimeException("CRLNumber extension does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking critical extensions... ");
-					Set<String> oids = crl.getCriticalExtensionOIDs();
-					if (oids == null || !oids.isEmpty()) throw new RuntimeException("Critical extensions do not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking non-critical extensions... ");
-					oids = crl.getNonCriticalExtensionOIDs();
-					if (oids == null) throw new RuntimeException("Non-critical extensions do not match");
-					for (int i = 0; i < NON_CRITICAL_OIDS.length; i++) if (!oids.contains(NON_CRITICAL_OIDS[i])) throw new RuntimeException("Non-critical extensions do not match");
-					System.out.println("Done!");
-
-					System.out.print("Parsing X509CRLEntry... ");
-					final X509CRLEntry entry = crl.getRevokedCertificate(new BigInteger(REVOKED_SERIAL));
-					System.out.println("Done!");
-
-					System.out.print("Checking revocation date... ");
-					if (!REVOCATION_DATE.equals(fmt.format(entry.getRevocationDate()))) throw new RuntimeException("Revocation date does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking revocation reason... ");
-					if (entry.getRevocationReason() != REVOCATION_REASON) throw new RuntimeException("Revocation reason does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking serial number... ");
-					if (!Arrays.equals(entry.getSerialNumber().toByteArray(), REVOKED_SERIAL)) throw new RuntimeException("Serial number does not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking non-critical OIDs... ");
-					if (!entry.getNonCriticalExtensionOIDs().contains(REASON_OID)) throw new RuntimeException("Non-critical OIDs do not match");
-					System.out.println("Done!");
-
-					System.out.print("Checking revoked certificates list... ");
-					if (!crl.getRevokedCertificates().contains(entry)) throw new RuntimeException("Revoked certificates list does not match");
+					System.out.print("Checking issuer signature... ");
+					crl.verify(cert.getPublicKey());
 					System.out.println("Done!");
 				}
-				finally { crl.closeHandle(); }
+				finally { cert.closeHandle(); }
+
+				final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
+				fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
+				System.out.print("Checking CRL nextUpdate field... ");
+				Date buffer = crl.getNextUpdate();
+				if (buffer == null || !NEXT_UPDATE.equals(fmt.format(buffer))) throw new RuntimeException("CRL next update does not match!");
+				System.out.println("Done!");
+
+				System.out.print("Checking CRL this field... ");
+				if (!THIS_UPDATE.equals(fmt.format(crl.getThisUpdate()))) throw new RuntimeException("CRL this update does not match!");
+				System.out.println("Done!");
+
+				System.out.print("Checking revoked certificate serial number... ");
+				if (!crl.isRevoked(REVOKED_SERIAL)) throw new RuntimeException("Revoked certificate serial number failed");
+				System.out.println("Done!");
+
+				System.out.print("Checking non-revoked certificate serial number... ");
+				if (crl.isRevoked(VALID_SERIAL)) throw new RuntimeException("Non-revoked certificate serial number failed");
+				System.out.println("Done!");
+
+				System.out.print("Checking signature algorithm name... ");
+				if (!SIG_ALG_NAME.equals(crl.getSigAlgName())) throw new RuntimeException("Signature algorithm name does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking signature algorithm OID... ");
+				if (!SIG_ALG_OID.equals(crl.getSigAlgOID())) throw new RuntimeException("Signature algorithm OID does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checked signature bit string field... ");
+				if (!Arrays.equals(SIGNATURE, crl.getSignature())) throw new RuntimeException("Signature bit string field does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking certificate version... ");
+				if (crl.getVersion() != VERSION) throw new RuntimeException("Certificate version does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking CRLNumber extension... ");
+				final byte[] ext = crl.getExtensionValue(CRL_NUMBER_OID);
+				if (ext == null || !Arrays.equals(CRL_NUMBER, ext)) throw new RuntimeException("CRLNumber extension does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking critical extensions... ");
+				Set<String> oids = crl.getCriticalExtensionOIDs();
+				if (oids == null || !oids.isEmpty()) throw new RuntimeException("Critical extensions do not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking non-critical extensions... ");
+				oids = crl.getNonCriticalExtensionOIDs();
+				if (oids == null) throw new RuntimeException("Non-critical extensions do not match");
+				for (int i = 0; i < NON_CRITICAL_OIDS.length; i++) if (!oids.contains(NON_CRITICAL_OIDS[i])) throw new RuntimeException("Non-critical extensions do not match");
+				System.out.println("Done!");
+
+				System.out.print("Parsing X509CRLEntry... ");
+				final X509CRLEntry entry = crl.getRevokedCertificate(new BigInteger(REVOKED_SERIAL));
+				System.out.println("Done!");
+
+				System.out.print("Checking revocation date... ");
+				if (!REVOCATION_DATE.equals(fmt.format(entry.getRevocationDate()))) throw new RuntimeException("Revocation date does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking revocation reason... ");
+				if (entry.getRevocationReason() != REVOCATION_REASON) throw new RuntimeException("Revocation reason does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking serial number... ");
+				if (!Arrays.equals(entry.getSerialNumber().toByteArray(), REVOKED_SERIAL)) throw new RuntimeException("Serial number does not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking non-critical OIDs... ");
+				if (!entry.getNonCriticalExtensionOIDs().contains(REASON_OID)) throw new RuntimeException("Non-critical OIDs do not match");
+				System.out.println("Done!");
+
+				System.out.print("Checking revoked certificates list... ");
+				if (!crl.getRevokedCertificates().contains(entry)) throw new RuntimeException("Revoked certificates list does not match");
+				System.out.println("Done!");
 			}
-			catch (final Throwable e) { e.printStackTrace(); }
+			finally { crl.closeHandle(); }
 		}
+		catch (final Throwable e) { e.printStackTrace(); }
 	}
 	private static void compatibilityTest()
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.println("NharuX509CRL compatibility test");
+		try
 		{
-			System.out.println("NharuX509CRL compatibility test");
+			final X509CRL sun = (X509CRL) (new sun.security.provider.X509Factory()).engineGenerateCRL(new ByteArrayInputStream(PFV2_CRL.getBytes()));
+			final NharuX509CRL nharu = new NharuX509CRL(PFV2_CRL.getBytes());
 			try
 			{
-				final X509CRL sun = (X509CRL) (new sun.security.provider.X509Factory()).engineGenerateCRL(new ByteArrayInputStream(PFV2_CRL.getBytes()));
-				final NharuX509CRL nharu = new NharuX509CRL(PFV2_CRL.getBytes());
-				try
+				final int tests = 19;
+				int fail = 0;
+				System.out.print("Checking CRL encoding... ");
+				if (!Arrays.equals(sun.getEncoded(), nharu.getEncoded()))
 				{
-					final int tests = 19;
-					int fail = 0;
-					System.out.print("Checking CRL encoding... ");
-					if (!Arrays.equals(sun.getEncoded(), nharu.getEncoded()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL issuer principal... ");
-					if (!sun.getIssuerX500Principal().getName().equals(nharu.getIssuerX500Principal().getName()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
-					fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
-					System.out.print("Checking CRL next update... ");
-					if (!fmt.format(sun.getNextUpdate()).equals(fmt.format(nharu.getNextUpdate())))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking signature algorithm name... ");
-					if (!sun.getSigAlgName().equals(nharu.getSigAlgName()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking signature algorithm OID... ");
-					if (!sun.getSigAlgOID().equals(nharu.getSigAlgOID()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking signature bit string... ");
-					if (!Arrays.equals(sun.getSignature(), nharu.getSignature()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking TBSCertList... ");
-					if (!Arrays.equals(sun.getTBSCertList(), nharu.getTBSCertList()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL this update... ");
-					if (!fmt.format(sun.getThisUpdate()).equals(fmt.format(nharu.getThisUpdate())))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL version... ");
-					if (sun.getVersion() != nharu.getVersion())
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL Authority Key Identifier extension... ");
-					if (!Arrays.equals(sun.getExtensionValue("2.5.29.35"), nharu.getExtensionValue("2.5.29.35")))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL Number extension... ");
-					if (!Arrays.equals(sun.getExtensionValue("2.5.29.20"), nharu.getExtensionValue("2.5.29.20")))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL Authority Info Access extension... ");
-					if (!Arrays.equals(sun.getExtensionValue("1.3.6.1.5.5.7.1.1"), nharu.getExtensionValue("1.3.6.1.5.5.7.1.1")))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking CRL non-critical extensions OIDs");
-					if (sun.getNonCriticalExtensionOIDs().size() != nharu.getNonCriticalExtensionOIDs().size())
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					X509CRLEntry sunEntry = sun.getRevokedCertificate(new BigInteger(REVOKED_SERIAL));
-					X509CRLEntry nharuEntry = nharu.getRevokedCertificate(new BigInteger(REVOKED_SERIAL));
-					System.out.print("Checking X509CRLEntry encoding... ");
-					if (!Arrays.equals(sunEntry.getEncoded(), nharuEntry.getEncoded()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking X509CRLEntry revocation date... ");
-					if (!fmt.format(sunEntry.getRevocationDate()).equals(fmt.format(nharuEntry.getRevocationDate())))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking X509CRLEntry revocation reason... ");
-					if (sunEntry.getRevocationReason() != nharuEntry.getRevocationReason())
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking X509CRLEntry serial number... ");
-					if (!Arrays.equals(sunEntry.getSerialNumber().toByteArray(), nharuEntry.getSerialNumber().toByteArray()))
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking X509CRLEntry extensions... ");
-					if (sunEntry.hasExtensions() != nharuEntry.hasExtensions())
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.print("Checking X509CRLEntry list... ");
-					if (sun.getRevokedCertificates().size() != nharu.getRevokedCertificates().size())
-					{
-						System.err.println("Failed!");
-						fail++;
-					}
-					else System.out.println("Done!");
-
-					System.out.println("NharuX509CRL is " + (100 - (100 * fail / tests)) + "% compatible with JDK implementation!");
+					System.err.println("Failed!");
+					fail++;
 				}
-				finally { nharu.closeHandle(); }
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL issuer principal... ");
+				if (!sun.getIssuerX500Principal().getName().equals(nharu.getIssuerX500Principal().getName()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				final DateFormat fmt = new SimpleDateFormat("yyMMddHHmmssX");
+				fmt.setCalendar(Calendar.getInstance(TimeZone.getTimeZone("GMT")));
+				System.out.print("Checking CRL next update... ");
+				if (!fmt.format(sun.getNextUpdate()).equals(fmt.format(nharu.getNextUpdate())))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking signature algorithm name... ");
+				if (!sun.getSigAlgName().equals(nharu.getSigAlgName()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking signature algorithm OID... ");
+				if (!sun.getSigAlgOID().equals(nharu.getSigAlgOID()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking signature bit string... ");
+				if (!Arrays.equals(sun.getSignature(), nharu.getSignature()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking TBSCertList... ");
+				if (!Arrays.equals(sun.getTBSCertList(), nharu.getTBSCertList()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL this update... ");
+				if (!fmt.format(sun.getThisUpdate()).equals(fmt.format(nharu.getThisUpdate())))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL version... ");
+				if (sun.getVersion() != nharu.getVersion())
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL Authority Key Identifier extension... ");
+				if (!Arrays.equals(sun.getExtensionValue("2.5.29.35"), nharu.getExtensionValue("2.5.29.35")))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL Number extension... ");
+				if (!Arrays.equals(sun.getExtensionValue("2.5.29.20"), nharu.getExtensionValue("2.5.29.20")))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL Authority Info Access extension... ");
+				if (!Arrays.equals(sun.getExtensionValue("1.3.6.1.5.5.7.1.1"), nharu.getExtensionValue("1.3.6.1.5.5.7.1.1")))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking CRL non-critical extensions OIDs");
+				if (sun.getNonCriticalExtensionOIDs().size() != nharu.getNonCriticalExtensionOIDs().size())
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				X509CRLEntry sunEntry = sun.getRevokedCertificate(new BigInteger(REVOKED_SERIAL));
+				X509CRLEntry nharuEntry = nharu.getRevokedCertificate(new BigInteger(REVOKED_SERIAL));
+				System.out.print("Checking X509CRLEntry encoding... ");
+				if (!Arrays.equals(sunEntry.getEncoded(), nharuEntry.getEncoded()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking X509CRLEntry revocation date... ");
+				if (!fmt.format(sunEntry.getRevocationDate()).equals(fmt.format(nharuEntry.getRevocationDate())))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking X509CRLEntry revocation reason... ");
+				if (sunEntry.getRevocationReason() != nharuEntry.getRevocationReason())
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking X509CRLEntry serial number... ");
+				if (!Arrays.equals(sunEntry.getSerialNumber().toByteArray(), nharuEntry.getSerialNumber().toByteArray()))
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking X509CRLEntry extensions... ");
+				if (sunEntry.hasExtensions() != nharuEntry.hasExtensions())
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.print("Checking X509CRLEntry list... ");
+				if (sun.getRevokedCertificates().size() != nharu.getRevokedCertificates().size())
+				{
+					System.err.println("Failed!");
+					fail++;
+				}
+				else System.out.println("Done!");
+
+				System.out.println("NharuX509CRL is " + (100 - (100 * fail / tests)) + "% compatible with JDK implementation!");
 			}
-			catch (final Throwable e) { e.printStackTrace(); }
+			finally { nharu.closeHandle(); }
 		}
+		catch (final Throwable e) { e.printStackTrace(); }
 	}
 	public static void main(final String[] args)
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			basicTest();
-			compatibilityTest();
-		}
+		basicTest();
+		compatibilityTest();
 	}
 }

@@ -36,6 +36,9 @@ INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize l
 	return armourlen;
 }
 
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(jsize, pem_to_DER)(_INOUT_ jbyte *jbuffer, _IN_ jsize len)
 {
 	jsize newlen = 0;
@@ -67,6 +70,9 @@ NH_UTILITY(void, throw_new)(JNIEnv *env, char *jc, char *msg, NH_RV nhc)
 
 const static int elapsed_days[]	= { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333 };
 const static int elapsed_days_leap[]	= { -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(jlong, java_mktime)(_IN_ NH_PTIME instant)
 {
 	jlong isLeap, yearDays, pre, daysUntilNow, year, adjust = 0;
@@ -102,6 +108,9 @@ INLINE NH_UTILITY(jbyteArray, get_node_value)(JNIEnv *env, _IN_ NH_ASN1_PNODE no
 	return ret;
 }
 
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(jbyteArray, get_node_contents)(JNIEnv *env, _IN_ NH_ASN1_PNODE node)
 {
 	jbyteArray ret = NULL;

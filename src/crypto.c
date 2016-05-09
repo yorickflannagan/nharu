@@ -2260,6 +2260,9 @@ const static CK_MECHANISM_TYPE supported_mechanisms_const[] =
 	CKM_AES_CBC
 };
 #define MECHANISM_CONST_COUNT(_a)		(sizeof(_a) / sizeof(CK_MECHANISM_TYPE))
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(CK_MECHANISM_TYPE, NH_oid_to_mechanism)(_IN_ unsigned int *OID, _IN_ size_t count)
 {
 	int i;

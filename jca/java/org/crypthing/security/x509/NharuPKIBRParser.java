@@ -1,8 +1,5 @@
 package org.crypthing.security.x509;
 
-import static org.crypthing.security.LogDevice.LOG_LEVEL;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
@@ -350,61 +347,49 @@ public final class NharuPKIBRParser
 
 	private static void testFields(final NharuPKIBRParser parser)
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			if (parser.getCertificateType() == PKIBRCertificateType.PF) System.out.println("Certificate type validated");
-			else System.err.println("Certificate type validation failed");
-			if (Arrays.equals(parser.getSubjectId(), subject_id)) System.out.println("Subject ID validated");
-			else System.err.println("Subject ID validation failed");
-			if (Arrays.equals(parser.getSubjectTE(), subject_te)) System.out.println("Subject TE validated");
-			else System.err.println("Subject TE validation failed");
-			if (Arrays.equals(parser.getSubjectCEI(), subject_cei)) System.out.println("Subject CEI validated");
-			else System.err.println("Subject CEI validation failed");
-		}
+		if (parser.getCertificateType() == PKIBRCertificateType.PF) System.out.println("Certificate type validated");
+		else System.err.println("Certificate type validation failed");
+		if (Arrays.equals(parser.getSubjectId(), subject_id)) System.out.println("Subject ID validated");
+		else System.err.println("Subject ID validation failed");
+		if (Arrays.equals(parser.getSubjectTE(), subject_te)) System.out.println("Subject TE validated");
+		else System.err.println("Subject TE validation failed");
+		if (Arrays.equals(parser.getSubjectCEI(), subject_cei)) System.out.println("Subject CEI validated");
+		else System.err.println("Subject CEI validation failed");
 	}
 	private static void basicTest()
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.println("NharuPKIBRParser basic test");
+		try
 		{
-			System.out.println("NharuPKIBRParser basic test");
+			final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
 			try
 			{
-				final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
-				try
-				{
-					final NharuPKIBRParser parser = NharuPKIBRParser.parse(endCert);
-					try { testFields(parser); }
-					finally { parser.releaseParser(); }
-				}
-				finally { endCert.closeHandle(); }
-			}
-			catch (final Throwable e) { e.printStackTrace(); }
-			System.out.println("NharuPKIBRParser basic test done");
-		}
-	}
-	private static void compatibilityTest()
-	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			System.out.println("NharuPKIBRParser compatibility test");
-			try
-			{
-				final CertificateFactory cf = CertificateFactory.getInstance("X.509");
-				final X509Certificate sunCert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(PF_CERT));
-				final NharuPKIBRParser parser = NharuPKIBRParser.parse(sunCert);
+				final NharuPKIBRParser parser = NharuPKIBRParser.parse(endCert);
 				try { testFields(parser); }
 				finally { parser.releaseParser(); }
 			}
-			catch (final Throwable e) { e.printStackTrace(); }
-			System.out.println("NharuPKIBRParser compatibility test done");
+			finally { endCert.closeHandle(); }
 		}
+		catch (final Throwable e) { e.printStackTrace(); }
+		System.out.println("NharuPKIBRParser basic test done");
+	}
+	private static void compatibilityTest()
+	{
+		System.out.println("NharuPKIBRParser compatibility test");
+		try
+		{
+			final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			final X509Certificate sunCert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(PF_CERT));
+			final NharuPKIBRParser parser = NharuPKIBRParser.parse(sunCert);
+			try { testFields(parser); }
+			finally { parser.releaseParser(); }
+		}
+		catch (final Throwable e) { e.printStackTrace(); }
+		System.out.println("NharuPKIBRParser compatibility test done");
 	}
 	public static void main(final String[] args)
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			basicTest();
-			compatibilityTest();
-		}
+		basicTest();
+		compatibilityTest();
 	}
 }

@@ -1,8 +1,5 @@
 package org.crypthing.security.cms;
 
-import static org.crypthing.security.LogDevice.LOG_LEVEL;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -590,104 +587,95 @@ public abstract class CMSDocument
 	private static boolean parsingTest()
 	{
 		boolean ret = false;
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.print("CMSSignedData parsing test... ");
+		KeyStore store;
+		try
 		{
-			System.out.print("CMSSignedData parsing test... ");
-			KeyStore store;
+			store = KeyStore.getInstance("JKS");
+			store.load(new ByteArrayInputStream(NharuArrays.fromBase64(TRUST_STORE_JKS.getBytes())), "secret".toCharArray());
+			final NharuCertStore trusted = new NharuCertStore(new DERX509CollectionParams(store));
+			CMSSignedData doc;
 			try
 			{
-				store = KeyStore.getInstance("JKS");
-				store.load(new ByteArrayInputStream(NharuArrays.fromBase64(TRUST_STORE_JKS.getBytes())), "secret".toCharArray());
-				final NharuCertStore trusted = new NharuCertStore(new DERX509CollectionParams(store));
-				CMSSignedData doc;
+				doc = new CMSSignedData(NharuArrays.fromBase64(OPENSSL_SIGNED_DER.getBytes()));
 				try
 				{
-					doc = new CMSSignedData(NharuArrays.fromBase64(OPENSSL_SIGNED_DER.getBytes()));
-					try
-					{
-						doc.verify(trusted);
-						System.out.println("Done!");
-						ret = true;
-					}
-					finally { doc.releaseDocument(); }
-				}
-				catch (final CMSParsingException e) { e.printStackTrace(); }
-			}
-			catch (final GeneralSecurityException e) { e.printStackTrace(); }
-			catch (final IOException e) { e.printStackTrace(); }
-		}
-		return ret;
-	}
-	private static boolean certsP7BTest()
-	{
-		boolean ret = false;
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			System.out.print("CMSSignedData certificate chain test... ");
-			try
-			{
-				CMSSignedData doc = CMSDocument.parse(NharuArrays.fromBase64(CHAIN_DER.getBytes()));
-				try
-				{
-					X509Certificate[] certs = doc.getCertificates();
-					if (certs.length != 14) throw new CMSException("Invalid chain length");
+					doc.verify(trusted);
 					System.out.println("Done!");
 					ret = true;
 				}
 				finally { doc.releaseDocument(); }
 			}
-			catch (CMSException e) { e.printStackTrace(); }
+			catch (final CMSParsingException e) { e.printStackTrace(); }
 		}
+		catch (final GeneralSecurityException e) { e.printStackTrace(); }
+		catch (final IOException e) { e.printStackTrace(); }
+		return ret;
+	}
+	private static boolean certsP7BTest()
+	{
+		boolean ret = false;
+		System.out.print("CMSSignedData certificate chain test... ");
+		try
+		{
+			CMSSignedData doc = CMSDocument.parse(NharuArrays.fromBase64(CHAIN_DER.getBytes()));
+			try
+			{
+				X509Certificate[] certs = doc.getCertificates();
+				if (certs.length != 14) throw new CMSException("Invalid chain length");
+				System.out.println("Done!");
+				ret = true;
+			}
+			finally { doc.releaseDocument(); }
+		}
+		catch (CMSException e) { e.printStackTrace(); }
 		return ret;
 	}
 	private static boolean generateTest()
 	{
 		boolean ret = false;
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.print("CMSSignedData generation test... ");
+		try
 		{
-			System.out.print("CMSSignedData generation test... ");
+			final NharuKeyStore signer = NharuKeyStore.getInstance();
 			try
 			{
-				final NharuKeyStore signer = NharuKeyStore.getInstance();
+				final CMSSignedDataBuilder builder = new CMSSignedDataBuilder("eContent".getBytes(), true);
 				try
 				{
-					final CMSSignedDataBuilder builder = new CMSSignedDataBuilder("eContent".getBytes(), true);
+					final NharuX509Certificate[] chain = signer.getSignerChain();
+					if (chain == null) throw new RuntimeException("BlindSigner not configured properly");
+					builder.addCertificates(chain);
+					builder.sign("SHA1withRSA", chain[0], signer);
+					final byte[] encoding = builder.encode();
+					KeyStore store;
 					try
 					{
-						final NharuX509Certificate[] chain = signer.getSignerChain();
-						if (chain == null) throw new RuntimeException("BlindSigner not configured properly");
-						builder.addCertificates(chain);
-						builder.sign("SHA1withRSA", chain[0], signer);
-						final byte[] encoding = builder.encode();
-						KeyStore store;
+						store = KeyStore.getInstance("JKS");
+						store.load(new ByteArrayInputStream(NharuArrays.fromBase64(TRUST_STORE_JKS.getBytes())), "secret".toCharArray());
+						final NharuCertStore trusted = new NharuCertStore(new DERX509CollectionParams(store));
+						CMSSignedData doc;
 						try
 						{
-							store = KeyStore.getInstance("JKS");
-							store.load(new ByteArrayInputStream(NharuArrays.fromBase64(TRUST_STORE_JKS.getBytes())), "secret".toCharArray());
-							final NharuCertStore trusted = new NharuCertStore(new DERX509CollectionParams(store));
-							CMSSignedData doc;
+							doc = new CMSSignedData(encoding);
 							try
 							{
-								doc = new CMSSignedData(encoding);
-								try
-								{
-									doc.verify(trusted);
-									System.out.println("Done!");
-									ret = true;
-								}
-								finally { doc.releaseDocument(); }
+								doc.verify(trusted);
+								System.out.println("Done!");
+								ret = true;
 							}
-							catch (final CMSParsingException e) { e.printStackTrace(); }
+							finally { doc.releaseDocument(); }
 						}
-						catch (final GeneralSecurityException e) { e.printStackTrace(); }
-						catch (final IOException e) { e.printStackTrace(); }
+						catch (final CMSParsingException e) { e.printStackTrace(); }
 					}
-					finally { builder.releaseBuilder(); }
+					catch (final GeneralSecurityException e) { e.printStackTrace(); }
+					catch (final IOException e) { e.printStackTrace(); }
 				}
-				finally { signer.releaseObject(); }
+				finally { builder.releaseBuilder(); }
 			}
-			catch (final GeneralSecurityException e) { e.printStackTrace(); }
+			finally { signer.releaseObject(); }
 		}
+		catch (final GeneralSecurityException e) { e.printStackTrace(); }
 		return ret;
 	}
 
@@ -729,27 +717,24 @@ public abstract class CMSDocument
 	private static boolean parsingOpenSSLEnvelopedTest()
 	{
 		boolean ret = false;
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.print("CMSEnvelolpedData parsing of OpenSSL document test... ");
+		try
 		{
-			System.out.print("CMSEnvelolpedData parsing of OpenSSL document test... ");
+			final NharuKeyStore store = NharuKeyStore.getInstance();
 			try
 			{
-				final NharuKeyStore store = NharuKeyStore.getInstance();
+				final CMSEnvelopedData document = new CMSEnvelopedData(ENVELOPED_CMS);
 				try
 				{
-					final CMSEnvelopedData document = new CMSEnvelopedData(ENVELOPED_CMS);
-					try
-					{
-						if (!NharuArrays.equals(PLAIN_TEXT, document.decrypt(store))) throw new RuntimeException("Encrypted document does not match");
-						System.out.println("Done!");
-						ret = true;
-					} 
-					finally { document.releaseDocument(); }
-				}
-				finally { store.releaseObject(); }
+					if (!NharuArrays.equals(PLAIN_TEXT, document.decrypt(store))) throw new RuntimeException("Encrypted document does not match");
+					System.out.println("Done!");
+					ret = true;
+				} 
+				finally { document.releaseDocument(); }
 			}
-			catch (final UnrecoverableKeyException | KeyStoreException | CMSException e) { e.printStackTrace(); }
+			finally { store.releaseObject(); }
 		}
+		catch (final UnrecoverableKeyException | KeyStoreException | CMSException e) { e.printStackTrace(); }
 		return ret;
 	}
 	private static final byte[] RECIP_CERT =
@@ -837,61 +822,55 @@ public abstract class CMSDocument
 	private static boolean encryptTest()
 	{
 		boolean ret = false;
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
+		System.out.print("CMSEnvelolpedData encryption document test... ");
+		try
 		{
-			System.out.print("CMSEnvelolpedData encryption document test... ");
+			final NharuX509Certificate cert = NharuX509Factory.generateCertificate(RECIP_CERT);
 			try
 			{
-				final NharuX509Certificate cert = NharuX509Factory.generateCertificate(RECIP_CERT);
 				try
 				{
+					final CMSEnvelopedDataBuilder builder = new CMSEnvelopedDataBuilder(PLAIN_TEXT);
 					try
 					{
-						final CMSEnvelopedDataBuilder builder = new CMSEnvelopedDataBuilder(PLAIN_TEXT);
+						builder.encrypt("DESede", 24, "DESede-CBC");
+						builder.addKeyTransRecip(cert, "OAEPPadding");
+						final byte[] encoding = builder.encode();
+						
+						final NharuKeyStore store = NharuKeyStore.getInstance();
 						try
 						{
-							builder.encrypt("DESede", 24, "DESede-CBC");
-							builder.addKeyTransRecip(cert, "OAEPPadding");
-							final byte[] encoding = builder.encode();
-							
-							final NharuKeyStore store = NharuKeyStore.getInstance();
+							final CMSEnvelopedData document = new CMSEnvelopedData(encoding);
 							try
 							{
-								final CMSEnvelopedData document = new CMSEnvelopedData(encoding);
 								try
 								{
-									try
-									{
-										if (!NharuArrays.equals(PLAIN_TEXT, document.decrypt(store))) throw new RuntimeException("Encrypted document does not match");
-										System.out.println("Done!");
-										ret = true;
-									}
-									catch (final CMSException e) { e.printStackTrace(); }
-								} 
-								finally { document.releaseDocument(); }
-							}
-							finally { store.releaseObject(); }
+									if (!NharuArrays.equals(PLAIN_TEXT, document.decrypt(store))) throw new RuntimeException("Encrypted document does not match");
+									System.out.println("Done!");
+									ret = true;
+								}
+								catch (final CMSException e) { e.printStackTrace(); }
+							} 
+							finally { document.releaseDocument(); }
 						}
-						catch (final CMSEncryptException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) { e.printStackTrace(); }
-						finally { builder.releaseBuilder(); }
+						finally { store.releaseObject(); }
 					}
-					catch (final CMSParsingException e) { e.printStackTrace(); }
+					catch (final CMSEncryptException | NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) { e.printStackTrace(); }
+					finally { builder.releaseBuilder(); }
 				}
-				finally { cert.closeHandle(); }
+				catch (final CMSParsingException e) { e.printStackTrace(); }
 			}
-			catch (final CertificateException e) { e.printStackTrace(); }
+			finally { cert.closeHandle(); }
 		}
+		catch (final CertificateException e) { e.printStackTrace(); }
 		return ret;
 	}
 	public static void main(final String[] args)
 	{
-		if (LOG_LEVEL < LOG_LEVEL_INFO)
-		{
-			boolean success = parsingTest();
-			if (success) success = certsP7BTest();
-			if (success) success = generateTest();
-			if (success) success = parsingOpenSSLEnvelopedTest();
-			if (success) success = encryptTest();
-		}
+		boolean success = parsingTest();
+		if (success) success = certsP7BTest();
+		if (success) success = generateTest();
+		if (success) success = parsingOpenSSLEnvelopedTest();
+		if (success) success = encryptTest();
 	}
 }
