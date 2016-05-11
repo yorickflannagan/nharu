@@ -1,3 +1,6 @@
 [submodule "openssl"]
 	path = openssl
 	url = ssh://hsmuser@linode/var/git/3rdParty/openssl.git
+[submodule "libidn"]
+	path = libidn
+	url = ssh://hsmuser@linode/var/git/3rdParty/libidn.git
