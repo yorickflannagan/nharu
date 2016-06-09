@@ -1,0 +1,71 @@
+bsrc="${BASH_SOURCE[0]}"
+while [ -h "$bsrc" ]; do
+  direc="$( cd -P "$( dirname "$bsrc" )" && pwd )"
+  bsrc="$(readlink "$bsrc")"
+  [[ $bsrc != /* ]] && bsrc="$direc/$bsrc"
+done
+CUR="$( cd -P "$( dirname "$bsrc" )" && pwd )"
+
+OPENSSL=_OPENSSL_
+IDN=_IDN_
+HOME_DIR=_HOME_DIR_
+JAVA=_JAVA_
+LIBS=_LIBS_
+
+BUILD="true"
+SCAN=""
+TEST="native"
+TEST_DIR="$HOME_DIR/test"
+GDB_ARGS="$TEST_DIR/ntest-app"
+
+sep='='
+while [ $# -ne 0 ]
+do
+	case $1 in
+	(--scan) SCAN="true"
+	;;
+	(--java) TEST="java"
+	;;
+	(--nobuild) BUILD=""
+	;;
+	(*)
+		printf "Invalid argument %s\n" "$1"
+		exit 1
+	;;
+	esac
+    shift
+done
+if [ -n "$BUILD" -o ! -f "$TEST_DIR/ntest-app" -o ! -f "$LIBS/libnharujca.so" -o ! -f "$LIBS/nharujca.jar" ]; then
+	BUILD="true"
+else
+	BUILD=""
+fi
+if [ -n "$SCAN" -o ! -f "$CUR/.gdbinit" ]; then
+	SCAN="true"
+fi
+if [ "$TEST" = "java" ]; then
+	GDB_ARGS="$JAVA -cp $HOME_DIR/jca/java-bin $TEST_DIR/signer.p12"
+fi
+
+
+if [ -n "$BUILD" ]; then
+	printf "%s\n" "Building solution..."
+	make DEBUG=1 VERSION=0.0.0
+fi
+if [ -n "$SCAN" ]; then
+	printf "%s\n" "Scanning source files..."
+	printf "%s" "">"$CUR/.gdbinit"
+	SRC_IDN=$(dirname $(dirname $(find . -name id.po.in)))
+	SRC_SSL=$(dirname $(dirname $(find . -name install-ssl.com)))
+	SOURCES=$(find $1 -name "*.[c|h]" -exec dirname {} + | sort | uniq | grep -v "$OPENSSL" | grep -v "$IDN" | grep -v "$SRC_IDN" | grep -v "$SRC_SSL")
+	printf '%s\n' "$SOURCES" | while IFS= read -r line
+	do
+	   printf "directory %s\n" "$line">>"$CUR/.gdbinit"
+	done
+fi
+if [ -f "$CUR/breaks" ]
+then
+	cat  "$CUR/breaks" >>"$CUR/.gdbinit"
+fi
+gdb --args "$GDB_ARGS"
+

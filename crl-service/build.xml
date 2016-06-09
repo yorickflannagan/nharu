@@ -1,10 +1,14 @@
 <?xml version = "1.0" encoding = "UTF-8" standalone = "no"?>
 <project basedir = "." default = "build" name = "crl-service">
 <!--
-	REQUIRED: run source nharu-env
 	ARGUMENTS (-D)
+	ANT_CONTRIB_LIB: Ant contrib support library
+	VERSION: provider version
+	OUTPUT: output JAR directory
 	DEBUG
-	JAVA_LOG_PATH
+	JAVA_LOG_PATH: logging class package
+	JEE_LIB: J2EE interface JAR
+	PICKETBOX: JBoss PicketBox JAR
   -->
 	<target name = "init">
 		<tstamp />
@@ -16,10 +20,10 @@
 			</classpath>
 		</taskdef>
 
-		<property name = "jar.version" value = "2.0.0" />
+		<property name = "jar.version" value = "${VERSION}" />
 		<property name = "src.dir" value = "java" />
 		<property name = "bin.dir" value = "java-bin" />
-		<property name = "dist.dir" value = "../libs" />
+		<property name = "dist.dir" value = "${OUTPUT}" />
 		<property name = "target.file" value = "crl-service.jar" />
 		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
 			<and>
@@ -36,7 +40,7 @@
 
 		<path id="project.class.path">
 			<pathelement location="${JEE_LIB}"/>
-			<pathelement location="../libs/nharujca.jar" />
+			<pathelement location="${OUTPUT}/nharujca.jar" />
 			<pathelement location="${PICKETBOX}" />
 		</path>
 

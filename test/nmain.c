@@ -1,7 +1,7 @@
 #include "test.h"
 #include <stdio.h>
 
-int main(int argv, char **argc)
+int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
 	int rv = NH_OK;
 	printf("Testing Nharu Library...\n");

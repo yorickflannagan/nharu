@@ -449,7 +449,7 @@ static unsigned char qmp_value[] =
 };
 const static NH_BLOB qmp = { qmp_value, sizeof(qmp_value) };
 
-NH_RV sign(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
+NH_RV sign(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_ _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
 {
 	NH_RV rv;
 	NH_RSA_PRIVKEY_HANDLER hHandler;
@@ -639,7 +639,7 @@ static unsigned char privkey_info[] =
 	0x82, 0x09, 0x4D, 0xC6, 0xB0, 0xA1, 0xA0, 0x2D, 0x5B, 0x66, 0x08, 0xFF, 0x96, 0x63, 0x2D, 0x79
 };
 #define PLAINTEXT		"Plain text\n"
-NH_RV decrypt(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _IN_ void *params, _OUT_ unsigned char *plaintext, _INOUT_ size_t *plainSize)
+NH_RV decrypt(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_ _IN_ void *params, _OUT_ unsigned char *plaintext, _INOUT_ size_t *plainSize)
 {
 	NH_RV rv;
 	NH_RSA_PRIVKEY_HANDLER hKey;

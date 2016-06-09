@@ -1,0 +1,45 @@
+SHELL = /bin/bash
+
+ifeq ($(strip $(VERSION)),)
+$(error VERSION argument required)
+endif
+JDK              = _JDK_
+OLD_PATH         = _PATH_
+export ANT_HOME  = _ANT_HOME_
+ANT_CONTRIB_LIB  = _ANT_CONTRIB_
+OUTPUT           = _OUTPUT_
+JEE_LIB          = _JEE_LIB_
+PICKETBOX        = _PICKETBOX_
+
+
+ifeq ($(strip $(JAVA_HOME)),)
+export JAVA_HOME = $(JDK)
+endif
+PATH             = $(JDK);$(OLD_PATH)
+ANT              = $(ANT_HOME)/bin/ant
+JCA_CMDLINE      = -DANT_CONTRIB_LIB=$(ANT_CONTRIB_LIB) -DVERSION=$(VERSION) -DOUTPUT=$(OUTPUT) -DDEBUG=$(DEBUG) -DJAVA_LOG_PATH=org.crypthing.security
+CRL_CMDLINE      = $(JCA_CMDLINE) -DJEE_LIB=$(JEE_LIB) -DPICKETBOX=$(PICKETBOX)
+
+
+.PHONY : all clean test-all
+all:
+	$(MAKE) -C src DEBUG=$(DEBUG) ALIGN=$(ALIGN)
+	$(ANT) -buildfile jca/build.xml $(JCA_CMDLINE)
+	jca/mkver $(VERSION)
+	$(MAKE) -C jca/native DEBUG=$(DEBUG)
+	$(ANT) -buildfile crl-service/build.xml $(CRL_CMDLINE)
+	$(MAKE) -C test DEBUG=$(DEBUG)
+
+clean:
+	$(MAKE) clean -C src DEBUG=$(DEBUG) ALIGN=$(ALIGN)
+	$(ANT) -buildfile jca/build.xml clean $(JCA_CMDLINE)
+	rm -f jca/native/version.c
+	$(MAKE) clean -C jca/native DEBUG=$(DEBUG)
+	$(ANT) -buildfile crl-service/build.xml clean $(CRL_CMDLINE)
+	$(MAKE) clean -C test DEBUG=$(DEBUG)
+
+test-all:
+	$(JDK)/bin/java -cp $(OUTPUT)/nharujca.jar -Djava.library.path=$(OUTPUT) org.crypthing.security.provider.NharuProvider test/signer.p12
+	test/ntest-app
+
+

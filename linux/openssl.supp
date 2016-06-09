@@ -1,0 +1,321 @@
+{
+   <RSA_new>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:CRYPTO_malloc
+   ...
+   fun:RSA_new
+   ...
+}
+{
+   <EVP_CipherInit_ex>
+   Memcheck:Value4
+   fun:DES_set_key_unchecked
+   fun:des_ede3_init_key
+   fun:EVP_CipherInit_ex
+   ...
+}
+{
+   <EVP_DecryptFinal_ex>
+   Memcheck:Cond
+   ...
+   fun:EVP_DecryptFinal_ex
+   fun:EVP_CipherFinal_ex
+   ...
+}
+{
+   <EVP_EncryptUpdate>
+   Memcheck:Value4
+   ...
+   fun:EVP_EncryptUpdate
+   fun:EVP_CipherUpdate
+   ...
+}
+{
+   <EVP_DecryptUpdate>
+   Memcheck:Value4
+   ...
+   fun:EVP_DecryptUpdate
+   fun:EVP_CipherUpdate
+   ...
+}
+{
+   <probable_prime>
+   Memcheck:Cond
+   ...
+   fun:probable_prime
+   fun:BN_generate_prime_ex
+   ...
+}
+{
+   <cond_BN_is_prime_fasttest_ex>
+   Memcheck:Cond
+   ...
+   fun:BN_is_prime_fasttest_ex
+   fun:BN_generate_prime_ex
+   ...
+}
+{
+   <rc2_init_key>
+   Memcheck:Value4
+   fun:RC2_set_key
+   fun:rc2_init_key
+   fun:EVP_CipherInit_ex
+   ...
+}
+{
+   <jump_BN_is_prime_fasttest_ex>
+   Memcheck:Value4
+   ...
+   fun:BN_is_prime_fasttest_ex
+   fun:BN_generate_prime_ex
+   ...
+}
+{
+   <RSA_generate_key_ex>
+   Memcheck:Cond
+   ...
+   fun:BN_sub
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <BN_gcd>
+   Memcheck:Cond
+   ...
+   fun:BN_gcd
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <EVP_EncryptFinal_ex>
+   Memcheck:Value4
+   ...
+   fun:EVP_EncryptFinal_ex
+   fun:EVP_CipherFinal_ex
+   ...
+}
+{
+   <val_BN_gcd>
+   Memcheck:Value4
+   ...
+   fun:BN_gcd
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <RSA_generate_key_ex>
+   Memcheck:Cond
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <BN_cmp>
+   Memcheck:Cond
+   fun:BN_cmp
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <BN_mul>
+   Memcheck:Cond
+   ...
+   fun:BN_mul
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <BN_mod_inverse>
+   Memcheck:Cond
+   ...
+   fun:BN_mod_inverse
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <BN_div>
+   Memcheck:Cond
+   ...
+   fun:BN_div
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <RSA_private_encrypt>
+   Memcheck:Cond
+   ...
+   fun:RSA_private_encrypt
+   fun:RSA_sign
+   ...
+}
+{
+   <cond_int_rsa_verify>
+   Memcheck:Cond
+   ...
+   fun:int_rsa_verify
+   fun:RSA_verify
+   ...
+}
+{
+   <OPENSSL_cleanse>
+   Memcheck:Cond
+   fun:OPENSSL_cleanse
+}
+{
+   <rsa_BN_mul>
+   Memcheck:Value4
+   ...
+   fun:BN_mul
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <val_BN_mod_inverse>
+   Memcheck:Value4
+   ...
+   fun:BN_mod_inverse
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <BN_num_bits>
+   Memcheck:Cond
+   ...
+   fun:BN_num_bits
+   fun:RSA_size
+   ...
+}
+{
+   <val_RSA_private_encrypt>
+   Memcheck:Value4
+   ...
+   fun:RSA_private_encrypt
+   fun:RSA_sign
+   ...
+}
+{
+   <d2i_X509_SIG>
+   Memcheck:Cond
+   ...
+   fun:d2i_X509_SIG
+   fun:int_rsa_verify
+   ...
+}
+{
+   <ASN1_item_d2i>
+   Memcheck:Value4
+   ...
+   fun:ASN1_item_d2i
+   fun:d2i_X509_SIG
+   ...
+}
+{
+   <cond_ASN1_item_d2i>
+   Memcheck:Cond
+   ...
+   fun:ASN1_item_ex_d2i
+   fun:ASN1_item_d2i
+   ...
+}
+{
+   <val_BN_div>
+   Memcheck:Value4
+   ...
+   fun:BN_div
+   fun:RSA_generate_key_ex
+   ...
+}
+{
+   <val_RSA_size>
+   Memcheck:Value4
+   ...
+   fun:BN_num_bits
+   fun:RSA_size
+   ...
+}
+{
+   <val_int_rsa_verify>
+   Memcheck:Value4
+   ...
+   fun:RSA_public_decrypt
+   fun:int_rsa_verify
+   ...
+}
+{
+   <BN_is_prime_exe>
+   Memcheck:Cond
+   ...
+   fun:BN_is_prime_ex
+   fun:RSA_check_key
+   ...
+}
+{
+   <val_BN_is_prime_ex>
+   Memcheck:Value4
+   ...
+   fun:BN_is_prime_ex
+   fun:RSA_check_key
+   ...
+}
+{
+   <cond_RSA_private_decrypt>
+   Memcheck:Cond
+   fun:BN_*
+   ...
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <val_RSA_private_decrypt>
+   Memcheck:Value4
+   fun:BN_*
+   ...
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <condcase_RSA_private_decrypt>
+   Memcheck:Cond
+   fun:bn_*
+   ...
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <valcase_RSA_private_decrypt>
+   Memcheck:Value4
+   fun:bn_*
+   ...
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <val_ssleay_rand_bytes>
+   Memcheck:Value4
+   fun:ssleay_rand_bytes
+   ...
+}
+{
+   <cond_ssleay_rand_bytes>
+   Memcheck:Cond
+   fun:ssleay_rand_bytes
+   ...
+}
+{
+   <cond_RSA_check_key>
+   Memcheck:Cond
+   fun:BN_*
+   ...
+   fun:RSA_check_key
+   ...
+}
+{
+   <val_RSA_check_key>
+   Memcheck:Value4
+   fun:BN_*
+   ...
+   fun:RSA_check_key
+   ...
+}
+
