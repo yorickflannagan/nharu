@@ -34,3 +34,4 @@ nharujca.exp
 Makefile
 debug
 test/ntest-app
+mem-check

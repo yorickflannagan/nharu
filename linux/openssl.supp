@@ -318,4 +318,132 @@
    fun:RSA_check_key
    ...
 }
+{
+   <val_RSA_verify>
+   Memcheck:Value4
+   ...
+   fun:asn1_*
+   ...
+   fun:RSA_verify
+   ...
+}
+{
+   <valcase_RSA_verify>
+   Memcheck:Value4
+   ...
+   fun:ASN1_*
+   ...
+   fun:RSA_verify
+   ...
+}
+{
+   <RSA_public_encrypt>
+   Memcheck:Cond
+   fun:BN_*
+   ...
+   fun:RSA_public_encrypt
+   ...
+}
+{
+   <RSA_public_encrypt_v>
+   Memcheck:Value4
+   fun:BN_*
+   ...
+   fun:RSA_public_encrypt
+   ...
+}
+{
+   <RSA_eay_private_decrypt>
+   Memcheck:Cond
+   fun:RSA_eay_private_decrypt
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <RSA_eay_private_decrypt_RSA>
+   Memcheck:Cond
+   fun:RSA_*
+   ...
+   fun:RSA_eay_private_decrypt
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <RSA_eay_private_decrypt_cpy>
+   Memcheck:Cond
+   fun:memcpy
+   fun:RSA_*
+   ...
+   fun:RSA_eay_private_decrypt
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <val_RSA_eay_private_decrypt_cpy>
+   Memcheck:Value4
+   fun:memcpy
+   fun:RSA_*
+   ...
+   fun:RSA_eay_private_decrypt
+   fun:RSA_private_decrypt
+   ...
+}
+{
+   <RSA_private_decrypt_malloc>
+   Memcheck:Cond
+   fun:CRYPTO_malloc
+   ...
+   fun:RSA_eay_private_decrypt
+   fun:RSA_private_decrypt
+   ...
+}
+
+{
+   <cond_RSA_check_key_mem>
+   Memcheck:Cond
+   fun:memset
+   fun:BN_*
+   ...
+   fun:RSA_check_key
+   ...
+}
+{
+   <val_RSA_check_key_mem>
+   Memcheck:Value4
+   fun:memset
+   fun:BN_*
+   ...
+   fun:RSA_check_key
+   ...
+}
+{
+   <RSA_check_key_leaf>
+   Memcheck:Cond
+   fun:RSA_check_key
+   ...
+}
+{
+   <condcase_RSA_check_key>
+   Memcheck:Cond
+   fun:bn_*
+   ...
+   fun:RSA_check_key
+   ...
+}
+{
+   <valcase_RSA_check_key>
+   Memcheck:Value4
+   fun:bn_*
+   ...
+   fun:RSA_check_key
+   ...
+}
+{
+   <RSA_check_key_malloc>
+   Memcheck:Cond
+   fun:CRYPTO_malloc
+   ...
+   fun:RSA_check_key
+   ...
+}
 

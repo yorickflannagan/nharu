@@ -211,4 +211,163 @@
    fun:_ZN2os6mallocEjtPh
    ...
 }
+{
+   <Z16interpreter_initv>
+   Memcheck:Cond
+   fun:_ZN5ArenaC1Ev
+   fun:_ZN10CodeBuffer21create_patch_overflowEv
+   fun:_ZN5Label12add_patch_atEP10CodeBufferi
+   fun:_ZN9Assembler3jccENS_9ConditionER5Labelb
+   fun:_ZN25InterpreterMacroAssembler11lock_objectEP12RegisterImpl
+   fun:_ZN20InterpreterGenerator11lock_methodEv
+   fun:_ZN20InterpreterGenerator21generate_normal_entryEb
+   fun:_ZN28AbstractInterpreterGenerator21generate_method_entryEN19AbstractInterpreter10MethodKindE
+   fun:_ZN28TemplateInterpreterGenerator12generate_allEv
+   fun:_ZN20InterpreterGeneratorC1EP9StubQueue
+   fun:_ZN19TemplateInterpreter10initializeEv
+   fun:_Z16interpreter_initv
+}
+{
+   <pointsEP8TemplateRPhS3>
+   Memcheck:Cond
+   fun:_ZN5ArenaC1Ev
+   fun:_ZN10CodeBuffer21create_patch_overflowEv
+   fun:_ZN5Label12add_patch_atEP10CodeBufferi
+   fun:_ZN9Assembler3jmpER5Labelb
+   fun:_ZN25InterpreterMacroAssembler30record_klass_in_profile_helperEP12RegisterImplS1_S1_iR5Labelb
+   fun:_ZN25InterpreterMacroAssembler17profile_typecheckEP12RegisterImplS1_S1_
+   fun:_ZN25InterpreterMacroAssembler17gen_subtype_checkEP12RegisterImplR5Label
+   fun:_ZN13TemplateTable7aastoreEv
+   fun:_ZN8Template8generateEP25InterpreterMacroAssembler
+   fun:_ZN28TemplateInterpreterGenerator21generate_and_dispatchEP8Template8TosState
+   fun:_ZN28TemplateInterpreterGenerator21set_vtos_entry_pointsEP8TemplateRPhS3_S3_S3_S3_S3_S3_S3_S3_
+   fun:_ZN28TemplateInterpreterGenerator22set_short_entry_pointsEP8TemplateRPhS3_S3_S3_S3_S3_S3_S3_S3_
+}
+{
+   <callEP10JavaThreadP13methodOopDesc>
+   Memcheck:Addr4
+   ...
+   fun:_ZN12NativeLookup12lookup_entryE12methodHandleRbP6Thread
+   fun:_ZN12NativeLookup11lookup_baseE12methodHandleRbP6Thread
+   fun:_ZN12NativeLookup6lookupE12methodHandleRbP6Thread
+   fun:_ZN18InterpreterRuntime19prepare_native_callEP10JavaThreadP13methodOopDesc
+}
+{
+   <ZN9JavaCalls4callEP9JavaValue12methodHandleP17JavaCallArgumentsP6Thread>
+   Memcheck:Addr4
+   ...
+   fun:_ZN9JavaCalls11call_helperEP9JavaValueP12methodHandleP17JavaCallArgumentsP6Thread
+   fun:_ZN2os20os_exception_wrapperEPFvP9JavaValueP12methodHandleP17JavaCallArgumentsP6ThreadES1_S3_S5_S7_
+   ...
+}
+{
+   <helperEP9JavaValueP12methodHandleP17JavaCallArgumentsP6Thread>
+   Memcheck:Addr4
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   ...
+   obj:*
+   obj:*
+   obj:*
+   fun:_ZN9JavaCalls11call_helperEP9JavaValueP12methodHandleP17JavaCallArgumentsP6Thread
+}
+{
+   <Shit>
+   Memcheck:Addr4
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   <ZN7Monitor7TrySpinEP6Thread>
+   Memcheck:Cond
+   fun:_ZN7Monitor7TrySpinEP6Thread
+   fun:_ZN7Monitor5ILockEP6Thread
+   fun:_ZN7Monitor28lock_without_safepoint_checkEv
+   ...
+}
+{
+   <00024NativeLibrary>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:JNI_OnLoad
+   fun:Java_java_lang_ClassLoader_00024NativeLibrary_load
+   obj:*
+   obj:*
+   obj:*
+   ...
+}
+{
+   <ZipFile_getEntry>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:newEntry
+   fun:ZIP_GetEntry
+   fun:Java_java_util_zip_ZipFile_getEntry
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+}
+{
+   <Inflater_init>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:Java_java_util_zip_Inflater_init
+   ...
+}
+{
+   <ZN18ObjectSynchronizer7omAllocEP6Thread>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:_Znwj
+   fun:_Znaj
+   fun:_ZN18ObjectSynchronizer7omAllocEP6Thread
+   fun:_ZN18ObjectSynchronizer7inflateEP6ThreadP7oopDesc
+   fun:_ZN18ObjectSynchronizer4waitE6HandlexP6Thread
+   fun:JVM_MonitorWait
+   obj:*
+   obj:*
+   obj:*
+   obj:*
+   fun:_ZN9JavaCalls11call_helperEP9JavaValueP12methodHandleP17JavaCallArgumentsP6Thread
+}
+{
+   <inflateBytes>
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:Java_java_util_zip_Inflater_inflateBytes
+   obj:*
+   obj:*
+   obj:*
+   ...
+}
+{
+   <Exit>
+   Memcheck:Free
+   fun:free
+   fun:__libc_freeres
+   fun:_vgnU_freeres
+   fun:_Exit
+}
 

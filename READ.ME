@@ -1,4 +1,11 @@
-Libidn: checkout libidn-1-32
-OpenSSL: checkout OpenSSL_1_0_2g; config options: threads no-shared -fPIC
+Libidn:
+	- requirements: autopoint, gperf, gengetopt, texinfo, help2man
+	- gettext 0.19.3: ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/gettext
+	- checkout libidn-1-32
+	- ./configure --enable-gcc-warnings
+
+OpenSSL:
+	- checkout OpenSSL_1_0_2g
+	- config options: threads no-shared -fPIC
 
 

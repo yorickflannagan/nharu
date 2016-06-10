@@ -1,0 +1,44 @@
+HOME_DIR=_HOME_DIR_
+JAVA=_JAVA_
+
+TEST_DIR="$HOME_DIR/test"
+CMD_LINE="$TEST_DIR/ntest-app"
+SUPP_SSL="--suppressions=$HOME_DIR/linux/openssl.supp"
+SUPP_FILES="$SUPP_SSL --suppressions=$HOME_DIR/linux/native.supp"
+SHOW_REACH="--show-reachable=yes"
+LOG_FILE="--log-file=valgrind.txt"
+SUPP="--gen-suppressions=no"
+
+sep='='
+while [ $# -ne 0 ]
+do
+	case $1 in
+	  (*"$sep"*)
+	    key=${1%%"$sep"*}
+	    value=${1#*"$sep"}
+	    ;;
+	  (*)
+	    key=$1
+	    value=
+	    ;;
+	esac
+	case $key in
+		(--java)
+			CMD_LINE="$JAVA -cp $HOME_DIR/jca/java-bin $TEST_DIR/signer.p12"
+			SUPP_FILES="$SUPP_SSL --suppressions=$HOME_DIR/linux/java.supp"
+			SHOW_REACH="--show-reachable=no"
+		;;
+		(--log) LOG_FILE="--log-file=$value"
+		;;
+		(--supp) SUPP="--gen-suppressions=all"
+		;;
+		(*)
+			printf "Invalid argument %s\n" "$key"
+			exit 1
+		;;
+	esac
+    shift
+done
+
+valgrind  --leak-check=full --track-origins=yes --error-limit=no --num-callers=24 --smc-check=all $SHOW_REACH $SUPP $SUPP_FILES $LOG_FILE $CMD_LINE
+
