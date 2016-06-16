@@ -71,7 +71,7 @@ sub	environment
 	my $doc = shift;
 	my $result = $doc->find( "/configure/environment/env" );
 	my XML::LibXML::Element $node;
-	my $exporting = "#!/bin/bash\n";
+	my $exporting = "";
 	my $scriptfile = ($doc->find("/configure/environment" )->get_nodelist())[0]->getAttribute('scriptfile');
 	
 	
@@ -99,7 +99,11 @@ sub	environment
 	        $LOG .= "Exported variables : \n";
 			$LOG .= "------------------------------------------------------------------------------------\n";
 			$LOG .= "$exporting\n\n";	        
-	        write_file($scriptfile, $exporting);
+			if("" ne "$exporting")
+			{
+				$exporting = "#!/bin/bash\n" . $exporting;
+	        		write_file($scriptfile, $exporting);
+	        	}
 	}
 	return 0;	
 	
