@@ -71,8 +71,11 @@ public final class NharuCertStore extends CertStoreSpi implements TrustedStore
 				while (it.hasNext())
 				{
 					final NharuX509Certificate cert = it.next();
-					certStore.put(cert.getSubject(), cert);
-					temp.add(cert);
+					if (cert.getBasicConstraints() != -1)
+					{
+						certStore.put(cert.getSubject(), cert);
+						temp.add(cert);
+					}
 				}
 			}
 			else
@@ -82,8 +85,11 @@ public final class NharuCertStore extends CertStoreSpi implements TrustedStore
 				{
 					
 					final NharuX509Certificate cert = NharuX509Factory.generateCertificate(certs.next());
-					certStore.put(cert.getSubject(), cert);
-					temp.add(cert);
+					if (cert.getBasicConstraints() != -1)
+					{
+						certStore.put(cert.getSubject(), cert);
+						temp.add(cert);
+					}
 				}
 				final Iterator<byte[]> crls = ((DERX509CollectionParams) params).getCRLs();
 				while (crls.hasNext())

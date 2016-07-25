@@ -57,7 +57,7 @@ if [ -n "$SCAN" ]; then
 	printf "%s" "">"$CUR/.gdbinit"
 	SRC_IDN=$(dirname $(dirname $(find . -name id.po.in)))
 	SRC_SSL=$(dirname $(dirname $(find . -name install-ssl.com)))
-	SOURCES=$(find $1 -name "*.[c|h]" -exec dirname {} + | sort | uniq | grep -v "$OPENSSL" | grep -v "$IDN" | grep -v "$SRC_IDN" | grep -v "$SRC_SSL")
+	SOURCES=$(find $HOME_DIR -name "*.[c|h]" -exec dirname {} + | sort | uniq | grep -v "$OPENSSL" | grep -v "$IDN" | grep -v "$SRC_IDN" | grep -v "$SRC_SSL")
 	printf '%s\n' "$SOURCES" | while IFS= read -r line
 	do
 	   printf "directory %s\n" "$line">>"$CUR/.gdbinit"

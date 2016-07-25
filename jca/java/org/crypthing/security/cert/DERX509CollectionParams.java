@@ -66,7 +66,10 @@ public final class DERX509CollectionParams implements CertStoreParameters
 				else if (ks.isKeyEntry(alias))
 				{
 					Certificate[] chain = ks.getCertificateChain(alias);
-					if (chain != null && chain.length > 0) certs.add(chain[0].getEncoded());
+					if (chain != null)
+					{
+						for (int i = 0; i < chain.length; i++) certs.add(chain[i].getEncoded());
+					}
 				}
 			}
 			catch (final CertificateEncodingException e)
