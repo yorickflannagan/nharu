@@ -1,5 +1,6 @@
 package org.crypthing.util;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 import org.crypthing.security.provider.NharuProvider;
@@ -36,7 +37,9 @@ public class NharuArrays
 	public static byte[] toBase64(final byte[] data)
 	{
 		if (data == null) throw new NullPointerException();
-		return nhToBase64(data);
+		final byte[] b64 = nhToBase64(data);
+		if (b64.length < 73) return Arrays.copyOf(b64, b64.length - 1);
+		return b64;
 	}
 
 

@@ -59,6 +59,7 @@
 /** ****************************
  *  Java Exceptions
  *  ****************************/
+#define J_NATIVE_ERROR			"Unexpected error occurred in native implementation"
 #define J_DEREF_ERROR			"Could not dereference Java type"
 #define J_NEW_ERROR			"Could not instantiate Java type"
 #define J_PARSE_ERROR			"An unexpected error has occurred during parsing"
@@ -79,6 +80,7 @@
 #define J_CMS_DECRYPT_ERROR		"Could not decrypt CMS EnvelopedData document"
 #define J_CMS_ENCRYPT_ERROR		"Could not encrypt CMS contents"
 
+#define J_NATIVE_EX			"java/lang/Error"
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
 #define J_OUTOFMEM_EX			"java/lang/OutOfMemoryError"
 #define J_CERTIFICATE_EX		"java/security/cert/CertificateException"

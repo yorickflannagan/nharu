@@ -1,5 +1,9 @@
 package org.crypthing.security.provider;
 
+import static org.crypthing.security.LogDevice.LOG_LEVEL;
+import static org.crypthing.security.LogDevice.LOG_LEVEL_DEBUG;
+import static org.crypthing.security.LogDevice.LOG_LEVEL_NONE;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -14,11 +18,6 @@ import org.crypthing.security.x509.NharuPKIBRParser;
 import org.crypthing.security.x509.NharuX509CRL;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuArrays;
-
-import static org.crypthing.security.LogDevice.LOG_LEVEL;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_DEBUG;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
-import static org.crypthing.security.LogDevice.LOG_LEVEL_NONE;
 
 
 public final class NharuProvider extends Provider
@@ -111,20 +110,29 @@ public final class NharuProvider extends Provider
 		put("TrustManagerFactory.PKIX", "org.crypthing.security.x509.NharuTrustManagerFactory");
 		put("Alg.Alias.TrustManagerFactory.SunPKIX", "PKIX");
 		put("Alg.Alias.TrustManagerFactory.X509", "PKIX");
-		put("Alg.Alias.TrustManagerFactory.X.509", "PKIX");	
+		put("Alg.Alias.TrustManagerFactory.X.509", "PKIX");
 
-//		paramMap.put("CertPathBuilder.PKIX", "sun.security.provider.certpath.SunCertPathBuilder");
-//		paramMap.put("CertPathBuilder.PKIX ValidationAlgorithm", "RFC3280");
-//		paramMap.put("CertPathValidator.PKIX", "sun.security.provider.certpath.PKIXCertPathValidator");
-//		paramMap.put("CertPathValidator.PKIX ValidationAlgorithm", "RFC3280");
-//		paramMap.put("CertPathValidator.PKIX ImplementedIn", "Software");
-//		paramMap.put("CertPathBuilder.PKIX ImplementedIn", "Software");
-
+		put("MessageDigest.MD5", "org.crypthing.security.provider.NharuDigest$MD5");
+		put("MessageDigest.SHA", "org.crypthing.security.provider.NharuDigest$SHA");
+		put("Alg.Alias.MessageDigest.SHA-1", "SHA");
+		put("Alg.Alias.MessageDigest.SHA1", "SHA");
+		put("MessageDigest.SHA-256", "org.crypthing.security.provider.NharuDigest$SHA256");
+		put("MessageDigest.SHA-384", "org.crypthing.security.provider.NharuDigest$SHA384");
+		put("MessageDigest.SHA-512", "org.crypthing.security.provider.NharuDigest$SHA512");
 
 	}
 
 
 /*
+
+	paramMap.put("CertPathBuilder.PKIX", "sun.security.provider.certpath.SunCertPathBuilder");
+	paramMap.put("CertPathBuilder.PKIX ValidationAlgorithm", "RFC3280");
+	paramMap.put("CertPathValidator.PKIX", "sun.security.provider.certpath.PKIXCertPathValidator");
+	paramMap.put("CertPathValidator.PKIX ValidationAlgorithm", "RFC3280");
+	paramMap.put("CertPathValidator.PKIX ImplementedIn", "Software");
+	paramMap.put("CertPathBuilder.PKIX ImplementedIn", "Software");
+
+    
     String str = "java.security.interfaces.DSAPublicKey|java.security.interfaces.DSAPrivateKey";
 
     paramMap.put("SecureRandom.NativePRNG", "sun.security.provider.NativePRNG");
@@ -150,15 +158,6 @@ public final class NharuProvider extends Provider
     paramMap.put("Alg.Alias.KeyPairGenerator.OID.1.2.840.10040.4.1", "DSA");
     paramMap.put("Alg.Alias.KeyPairGenerator.1.2.840.10040.4.1", "DSA");
     paramMap.put("Alg.Alias.KeyPairGenerator.1.3.14.3.2.12", "DSA");
-
-    paramMap.put("MessageDigest.MD2", "sun.security.provider.MD2");
-    paramMap.put("MessageDigest.MD5", "sun.security.provider.MD5");
-    paramMap.put("MessageDigest.SHA", "sun.security.provider.SHA");
-    paramMap.put("Alg.Alias.MessageDigest.SHA-1", "SHA");
-    paramMap.put("Alg.Alias.MessageDigest.SHA1", "SHA");
-    paramMap.put("MessageDigest.SHA-256", "sun.security.provider.SHA2");
-    paramMap.put("MessageDigest.SHA-384", "sun.security.provider.SHA5$SHA384");
-    paramMap.put("MessageDigest.SHA-512", "sun.security.provider.SHA5$SHA512");
 
     paramMap.put("AlgorithmParameterGenerator.DSA", "sun.security.provider.DSAParameterGenerator");
     paramMap.put("AlgorithmParameters.DSA", "sun.security.provider.DSAParameters");
@@ -268,6 +267,8 @@ public final class NharuProvider extends Provider
 		System.setProperty("javax.net.ssl.keyStorePassword", "secret");
 		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
 		CMSDocument.main(new String[0]);
+		System.out.println("====================================================================");
+		NharuDigest.main(new String[0]);
 		System.out.println("====================================================================");
 		org.crypthing.security.x509.CacheCleaner.debugShutDown();
 		try { Thread.sleep(1000); }
