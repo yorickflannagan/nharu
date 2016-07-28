@@ -25,11 +25,12 @@ INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize l
 	if (idx == 0)							/* PEM without armour? Just a base64 encoding... Support legacy MIME multipart/signed */
 	{
 		*start = jbuffer;
-		return len;
+		*end = len - 1;
+		return 0;
 	}
 	while (jbuffer[idx] != 0x2D && idx < len) idx++;	/* Remove BEGIN XXXX */
 	while (jbuffer[idx] == 0x2D && idx < len) idx++;	/* Remove ---- */
-	if (idx == 0 || idx == len) return 0;
+	if (idx == 0 || idx == len) return -1;
 	*start = &jbuffer[idx];
 	armourlen = idx;
 	while (jbuffer[idx] != 0x2D && idx < len)
@@ -51,7 +52,7 @@ INLINE NH_UTILITY(jsize, pem_to_DER)(_INOUT_ jbyte *jbuffer, _IN_ jsize len)
 	base64_decodestate state_in;
 
 	if (jbuffer[0] == 0x30) return len;
-	if (remove_PEM_armour(jbuffer, len, &inbuffer, &newlen) > 0)
+	if (remove_PEM_armour(jbuffer, len, &inbuffer, &newlen) != -1)
 	{
 		base64_init_decodestate(&state_in);
 		newlen = base64_decode_block((char*) inbuffer, newlen, (char*) jbuffer, &state_in);
