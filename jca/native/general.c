@@ -16,7 +16,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_nharuI
 /** ****************************
  *  Utilities
  *  ****************************/
-INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize len, _OUT_ jbyte **start, _OUT_ jsize *end)
+INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize len, _OUT_ jbyte **start, _OUT_ jsize *newlen)
 {
 	jint idx = 0;
 	jsize nlen = 0, armourlen;
@@ -25,7 +25,7 @@ INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize l
 	if (idx == 0)							/* PEM without armour? Just a base64 encoding... Support legacy MIME multipart/signed */
 	{
 		*start = jbuffer;
-		*end = len - 1;
+		*newlen = len;
 		return 0;
 	}
 	while (jbuffer[idx] != 0x2D && idx < len) idx++;	/* Remove BEGIN XXXX */
@@ -38,7 +38,7 @@ INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize l
 		idx++;
 		nlen++;
 	}
-	*end = nlen;
+	*newlen = nlen;
 	return armourlen;
 }
 
