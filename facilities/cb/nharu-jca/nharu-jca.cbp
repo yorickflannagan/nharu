@@ -19,12 +19,12 @@
 					<Add option="-g" />
 				</Compiler>
 				<MakeCommands>
-					<Build command="$make -f $makefile DEBUG=1" />
-					<CompileFile command="$make -f $makefile $file DEBUG=1" />
-					<Clean command="$make -f $makefile clean DEBUG=1" />
+					<Build command="$make -f $makefile DEBUG=1 VERSION=1.1.0" />
+					<CompileFile command="$make -f $makefile $file DEBUG=1 VERSION=1.1.0" />
+					<Clean command="$make -f $makefile clean DEBUG=1 VERSION=1.1.0" />
 					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile DEBUG=1" />
-					<SilentBuild command="$make -f $makefile DEBUG=1 &gt; $(CMD_NULL)" />
+					<AskRebuildNeeded command="$make -q -f $makefile DEBUG=1 VERSION=1.1.0" />
+					<SilentBuild command="$make -f $makefile DEBUG=1 VERSION=1.1.0 &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 			<Target title="Release">
@@ -74,6 +74,9 @@
 		<Unit filename="../../../jca/native/crc.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../../jca/native/crypto_glue.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../../jca/native/general.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -81,6 +84,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../jca/native/jcms.h">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../../jca/native/jcrypto.h">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../../jca/native/sb8/crc.h">
