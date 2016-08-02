@@ -44,7 +44,7 @@ if [ -n "$SCAN" -o ! -f "$CUR/.gdbinit" ]; then
 	SCAN="true"
 fi
 if [ "$TEST" = "java" ]; then
-	GDB_ARGS="$JAVA -cp $HOME_DIR/jca/java-bin $TEST_DIR/signer.p12"
+	GDB_ARGS="$JAVA -cp $LIBS/nharujca.jar -Djava.library.path=$LIBS org.crypthing.security.provider.NharuProvider $TEST_DIR/signer.p12"
 fi
 
 
@@ -67,5 +67,5 @@ if [ -f "$CUR/breaks" ]
 then
 	cat  "$CUR/breaks" >>"$CUR/.gdbinit"
 fi
-gdb --args "$GDB_ARGS"
+gdb --args $GDB_ARGS
 

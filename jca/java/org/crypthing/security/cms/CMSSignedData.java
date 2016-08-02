@@ -4,19 +4,22 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 
 import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.cert.TrustedStore;
 import org.crypthing.security.provider.NharuProvider;
+import org.crypthing.security.x509.NativeParent;
 import org.crypthing.security.x509.NharuX509Certificate;
+import org.crypthing.security.x509.NharuX509Factory;
 
 /**
  * Parses a CMS SignedData document
  * @author magut
  *
  */
-public final class CMSSignedData
+public final class CMSSignedData implements NativeParent
 {
 	static { NharuProvider.isLoaded(); }
 	private long hHandle;
@@ -33,6 +36,9 @@ public final class CMSSignedData
 	private static native void nhcmsValidateAttached(long handle) throws CMSInvalidAttributesException;
 	private static native int nhcmsCountSigners(long handle);
 	private static native long nhcmsGetSignerCertificate(long handle, int idx);
+	private static native long nhcmsGetIssuerNode(long handle);
+	private native SignerIdentifier nhcmsGetSignerIdentifier(long handle, int idx) throws CMSParsingException;
+	private static native boolean nhcmsHasCertificates(long handle);
 
 	private byte[] content;
 	private int signers;
@@ -60,7 +66,7 @@ public final class CMSSignedData
 
 	/**
 	 * Gets CertificateSet field, if any.
-	 * @return embbeded certificates or null, if they are not present.
+	 * @return embedded certificates or null, if they are not present.
 	 */
 	public X509Certificate[] getCertificates()
 	{
@@ -75,6 +81,12 @@ public final class CMSSignedData
 		return ret;
 	}
 
+	public boolean hasCertificatesAttached()
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return nhcmsHasCertificates(hHandle);
+	}
+
 	/**
 	 * Verifies document signature. Only cryptographic signature is checked. To check signed attributes, use verify().
 	 * @param store: trusted certificates store.
@@ -83,6 +95,7 @@ public final class CMSSignedData
 	 */
 	private void verifySignature(final TrustedStore store) throws UntrustedCertificateException, CMSSignatureException
 	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		if (store == null) throw new NullPointerException("Argument must not be null");
 		final int count = countSigners();
 		for (int i = 0; i < count; i++)
@@ -94,7 +107,7 @@ public final class CMSSignedData
 	}
 
 	/**
-	 * Verificates this signed document. EncapsulatedContentInfo must be present.
+	 * Verifies this signed document. EncapsulatedContentInfo must be present.
 	 * @param store: trusted certificates store.
 	 * @throws UntrustedCertificateException
 	 * @throws CMSSignatureException
@@ -107,7 +120,7 @@ public final class CMSSignedData
 	}
 
 	/**
-	 * Verificates this signed document using specified content
+	 * Verify this signed document using specified content
 	 * @param eContent: EncapsulatedContentInfo eContent.
 	 * @param store: trusted certificates store.
 	 * @throws UntrustedCertificateException
@@ -116,9 +129,26 @@ public final class CMSSignedData
 	 */
 	public void verify(final byte[] eContent, final TrustedStore store) throws UntrustedCertificateException, CMSSignatureException, CMSInvalidAttributesException
 	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		if(eContent == null) throw new NullPointerException("Arguments must not be null");
 		verifySignature(store);
 		nhcmsValidate(hHandle, eContent);
+	}
+
+	public void verfiy(final byte[] eContent, final CertificateResolver callback) throws CMSParsingException, CertificateException, CMSSignatureException, CMSInvalidAttributesException
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		final int count = countSigners();
+		for (int i = 0; i < count; i++)
+		{
+			final X509Certificate cert = callback.getCertificate(nhcmsGetSignerIdentifier(hHandle, i));
+			if (cert == null) throw new CMSSignatureException("Signer certificate not provided");
+			final NharuX509Certificate signerCert;
+			if (!(cert instanceof NharuX509Certificate)) signerCert = NharuX509Factory.generateCertificate(cert.getEncoded());
+			else signerCert = (NharuX509Certificate) cert;
+			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) signerCert.getPublicKey()).getKeyHandle());
+			nhcmsValidate(hHandle, eContent);
+		}
 	}
 
 	/**
@@ -133,7 +163,7 @@ public final class CMSSignedData
 	}
 
 	/**
-	 * Gets the embbeded certificate for specified signer info.
+	 * Gets the embedded certificate for specified signer info.
 	 * @param idx: the signer info index.
 	 * @return the signer certificate, if present.
 	 */
@@ -156,5 +186,11 @@ public final class CMSSignedData
 			nhcmsReleaseHandle(hHandle);
 			hHandle = 0;
 		}
+	}
+	@Override
+	public long getParentHandle(final X509FieldName node)
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		return nhcmsGetIssuerNode(hHandle);
 	}
 }

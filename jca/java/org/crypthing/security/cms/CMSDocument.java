@@ -865,6 +865,128 @@ public abstract class CMSDocument
 		catch (final CertificateException e) { e.printStackTrace(); }
 		return ret;
 	}
+
+	private static final String MIME = 
+		"MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAMYICKTCCAiUC\r\n" +
+		"AQEwdzByMQswCQYDVQQGEwJCUjETMBEGA1UEChMKUEtJIEJyYXppbDEfMB0GA1UECxMWUEtJIFJ1\r\n" +
+		"bGVyIGZvciBBbGwgQ2F0czEtMCsGA1UEAxMkQ29tbW9uIE5hbWUgZm9yIEFsbCBDYXRzIEVuZCBV\r\n" +
+		"c2VyIENBAgEBMAkGBSsOAwIaBQCggYgwGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG\r\n" +
+		"9w0BCQUxDxcNMTYwNzI1MTMzNTM0WjAjBgkqhkiG9w0BCQQxFgQUQh5rOzgG0bqy9AdfWc2GCeW9\r\n" +
+		"fJUwKQYJKoZIhvcNAQk0MRwwGjAJBgUrDgMCGgUAoQ0GCSqGSIb3DQEBAQUAMA0GCSqGSIb3DQEB\r\n" +
+		"AQUABIIBAC8VRFKb470sH5rUYnC5cS/paV110CTzd6OwP975CxcWMTIDhpbCID2Q6fcHtXwhJOG/\r\n" +
+		"oHPzz8PYopkll1jRhjyTioPBWFCV2uKSacS2v5twC0ZoeXuBURCopMopzYwolQH3L6loSAnNGqqh\r\n" +
+		"OI8IkhJz3nEI218M23GyFFI+XpOiob83I4IhRfD5sY24NvJ6A8182yxT1INbAjv4mcw4TOyutL+y\r\n" +
+		"IkqJGCZs5QSDlAm8Zzof25U3XIZ0eVFjPoIKh5Jvz/xOWhmTvEF7Og0zeQCZ1dKfDyrLpJiX9WDr\r\n" +
+		"KFt1UNw95yfUh+KOngCtJZ2TtXAOSwtRjUIde5l6OJwXN5AAAAAAAAA=";
+	private static final String CRLF = "\r\n";
+	private static final String SIGNED =
+		"Content-Type: application/EDIFACT" + CRLF +
+		"Content-Transfer-Encoding: 8bit" + CRLF +
+		"Content-Disposition: Attachment; filename=\"message.edi\"" + CRLF +
+		CRLF +
+		"UNA:+,? '" + CRLF +
+		"UNB+UNOA:2+FHPEDAL+HUBERGMBH+990802:1557+9908021557'" + CRLF +
+		"UNH+INVOIC0001+INVOIC:D:93A:UN'" + CRLF +
+		"BGM+380+9908001+9'" + CRLF +
+		"DTM+3:19990802:102'" + CRLF +
+		"RFF+ON:O0010001'" + CRLF +
+		"DTM+4:19999715:102'" + CRLF +
+		"NAD+SE++Fahrradhandel Pedal++Wagingerstr. 5+München++81549'" + CRLF +
+		"NAD+BY++Huber GmbH++Obstgasse 2+München++81549'" + CRLF +
+		"LIN+1++4711.001'" + CRLF +
+		"IMD+F++:::Fahrrad, Damen'" + CRLF +
+		"QTY+47:1:PCE'" + CRLF +
+		"MOA+66:750'" + CRLF +
+		"PRI+AAA:750'" + CRLF +
+		"LIN+2++4711.002'" + CRLF +
+		"IMD+F++:::Luftpumpe, Stand-'" + CRLF +
+		"QTY+47:1:PCE'" + CRLF +
+		"MOA+66:19,9'" + CRLF +
+		"PRI+AAA:19,9'" + CRLF +
+		"LIN+3++4711.003'" + CRLF +
+		"IMD+F++:::Ersatzventil'" + CRLF +
+		"QTY+47:3:PCE'" + CRLF +
+		"MOA+66:7,5'" + CRLF +
+		"PRI+AAA:2,5'" + CRLF +
+		"UNS+S'" + CRLF +
+		"MOA+79:777,4'" + CRLF +
+		"MOA+124:124,38'" + CRLF +
+		"MOA+128:901,78'" + CRLF +
+		"TAX+7+VAT+++:::16+S'" + CRLF +
+		"UNT+28+INVOIC0001'" + CRLF +
+		"UNZ+1+9908021557'" + CRLF + CRLF;
+	private static final String SIGNER =
+		"-----BEGIN CERTIFICATE-----" +
+		"MIIFGTCCBAGgAwIBAgIBATANBgkqhkiG9w0BAQsFADByMQswCQYDVQQGEwJCUjET" +
+		"MBEGA1UEChMKUEtJIEJyYXppbDEfMB0GA1UECxMWUEtJIFJ1bGVyIGZvciBBbGwg" +
+		"Q2F0czEtMCsGA1UEAxMkQ29tbW9uIE5hbWUgZm9yIEFsbCBDYXRzIEVuZCBVc2Vy" +
+		"IENBMB4XDTE2MDcxMjE3MzgwNFoXDTE3MDcxMjE3MzgwNFowTzELMAkGA1UEBhMC" +
+		"QlIxEzARBgNVBAoTClBLSSBCcmF6aWwxHzAdBgNVBAsTFlBLSSBSdWxlciBmb3Ig" +
+		"QWxsIENhdHMxCjAIBgNVBAMTATEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK" +
+		"AoIBAQDknj+IJSxPHbUCssNMIPjJvPjM/oeS37YIlrZITifOa7z8uxNeMIHpKq0/" +
+		"1mib03PHWgjccyp8BEZk/3Vf8pL4TtmWF8H1tRgna/FVR48DMu1Kts05wTw7hBMG" +
+		"x3qBLIXijYJey4fOPQ60ygPmfeDaZ0NoqeRC0LDnbIPjzofwCO4hyvElXv05vQaq" +
+		"AfWDxKwGxBi9Tkd+jRHE8x0n6Yz6zHvASmmyE2fm6X34qTBPAFfapkH0wbhmobcO" +
+		"He5ui1ykDz1mhF7BcBbb3Q4IPbF2ButJ8kphg5hrfatoIPTk8w/1XS1GZ7U9H1H9" +
+		"PMzVG6FYQOYY4KfN25edssIoUNAdAgMBAAGjggHbMIIB1zALBgNVHQ8EBAMCBeAw" +
+		"KQYDVR0lBCIwIAYIKwYBBQUHAwIGCCsGAQUFBwMEBgorBgEEAYI3FAICMB0GA1Ud" +
+		"DgQWBBRSApFIZJsY7MmXmR419IKniXsZcjAfBgNVHSMEGDAWgBS/t1eTgi7zYUIj" +
+		"ejSY8mVIlv4eqjCBjAYDVR0RBIGEMIGBoBkGBWBMAQMDoBAEDjM5MDE2MTExODg5" +
+		"MjIyoBcGBWBMAQMHoA4EDDcyMTY0MjMzMzcyOKAMBgVgTAEDAqADBAExoD0GBWBM" +
+		"AQMEoDQEMjA4MTIxOTg3NTAwMzMzMTYyMjM2NTM2NzM3NTY1OTAyNzAxMTU1MjU1" +
+		"MTA3M0RJS1JKMGYGA1UdIARfMF0wWwYGYEwBAgMIMFEwTwYIKwYBBQUHAgEWQ2h0" +
+		"dHA6Ly9jZXJ0aWZpY2Fkb2RpZ2l0YWwuY2FpeGEuZ292LmJyL2RvY3VtZW50b3Mv" +
+		"ZHBjYWMtY2FpeGFwZi5wZGYwLAYDVR0fBCUwIzAhoB+gHYYbaHR0cDovL2xvY2Fs" +
+		"aG9zdC9hYy9lbmQuY3JsMDgGCCsGAQUFBwEBBCwwKjAoBggrBgEFBQcwAoYcaHR0" +
+		"cDovL2xvY2FsaG9zdC9hYy9lbmQuaHRtbDANBgkqhkiG9w0BAQsFAAOCAQEAKpZD" +
+		"X0qRYcw3ZgTY3660+xgeaEM6qdx8hQv2c986YbaRgJ8VQ3bqfCfJ4FsrBfFagt2P" +
+		"STCnAW4tOkhhfYdXDAPzCZcm4WUih+zHLFNSYFaUxYp/dK5vc6NsYSmyO7l0Prn9" +
+		"vsBONngnTSnOA2cMkQaumDy8zzK3K4JyAKPG0FtDzIkDSVUkxLJSHXBOiRAhV+GE" +
+		"o0B6XhM+ueInZUhSL9LeG6qI5ZtP0nvBLeWniEKGfPC1NZutdUdb3dLLToR10NV+" +
+		"zcVF4IR872/AgZDqIRZ9lLB1f2Ka2Y82iaZJ6Th7LndbVQLtpMhRafhSxcLyzF4R" +
+		"pJBJXquUBk2vrQ/bBw==" +
+		"-----END CERTIFICATE-----";
+	private static boolean indefiniteFormTest()
+	{
+		boolean ret = false;
+		System.out.print("CMSSignedData indefinite length form parsing test... ");
+		CMSSignedData doc;
+		try
+		{
+			doc = new CMSSignedData(NharuArrays.fromBase64(MIME.getBytes()));
+			try
+			{
+				if (!doc.hasCertificatesAttached())
+				{
+					doc.verfiy(SIGNED.getBytes(), new CertificateResolver()
+					{
+						@Override
+						public X509Certificate getCertificate(final SignerIdentifier signer)
+						{
+							final IssuerAndSerialNumber sid = signer.getIssuer();
+							if (sid == null) return null;
+							try
+							{
+								final NharuX509Certificate cert = NharuX509Factory.generateCertificate(SIGNER.getBytes());
+								final IssuerAndSerialNumber issuer = new IssuerAndSerialNumber(cert.getIssuer(), cert.getSerial());
+								if (sid.equals(issuer)) return cert;
+							}
+							catch (final CertificateException e) { e.printStackTrace(); return null; }
+							return null;
+						}
+					});
+					System.out.println("Done!");
+					ret = true;
+				}
+				else System.out.println("Failed because CMS has certificates attached");
+			}
+			catch (final CMSSignatureException | CMSInvalidAttributesException | CertificateException e) { e.printStackTrace(); }
+			finally { doc.releaseDocument(); }
+		}
+		catch (final CMSParsingException e) { e.printStackTrace(); }
+		return ret;
+	}
+
 	public static void main(final String[] args)
 	{
 		boolean success = parsingTest();
@@ -872,5 +994,6 @@ public abstract class CMSDocument
 		if (success) success = generateTest();
 		if (success) success = parsingOpenSSLEnvelopedTest();
 		if (success) success = encryptTest();
+		if (success) success = indefiniteFormTest();
 	}
 }

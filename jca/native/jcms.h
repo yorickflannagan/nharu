@@ -137,6 +137,25 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsCountS
  * Signature: (JI)J
  */
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerCertificate(JNIEnv *, jclass, jlong, jint);
+/*
+ * Class:     org_crypthing_security_cms_CMSSignedData
+ * Method:    nhcmsGetIssuerNode
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetIssuerNode(JNIEnv*, jclass, jlong);
+
+/*
+ * Class:     org_crypthing_security_cms_CMSSignedData
+ * Method:    nhcmsGetSignerIdentifier
+ * Signature: (JI)Lorg/crypthing/security/cms/SignerIdentifier;
+ */
+JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerIdentifier(JNIEnv*, jobject, jlong, jint);
+/*
+ * Class:     org_crypthing_security_cms_CMSSignedData
+ * Method:    nhcmsHasCertificates
+ * Signature: (J)Z
+ */
+JNIEXPORT jboolean JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsHasCertificates(JNIEnv*, jclass, jlong);
 
 
 

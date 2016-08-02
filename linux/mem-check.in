@@ -1,5 +1,6 @@
 HOME_DIR=_HOME_DIR_
 JAVA=_JAVA_
+LIBS=_LIBS_
 
 TEST_DIR="$HOME_DIR/test"
 CMD_LINE="$TEST_DIR/ntest-app"
@@ -24,7 +25,7 @@ do
 	esac
 	case $key in
 		(--java)
-			CMD_LINE="$JAVA -cp $HOME_DIR/jca/java-bin $TEST_DIR/signer.p12"
+			CMD_LINE="$JAVA -cp $LIBS/nharujca.jar -Djava.library.path=$LIBS org.crypthing.security.provider.NharuProvider $TEST_DIR/signer.p12"
 			SUPP_FILES="$SUPP_SSL --suppressions=$HOME_DIR/linux/java.supp"
 			SHOW_REACH="--show-reachable=no"
 		;;

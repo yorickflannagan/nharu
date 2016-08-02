@@ -26,6 +26,41 @@ INLINE NH_UTILITY(jlong, nharu_to_java_handler)(JNIEnv *env, _IN_ NH_CERTIFICATE
 	return ret;
 }
 
+INLINE NH_UTILITY(jobject, get_issuer_serial)(JNIEnv *env, _IN_ NH_CMS_ISSUER_SERIAL issuer, jobject instance)
+{
+	jbyteArray serial;
+	jclass namez, issuerz;
+	jmethodID ctorName, ctorIssuer;
+	jobject ret = NULL, namenew;
+
+	if ((serial = get_node_value(env, issuer->serial)))
+	{
+		if
+		(
+			(namez = (*env)->FindClass(env, "org/crypthing/security/x509/NharuX509Name")) &&
+			(issuerz = (*env)->FindClass(env, "org/crypthing/security/cms/IssuerAndSerialNumber"))
+		)
+		{
+			if
+			(
+				(ctorName = (*env)->GetMethodID(env, namez, "<init>", "(Lorg/crypthing/security/x509/NativeParent;)V")) &&
+				(ctorIssuer = (*env)->GetMethodID(env, issuerz, "<init>", "(Lorg/crypthing/security/x509/NharuX509Name;[B)V"))
+
+			)
+			{
+				if
+				(
+					!(namenew = (*env)->NewObject(env, namez, ctorName, instance)) ||
+					!(ret = (*env)->NewObject(env, issuerz, ctorIssuer, namenew, serial))
+				)	throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+			}
+			else throw_new(env, J_METH_NOT_FOUND_EX, J_METH_NOT_FOUND_ERROR, 0);
+		}
+		else throw_new(env, J_CLASS_NOT_FOUND_EX, J_CLASS_NOT_FOUND_ERROR, 0);
+	}
+	return ret;
+}
+
 JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSDocument_nhcmsDiscover
 (
 	JNIEnv *env,
@@ -245,6 +280,75 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSi
 		NH_SUCCESS(hHandler->hCMS->get_cert(hHandler->hCMS, sid, &hCert))
 	)	ret = nharu_to_java_handler(env, hCert);
 	return ret;
+}
+
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetIssuerNode(JNIEnv *env, _UNUSED_ jclass c, jlong handle)
+{
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
+	NH_CMS_ISSUER_SERIAL issuer;
+	NH_RV rv;
+	jlong ret = 0L;
+
+	if (NH_SUCCESS(rv = hHandler->hCMS->get_sid(hHandler->hCMS, 0, &issuer))) ret = (jlong) issuer->name;
+	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+	return ret;
+}
+
+JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerIdentifier
+(
+	JNIEnv *env,
+	jobject instance,
+	jlong handle,
+	jint idx
+)
+{
+	JNH_CMSSD_PARSING_HANDLER hHandler = (JNH_CMSSD_PARSING_HANDLER) handle;
+	NH_RV rv;
+	NH_CMS_ISSUER_SERIAL sid;
+	jclass classz;
+	jmethodID ctor;
+	char *sig;
+	void *arg;
+	jobject ret = NULL;
+
+	if (NH_SUCCESS(rv = hHandler->hCMS->get_sid(hHandler->hCMS, idx, &sid)))
+	{
+		if ((classz = (*env)->FindClass(env, "org/crypthing/security/cms/SignerIdentifier")))
+		{
+			if (sid->keyIdentifier)
+			{
+				sig = "([B)V";
+				if (!(arg = get_node_value(env, sid->keyIdentifier))) return ret;
+			}
+			else
+			{
+				sig = "(Lorg/crypthing/security/cms/IssuerAndSerialNumber;)V";
+				if (!(arg = get_issuer_serial(env, sid, instance))) return ret;
+			}
+			if ((ctor = (*env)->GetMethodID(env, classz, "<init>", sig)))
+			{
+				if (!(ret = (*env)->NewObject(env, classz, ctor, arg))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+			}
+			else throw_new(env, J_METH_NOT_FOUND_EX, J_METH_NOT_FOUND_ERROR, 0);
+		}
+		else throw_new(env, J_CLASS_NOT_FOUND_EX, J_CLASS_NOT_FOUND_ERROR, 0);
+	}
+	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+	return ret;
+}
+
+JNIEXPORT jboolean JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsHasCertificates
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	return
+	(
+		((JNH_CMSSD_PARSING_HANDLER) handle)->hCMS->certificates &&
+		(((JNH_CMSSD_PARSING_HANDLER) handle)->hCMS->certificates->child)
+	);
 }
 
 
@@ -566,39 +670,9 @@ JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_getRI
 	JNH_CMSENV_PARSING_HANDLER hHandler = (JNH_CMSENV_PARSING_HANDLER) handle;
 	NH_CMS_ISSUER_SERIAL issuer;
 	NH_RV rv;
-	jbyteArray serial;
-	jclass namez, issuerz;
-	jmethodID ctorName, ctorIssuer;
-	jobject ret = NULL, namenew;
+	jobject ret = NULL;
 
-	if (NH_SUCCESS(rv = hHandler->hCMS->get_rid(hHandler->hCMS, 0, &issuer)))
-	{
-		if ((serial = get_node_value(env, issuer->serial)))
-		{
-			if
-			(
-				(namez = (*env)->FindClass(env, "org/crypthing/security/x509/NharuX509Name")) &&
-				(issuerz = (*env)->FindClass(env, "org/crypthing/security/cms/IssuerAndSerialNumber"))
-			)
-			{
-				if
-				(
-					(ctorName = (*env)->GetMethodID(env, namez, "<init>", "(Lorg/crypthing/security/x509/NativeParent;)V")) &&
-					(ctorIssuer = (*env)->GetMethodID(env, issuerz, "<init>", "(Lorg/crypthing/security/x509/NharuX509Name;[B)V"))
-
-				)
-				{
-					if
-					(
-						!(namenew = (*env)->NewObject(env, namez, ctorName, instance)) ||
-						!(ret = (*env)->NewObject(env, issuerz, ctorIssuer, namenew, serial))
-					)	throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-				}
-				else throw_new(env, J_METH_NOT_FOUND_EX, J_METH_NOT_FOUND_ERROR, 0);
-			}
-			else throw_new(env, J_CLASS_NOT_FOUND_EX, J_CLASS_NOT_FOUND_ERROR, 0);
-		}
-	}
+	if (NH_SUCCESS(rv = hHandler->hCMS->get_rid(hHandler->hCMS, 0, &issuer))) ret = get_issuer_serial(env, issuer, instance);
 	else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
 	return ret;
 }

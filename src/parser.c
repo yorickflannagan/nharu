@@ -76,6 +76,65 @@ NH_UTILITY(NH_ASN1_NODE_STR*, NH_add_to_set)(_IN_ NH_CARGO_CONTAINER hContainer,
 	return node;
 }
 
+#define UNDEFINITE_SIZE		-1
+#define ERROR_SIZE		-2
+INLINE NH_UTILITY(int, READ_SIZE)(_IN_ unsigned char *buffer, _IN_ unsigned char *limit, _OUT_ unsigned int *skip)
+{
+	unsigned int len_byte, roll = 0;
+	int size = 0;
+
+	*skip = 1;
+	len_byte = *buffer;
+	if (!(len_byte & 0x80)) return len_byte;
+	len_byte &= 0x7F;
+	if (buffer + len_byte > limit) return ERROR_SIZE;
+	switch (len_byte)
+	{
+	case 4:
+		size = *(buffer + 4) << roll;
+		roll += 0x08;
+		(*skip)++;
+	case 3:
+		size |= *(buffer + 3) << roll;
+		roll += 0x08;
+		(*skip)++;
+	case 2:
+		size |= *(buffer + 2) << roll;
+		roll += 0x08;
+		(*skip)++;
+	case 1:
+		size |= *(buffer + 1) << roll;
+		(*skip)++;
+		break;
+	case 0: return UNDEFINITE_SIZE;
+	default: return ERROR_SIZE;
+	}
+	return size;
+}
+
+NH_UTILITY(int, read_indefinite_size)(_IN_ unsigned char *buffer, _IN_ unsigned char *limit)
+{
+	int size, acc = 0;
+	unsigned int skip;
+	unsigned char *current = (unsigned char*) buffer;
+
+	while (current < limit && (*current || *(current + 1)))
+	{
+		size = READ_SIZE(current + 1, limit, &skip);
+		if (size == UNDEFINITE_SIZE && current < limit)
+		{
+			if (!ASN_IS_CONSTRUCTED(*(current))) return ERROR_SIZE;
+			size = read_indefinite_size(current + 2, limit);
+			skip = 3;
+		}
+		if (size == ERROR_SIZE) return size;
+		acc += size + skip + 1;
+		current += (skip + size + 1);
+	}
+	if (current == limit) return ERROR_SIZE;
+	return acc;
+}
+
 NH_UTILITY(NH_RV, NH_read_size)
 (
 	_IN_ unsigned char *buffer,
@@ -85,47 +144,20 @@ NH_UTILITY(NH_RV, NH_read_size)
 	_OUT_ unsigned char **next
 )
 {
-	unsigned int len_byte, skip = 0, pos = 1, roll = 0;
+	unsigned int skip, eoc = 0, msize;
 
 	if (!(buffer && last_byte && size && contents && next)) return NH_INVALID_ARG;
-	len_byte = *buffer;
-	if (!(len_byte & 0x80)) *size = len_byte;
-	else
+	msize = READ_SIZE(buffer, last_byte, &skip);
+	if (msize == UNDEFINITE_SIZE)
 	{
-		len_byte &= 0x7F;
-		if (buffer + len_byte > last_byte) return NH_SMALL_DER_ENCODING;
-		*size = 0;
-		switch (len_byte)
-		{
-		case 4:
-			*size = *(buffer + 4) << roll;
-			roll += 0x08;
-			pos++;
-		case 3:
-			*size |= *(buffer + 3) << roll;
-			roll += 0x08;
-			pos++;
-		case 2:
-			*size |= *(buffer + 2) << roll;
-			roll += 0x08;
-			pos++;
-		case 1:
-			*size |= *(buffer + 1) << roll;
-			pos++;
-			break;
-		case 0:
-			buffer++;
-			skip = 2;
-			while (buffer + pos < last_byte && (buffer[pos++] || buffer[pos]));
-			if (buffer[pos - 1] || buffer[pos]) return NH_SMALL_DER_ENCODING;
-			*size = pos - 2;
-			pos = 1;
-			break;
-		default: return NH_UNSUPPORTED_DER_LENGTH;
-		}
+		msize = read_indefinite_size(buffer + 1, last_byte);
+		skip = 1;
+		eoc = 2;
 	}
-	if (*size > 0) *contents = (unsigned char*) buffer + pos;
-	if (buffer + pos + *size + skip < last_byte) *next = (unsigned char*) buffer + pos + *size + skip;
+	if (msize < 0) return NH_UNEXPECTED_ENCODING;
+	*size = msize;
+	*contents = (unsigned char*) buffer + skip;
+	if (buffer + skip + msize + eoc < last_byte) *next = (unsigned char*) buffer + skip + msize + eoc;
 	return NH_OK;
 }
 

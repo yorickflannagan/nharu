@@ -362,7 +362,7 @@ while read -r line || [[ -n "$line" ]]; do
 	NEW="${line/\_OPENSSL_/$OPENSSL}"
 	NEW="${NEW/\_IDN_/$IDN}"
 	NEW="${NEW/\_HOME_DIR_/$PARENT}"
-	NEW="${NEW/\_JAVA_/$_JDK_}"
+	NEW="${NEW/\_JAVA_/$_JDK_/bin/java}"
 	NEW="${NEW/\_LIBS_/$_OUTPUT_}"
 	printf "%s\n" $NEW>>"$PARENT/debug"
 done < "$CUR/debug.in"
@@ -385,7 +385,8 @@ printf "%s\n" "# # # # # # # # # # # # # # # # # # # # # # # #">>"$PARENT/mem-ch
 IFS=''
 while read -r line || [[ -n "$line" ]]; do
 	NEW="${line/\_HOME_DIR_/$PARENT}"
-	NEW="${NEW/\_JAVA_/$_JDK_}"
+	NEW="${NEW/\_JAVA_/$_JDK_/bin/java}"
+	NEW="${NEW/\_LIBS_/$_OUTPUT_}"
 	printf "%s\n" $NEW>>"$PARENT/mem-check"
 done < "$CUR/mem-check.in"
 chmod -c u+x "$PARENT/mem-check"
