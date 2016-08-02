@@ -119,7 +119,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_nharuI
 /** ****************************
  *  Utilities
  *  ****************************/
-NH_UTILITY(jsize, pem_to_DER)(_INOUT_ jbyte*, _IN_ jsize);
+NH_UTILITY(jsize, pem_to_DER)(_IN_ jbyte*, _IN_ jsize, _OUT_ jbyte*);
 NH_UTILITY(void, throw_new)(JNIEnv*, char*, char*, NH_RV);
 NH_UTILITY(jlong, java_mktime)(_IN_ NH_PTIME);
 NH_UTILITY(jbyteArray, get_node_contents)(JNIEnv*, _IN_ NH_ASN1_PNODE);

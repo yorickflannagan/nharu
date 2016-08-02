@@ -16,7 +16,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_nharuI
 /** ****************************
  *  Utilities
  *  ****************************/
-INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize len, _OUT_ jbyte **start, _OUT_ jsize *newlen)
+INLINE NH_UTILITY(jsize, remove_PEM_armour)(_IN_ jbyte *jbuffer, _IN_ jsize len, _OUT_ jbyte **start, _OUT_ jsize *newlen)
 {
 	jint idx = 0;
 	jsize nlen = 0, armourlen;
@@ -24,14 +24,14 @@ INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize l
 	while (jbuffer[idx] == 0x2D && idx < len) idx++;	/* Remove ---- */
 	if (idx == 0)							/* PEM without armour? Just a base64 encoding... Support legacy MIME multipart/signed */
 	{
-		*start = jbuffer;
+		*start = (jbyte*) jbuffer;
 		*newlen = len;
 		return 0;
 	}
 	while (jbuffer[idx] != 0x2D && idx < len) idx++;	/* Remove BEGIN XXXX */
 	while (jbuffer[idx] == 0x2D && idx < len) idx++;	/* Remove ---- */
 	if (idx == 0 || idx == len) return -1;
-	*start = &jbuffer[idx];
+	*start = (jbyte*) &jbuffer[idx];
 	armourlen = idx;
 	while (jbuffer[idx] != 0x2D && idx < len)
 	{
@@ -45,17 +45,16 @@ INLINE NH_UTILITY(jsize, remove_PEM_armour)(_INOUT_ jbyte *jbuffer, _IN_ jsize l
 #if defined(_MSC_VER)
 EXTERN
 #endif
-INLINE NH_UTILITY(jsize, pem_to_DER)(_INOUT_ jbyte *jbuffer, _IN_ jsize len)
+INLINE NH_UTILITY(jsize, pem_to_DER)(_IN_ jbyte *from, _IN_ jsize len, _OUT_ jbyte *to)
 {
-	jsize newlen = 0;
-	jbyte *inbuffer = NULL;
+	jsize newlen;
+	jbyte *start;
 	base64_decodestate state_in;
 
-	if (jbuffer[0] == 0x30) return len;
-	if (remove_PEM_armour(jbuffer, len, &inbuffer, &newlen) != -1)
+	if (remove_PEM_armour(from, len, &start, &newlen) != -1)
 	{
 		base64_init_decodestate(&state_in);
-		newlen = base64_decode_block((char*) inbuffer, newlen, (char*) jbuffer, &state_in);
+		newlen = base64_decode_block((char*) start, newlen, (char*) to, &state_in);
 	}
 	return newlen;
 }

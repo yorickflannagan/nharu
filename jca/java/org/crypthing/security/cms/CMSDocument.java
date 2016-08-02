@@ -953,7 +953,7 @@ public abstract class CMSDocument
 		CMSSignedData doc;
 		try
 		{
-			doc = new CMSSignedData(NharuArrays.fromBase64(MIME.getBytes()));
+			doc = new CMSSignedData(MIME.getBytes());
 			try
 			{
 				if (!doc.hasCertificatesAttached())

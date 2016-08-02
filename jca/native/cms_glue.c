@@ -77,8 +77,12 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSDocument_nhcmsDiscover
 	{
 		if ((copy = (jbyte*) malloc(len)))
 		{
-			memcpy(copy, jbuffer, len * sizeof(jbyte));
-			elen = pem_to_DER(copy, len);
+			if (*jbuffer == NH_ASN1_SEQUENCE)
+			{
+				memcpy(copy, jbuffer, len * sizeof(jbyte));
+				elen = len;
+			}
+			else elen = pem_to_DER(jbuffer, len, copy);
 			ret = NH_cms_discover((unsigned char*) copy, elen);
 			free(copy);
 		}
@@ -112,8 +116,12 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsParse
 	{
 		if ((copy = (jbyte*) malloc(len)))
 		{
-			memcpy(copy, jbuffer, len * sizeof(jbyte));
-			elen = pem_to_DER(copy, len);
+			if (*jbuffer == NH_ASN1_SEQUENCE)
+			{
+				memcpy(copy, jbuffer, len * sizeof(jbyte));
+				elen = len;
+			}
+			else elen = pem_to_DER(jbuffer, len, copy);
 			if (NH_SUCCESS(rv = NH_cms_parse_signed_data((unsigned char*) copy, elen, &hCMS)))
 			{
 				if ((hHandler = (JNH_CMSSD_PARSING_HANDLER) malloc(sizeof(JNH_CMSSD_PARSING_HANDLER_STR))))
@@ -598,8 +606,12 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsPa
 	{
 		if ((copy = (jbyte*) malloc(len)))
 		{
-			memcpy(copy, jbuffer, len * sizeof(jbyte));
-			elen = pem_to_DER(copy, len);
+			if (*jbuffer == NH_ASN1_SEQUENCE)
+			{
+				memcpy(copy, jbuffer, len * sizeof(jbyte));
+				elen = len;
+			}
+			else elen = pem_to_DER(jbuffer, len, copy);
 			if (NH_SUCCESS(rv = NH_cms_parse_enveloped_data((unsigned char*) copy, elen, &hCMS)))
 			{
 				if ((hHandler = (JNH_CMSENV_PARSING_HANDLER) malloc(sizeof(JNH_CMSENV_PARSING_HANDLER_STR))))

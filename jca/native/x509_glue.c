@@ -61,8 +61,12 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nh
 	{
 		if ((copy = (jbyte*) malloc(len)))
 		{
-			memcpy(copy, jbuffer, len * sizeof(jbyte));
-			elen = pem_to_DER(copy, len);
+			if (*jbuffer == NH_ASN1_SEQUENCE)
+			{
+				memcpy(copy, jbuffer, len * sizeof(jbyte));
+				elen = len;
+			}
+			else elen = pem_to_DER(jbuffer, len, copy);
 			if (NH_SUCCESS(rv = NH_parse_certificate((unsigned char*) copy, elen, &hCert)))
 			{
 				if ((hHandler = (JNH_CERTIFICATE_HANDLER) malloc(sizeof(JNH_CERTIFICATE_HANDLER_STR))))
@@ -1263,8 +1267,12 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixParseC
 	{
 		if ((copy = (jbyte*) malloc(len)))
 		{
-			memcpy(copy, jbuffer, len * sizeof(jbyte));
-			elen = pem_to_DER(copy, len);
+			if (*jbuffer == NH_ASN1_SEQUENCE)
+			{
+				memcpy(copy, jbuffer, len * sizeof(jbyte));
+				elen = len;
+			}
+			else elen = pem_to_DER(jbuffer, len, copy);
 			if (NH_SUCCESS(rv = NH_parse_crl((unsigned char*) copy, elen, &hCRL)))
 			{
 				if ((hHandler = (JNH_CRL_HANDLER) malloc(sizeof(JNH_CRL_HANDLER_STR))))

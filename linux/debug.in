@@ -17,6 +17,7 @@ SCAN=""
 TEST="native"
 TEST_DIR="$HOME_DIR/test"
 GDB_ARGS="$TEST_DIR/ntest-app"
+ATTACH=""
 
 sep='='
 while [ $# -ne 0 ]
@@ -27,6 +28,8 @@ do
 	(--java) TEST="java"
 	;;
 	(--nobuild) BUILD=""
+	;;
+	(--attach) ATTACH="true"
 	;;
 	(*)
 		printf "Invalid argument %s\n" "$1"
@@ -67,5 +70,9 @@ if [ -f "$CUR/breaks" ]
 then
 	cat  "$CUR/breaks" >>"$CUR/.gdbinit"
 fi
-gdb --args $GDB_ARGS
+if [ -n "$ATTACH" ]; then
+	sudo gdb
+else
+	gdb --args $GDB_ARGS
+fi
 
