@@ -51,7 +51,7 @@ import org.crypthing.util.NharuCommon;
  * @author magut & dsohsten
  *
  */
-public final class NharuX509Certificate extends X509Certificate implements NativeParent
+public final class NharuX509Certificate extends X509Certificate
 {
 	static { NharuProvider.isLoaded(); }
 
@@ -174,10 +174,7 @@ public final class NharuX509Certificate extends X509Certificate implements Nativ
 	}
 
 	@Override
-	public void verify(final PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException
-	{
-		verify(key, null);
-	}
+	public void verify(final PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException { verify(key, null); }
 
 
 	@Override
@@ -579,7 +576,7 @@ public final class NharuX509Certificate extends X509Certificate implements Nativ
 		if (encodedIssuer == null)
 		{
 			if (hHandle == 0) recallHandle();
-			encodedIssuer = new NharuX509Name(this, X509FieldName.ISSUER);
+			encodedIssuer = new NharuX509Name(nhixGetNameIssuer(hHandle));
 		}
 		return encodedIssuer;
 	}
@@ -594,21 +591,9 @@ public final class NharuX509Certificate extends X509Certificate implements Nativ
 		if (encodedSubject == null)
 		{
 			if (hHandle == 0) recallHandle();
-			encodedSubject = new NharuX509Name(this, X509FieldName.SUBJECT);
+			encodedSubject = new NharuX509Name(nhixGetNameSubject(hHandle));
 		}
 		return encodedSubject;
-	}
-
-	@Override
-	public long getParentHandle(X509FieldName node)
-	{
-		cota++;
-		if (hHandle == 0) recallHandle();
-		switch (node)
-		{
-		case ISSUER: return nhixGetIssuerNode(hHandle);
-		default: return nhixGetSubjectNode(hHandle);
-		}
 	}
 
 	public byte[] getSerial()
@@ -680,9 +665,8 @@ public final class NharuX509Certificate extends X509Certificate implements Nativ
 	private static native Collection<List<?>> nhixGetSubjectAltNames(long handle);
 	private static native Collection<List<?>> nhixGetIssuerAltNames(long handle);
 
-	private static native long nhixGetIssuerNode(long handle);
-	private static native long nhixGetSubjectNode(long handle);
-
+	private static native String nhixGetNameIssuer(long handle);
+	private static native String nhixGetNameSubject(long handle);
 
 
 

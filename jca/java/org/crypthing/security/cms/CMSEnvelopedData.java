@@ -8,14 +8,13 @@ import java.security.UnrecoverableKeyException;
 
 import org.crypthing.security.DecryptInterface;
 import org.crypthing.security.provider.NharuProvider;
-import org.crypthing.security.x509.NativeParent;
 
 /**
  * Parses a CMS EnvelopedData document. Only a single KeyTransRecipientInfo recipient is currently supported.
  * @author magut
  *
  */
-public final class CMSEnvelopedData implements NativeParent
+public final class CMSEnvelopedData
 {
 	static { NharuProvider.isLoaded(); }
 	private long hHandle;
@@ -25,9 +24,8 @@ public final class CMSEnvelopedData implements NativeParent
 
 	private static native long nhcmsParseEnvelopedData(byte[] encoding) throws CMSParsingException;
 	private static native void nhcmsReleaseHandle(long handle);
-	private static native long nhcmsGetIssuerNode(long handle);
 	private static native byte[] nhcmsDecrypt(long handle, DecryptInterface decrypt) throws CMSException;
-	private native IssuerAndSerialNumber getRID(long handle) throws CMSParsingException;
+	private static native IssuerAndSerialNumber getRID(long handle) throws CMSParsingException;
 
 	private byte[] eContent;
 	/**
@@ -57,13 +55,6 @@ public final class CMSEnvelopedData implements NativeParent
 			nhcmsReleaseHandle(hHandle);
 			hHandle = 0;
 		}
-	}
-
-	@Override
-	public long getParentHandle(final X509FieldName node)
-	{
-		if (hHandle == 0) throw new IllegalStateException("Object already released");
-		return nhcmsGetIssuerNode(hHandle);
 	}
 
 	/**

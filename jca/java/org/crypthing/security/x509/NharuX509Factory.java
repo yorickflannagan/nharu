@@ -82,7 +82,7 @@ public final class NharuX509Factory extends CertificateFactorySpi
 		}
 	}
 	static void cacheGiveBack(final NharuX509Certificate cert) { cachePut(new NharuArray(cert.getOriginalEncoding()), cert);}
-	static void cachePromote(final NharuX509Certificate cert)
+	public static void cachePromote(final NharuX509Certificate cert)
 	{
 		final NharuArray key = new NharuArray(cert.getOriginalEncoding());
 		if (transientCache.get(key) != null) transientCache.remove(key);

@@ -138,7 +138,11 @@ public class NharuKeyStore implements SignerInterface
 			{
 				final NharuRSAPrivateKey key = getKey(from, pwd, entry);
 				final NharuX509Certificate[] chain = key.getChain();
-				if (chain != null && chain.length > 0) recips.put(new IssuerAndSerialNumber(chain[0].getIssuer(), chain[0].getSerial()), key);
+				if (chain != null && chain.length > 0)
+				{
+					recips.put(new IssuerAndSerialNumber(chain[0].getIssuer(), chain[0].getSerial()), key);
+					for (int i = 0; i < chain.length; i++) if (chain[i].getBasicConstraints() != -1) NharuX509Factory.cachePromote(chain[i]);
+				}
 			}
 		}
 	}

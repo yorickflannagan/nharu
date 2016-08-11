@@ -9,37 +9,6 @@
 
 
 /** ******************************
- *  NharuX509Name interface
- *  ******************************/
-JNIEXPORT jboolean JNICALL Java_org_crypthing_security_x509_NharuX509Name_nhixMatchName
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong aHandle,
-	jlong bHandle
-)
-{
-	return strcmp(((NH_NAME_NODE) aHandle)->stringprep, ((NH_NAME_NODE) bHandle)->stringprep) == 0 ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT jint JNICALL Java_org_crypthing_security_x509_NharuX509Name_nhixGetNameHash
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong handle
-)
-{
-	return crc32c_sb8_64_bit
-	(
-		NULL,
-		(uint8_t*) ((NH_NAME_NODE) handle)->stringprep,
-		strlen(((NH_NAME_NODE) handle)->stringprep),
-		0,
-		MODE_BODY
-	);
-}
-
-/** ******************************
  *  NharuX509Certificate interface
  *  ******************************/
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixParseCertificate
@@ -110,26 +79,6 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhi
 		if (hHandler->encoding) free(hHandler->encoding);
 		free(hHandler);
 	}
-}
-
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetIssuerNode
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong handle
-)
-{
-	return (jlong) ((JNH_CERTIFICATE_HANDLER) handle)->hCert->issuer;
-}
-
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetSubjectNode
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong handle
-)
-{
-	return (jlong) ((JNH_CERTIFICATE_HANDLER) handle)->hCert->subject;
 }
 
 
@@ -999,6 +948,32 @@ JNIEXPORT jobject JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_
 	return ret;
 }
 
+JNIEXPORT jstring JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetNameIssuer
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	jstring ret = NULL;
+
+	if (!(ret = (*env)->NewStringUTF(env, ((JNH_CERTIFICATE_HANDLER) handle)->hCert->issuer->stringprep))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+	return ret;
+}
+
+JNIEXPORT jstring JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetNameSubject
+(
+	JNIEnv *env,
+	_UNUSED_ jclass c,
+	jlong handle
+)
+{
+	jstring ret = NULL;
+
+	if (!(ret = (*env)->NewStringUTF(env, ((JNH_CERTIFICATE_HANDLER) handle)->hCert->subject->stringprep))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+	return ret;
+}
+
 
 /** ******************************
  *  NharuPKIBRParser interface
@@ -1500,16 +1475,6 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixG
 	return get_node_encoding(env, ((JNH_CRL_HANDLER) handle)->hCRL->issuer->node);
 }
 
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetIssuerNode
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong handle
-)
-{
-	return (jlong) ((JNH_CRL_HANDLER) handle)->hCRL->issuer;
-}
-
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetExtension
 (
 	JNIEnv *env,
@@ -1669,6 +1634,19 @@ JNIEXPORT jobject JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetR
 		}
 	}
 	else throw_new(env, J_RUNTIME_EX, J_CRL_PARSE_ERROR, rv);
+	return ret;
+}
+
+JNIEXPORT jstring JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetIssuerName
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	jstring ret = NULL;
+
+	if (!(ret = (*env)->NewStringUTF(env, ((JNH_CRL_HANDLER) handle)->hCRL->issuer->stringprep))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 	return ret;
 }
 

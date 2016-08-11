@@ -64,22 +64,6 @@ typedef struct JNH_CRL_HANDLER_STR
 extern "C" {
 #endif
 
-/** ******************************
- *  NharuX509Name interface
- *  ******************************/
-/*
- * Class:     org_crypthing_security_x509_NharuX509Name
- * Method:    nhixMatchName
- * Signature: (JJ)Z
- */
-JNIEXPORT jboolean JNICALL Java_org_crypthing_security_x509_NharuX509Name_nhixMatchName(JNIEnv*, jclass, jlong, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuX509Name
- * Method:    nhixGetNameHash
- * Signature: (J)I
- */
-JNIEXPORT jint JNICALL Java_org_crypthing_security_x509_NharuX509Name_nhixGetNameHash(JNIEnv*, jclass, jlong);
-
 
 /** ******************************
  *  NharuX509Certificate interface
@@ -114,18 +98,6 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuX509Certifica
  * Signature: (J)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetIssuer(JNIEnv*, jclass, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuX509Certificate
- * Method:    nhixGetIssuerNode
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetIssuerNode(JNIEnv*, jclass, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuX509Certificate
- * Method:    nhixGetSubjectNode
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetSubjectNode(JNIEnv*, jclass, jlong);
 /*
  * Class:     org_crypthing_security_x509_NharuX509Certificate
  * Method:    nhixVerify
@@ -253,6 +225,20 @@ JNIEXPORT jobject JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_
  * Signature: (J)Ljava/util/Set;
  */
 JNIEXPORT jobject JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetNonCriticalExtensionOIDs(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_x509_NharuX509Certificate
+ * Method:    nhixGetNameIssuer
+ * Signature: (J)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetNameIssuer(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_x509_NharuX509Certificate
+ * Method:    nhixGetNameSubject
+ * Signature: (J)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetNameSubject(JNIEnv*, jclass, jlong);
+
+
 
 
 /** ******************************
@@ -427,12 +413,6 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixVerify(
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetIssuer(JNIEnv *, jclass, jlong);
 /*
  * Class:     org_crypthing_security_x509_NharuX509CRL
- * Method:    nhixGetIssuerNode
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetIssuerNode(JNIEnv *, jclass, jlong);
-/*
- * Class:     org_crypthing_security_x509_NharuX509CRL
  * Method:    nhixGetExtension
  * Signature: (J[I)[B
  */
@@ -461,6 +441,12 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetRev
  * Signature: (J)Ljava/util/Set;
  */
 JNIEXPORT jobject JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetRevokedCertificates(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_x509_NharuX509CRL
+ * Method:    nhixGetIssuerName
+ * Signature: (J)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_org_crypthing_security_x509_NharuX509CRL_nhixGetIssuerName(JNIEnv*, jclass, jlong);
 
 
 /** ******************************

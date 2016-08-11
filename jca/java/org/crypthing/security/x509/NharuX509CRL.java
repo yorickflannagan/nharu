@@ -38,7 +38,7 @@ import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.util.NharuArrays;
 import org.crypthing.util.NharuCommon;
 
-public class NharuX509CRL extends X509CRL implements NativeParent
+public class NharuX509CRL extends X509CRL
 {
 	static { NharuProvider.isLoaded(); }
 
@@ -388,16 +388,9 @@ public class NharuX509CRL extends X509CRL implements NativeParent
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		if (encodedIssuer == null)
 		{
-			encodedIssuer = new NharuX509Name(this, NativeParent.X509FieldName.ISSUER);
+			encodedIssuer = new NharuX509Name(nhixGetIssuerName(hHandle));
 		}
 		return encodedIssuer;
-	}
-
-	@Override
-	public long getParentHandle(X509FieldName node)
-	{
-		if (hHandle == 0) throw new IllegalStateException("Object already released");
-		return nhixGetIssuerNode(hHandle);
 	}
 
 	long getCRLHandle()
@@ -427,7 +420,7 @@ public class NharuX509CRL extends X509CRL implements NativeParent
 	private static native void nhixVerify(long crlHandle, long keyHandle) throws CRLException, SignatureException;
 	private static native byte[] nhixGetExtension(long handle, int[] oid);
 	private static native byte[] nhixGetIssuer(long handle);
-	private static native long nhixGetIssuerNode(long handle);
+	private static native String nhixGetIssuerName(long handle);
 	private static native Set<int[]> nhixGetCriticalExtensionOIDs(long handle);
 	private static native Set<int[]> nhixGetNonCriticalExtensionOIDs(long handle);
 	private static native long nhixGetRevoked(long handle, byte[] serial);

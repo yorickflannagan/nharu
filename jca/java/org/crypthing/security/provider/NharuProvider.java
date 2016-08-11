@@ -266,6 +266,9 @@ public final class NharuProvider extends Provider
 		System.setProperty("javax.net.ssl.keyStore", p12);
 		System.setProperty("javax.net.ssl.keyStorePassword", "secret");
 		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
+		System.setProperty("javax.net.ssl.trustStore", p12);
+		System.setProperty("javax.net.ssl.trustStorePassword", "secret");
+		System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
 		CMSDocument.main(new String[0]);
 		System.out.println("====================================================================");
 		NharuDigest.main(new String[0]);

@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.crypthing.security.x509.NharuX509Certificate;
+import org.crypthing.security.x509.NharuX509Factory;
 import org.crypthing.security.x509.NharuX509Name;
 
 final class TrustedCertStore extends HashMap<NharuX509Name, NharuX509Certificate>
@@ -39,6 +40,7 @@ final class TrustedCertStore extends HashMap<NharuX509Name, NharuX509Certificate
 			{
 				subject.checkValidity();
 				subject.verify(issuer.getPublicKey());
+				if (subject.getBasicConstraints() != -1) NharuX509Factory.cachePromote(subject);
 			}
 			catch (final InvalidKeyException | CertificateException | NoSuchAlgorithmException | NoSuchProviderException | SignatureException e)
 			{

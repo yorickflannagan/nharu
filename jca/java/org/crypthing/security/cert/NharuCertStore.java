@@ -5,9 +5,13 @@ import static org.crypthing.security.LogDevice.LOG_LEVEL_DEBUG;
 import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
 import static org.crypthing.security.LogDevice.LOG_LEVEL_NONE;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
@@ -50,6 +54,40 @@ public final class NharuCertStore extends CertStoreSpi implements TrustedStore
 	private final TrustedCertStore certStore;
 	private final HashMap<NharuX509Name, NharuX509CRL> crlStore = new HashMap<>();
 	private final List<NharuX509Certificate> issuers;
+
+
+	private static final String CERT_STORE_ENTRY = "javax.net.ssl.trustStore";
+	private static final String CERT_STORE_PWD_ENTRY = "javax.net.ssl.trustStorePassword";
+	private static final String CERT_STORE_PROV_ENTRY = "javax.net.ssl.trustStoreProvider";
+	private static final String CERT_STORE_TYPE_ENTRY = "javax.net.ssl.trustStoreType";
+	public static NharuCertStore getInstance() throws KeyStoreException
+	{
+		String entry = System.getProperty(CERT_STORE_PROV_ENTRY);
+		KeyStore store;
+			try
+			{
+				if (entry != null) store = KeyStore.getInstance(System.getProperty(CERT_STORE_TYPE_ENTRY, "jks"), entry);
+				else store = KeyStore.getInstance(System.getProperty(CERT_STORE_TYPE_ENTRY, "jks"));
+				entry = System.getProperty(CERT_STORE_ENTRY);
+				if (entry == null) throw new KeyStoreException("Invalid system property entry: " + CERT_STORE_ENTRY);
+				final FileInputStream stream = new FileInputStream(entry);
+				try
+				{
+					entry = System.getProperty(CERT_STORE_PWD_ENTRY);
+					final char[] pwd = entry != null ? entry.toCharArray() : null;
+					store.load(stream, pwd);
+					return getInstance(store);
+				}
+				finally { stream.close(); }
+			}
+			catch (final GeneralSecurityException | IOException e) { throw new KeyStoreException(e); }
+	}
+	public static NharuCertStore getInstance(final KeyStore from) throws KeyStoreException
+	{
+		try { return new NharuCertStore(new DERX509CollectionParams(from)); }
+		catch (final InvalidAlgorithmParameterException e) { throw new KeyStoreException(e); }
+	}
+
 
 	public NharuCertStore(final CertStoreParameters params) throws InvalidAlgorithmParameterException
 	{

@@ -10,7 +10,6 @@ import java.security.cert.X509Certificate;
 import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.cert.TrustedStore;
 import org.crypthing.security.provider.NharuProvider;
-import org.crypthing.security.x509.NativeParent;
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.security.x509.NharuX509Factory;
 
@@ -19,7 +18,7 @@ import org.crypthing.security.x509.NharuX509Factory;
  * @author magut
  *
  */
-public final class CMSSignedData implements NativeParent
+public final class CMSSignedData
 {
 	static { NharuProvider.isLoaded(); }
 	private long hHandle;
@@ -36,8 +35,7 @@ public final class CMSSignedData implements NativeParent
 	private static native void nhcmsValidateAttached(long handle) throws CMSInvalidAttributesException;
 	private static native int nhcmsCountSigners(long handle);
 	private static native long nhcmsGetSignerCertificate(long handle, int idx);
-	private static native long nhcmsGetIssuerNode(long handle);
-	private native SignerIdentifier nhcmsGetSignerIdentifier(long handle, int idx) throws CMSParsingException;
+	private static native SignerIdentifier nhcmsGetSignerIdentifier(long handle, int idx) throws CMSParsingException;
 	private static native boolean nhcmsHasCertificates(long handle);
 
 	private byte[] content;
@@ -186,11 +184,5 @@ public final class CMSSignedData implements NativeParent
 			nhcmsReleaseHandle(hHandle);
 			hHandle = 0;
 		}
-	}
-	@Override
-	public long getParentHandle(final X509FieldName node)
-	{
-		if (hHandle == 0) throw new IllegalStateException("Object already released");
-		return nhcmsGetIssuerNode(hHandle);
 	}
 }

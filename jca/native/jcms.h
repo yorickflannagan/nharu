@@ -137,19 +137,13 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsCountS
  * Signature: (JI)J
  */
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerCertificate(JNIEnv *, jclass, jlong, jint);
-/*
- * Class:     org_crypthing_security_cms_CMSSignedData
- * Method:    nhcmsGetIssuerNode
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetIssuerNode(JNIEnv*, jclass, jlong);
 
 /*
  * Class:     org_crypthing_security_cms_CMSSignedData
  * Method:    nhcmsGetSignerIdentifier
  * Signature: (JI)Lorg/crypthing/security/cms/SignerIdentifier;
  */
-JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerIdentifier(JNIEnv*, jobject, jlong, jint);
+JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerIdentifier(JNIEnv*, jclass, jlong, jint);
 /*
  * Class:     org_crypthing_security_cms_CMSSignedData
  * Method:    nhcmsHasCertificates
@@ -211,16 +205,10 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsPa
 JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsReleaseHandle(JNIEnv *, jclass, jlong);
 /*
  * Class:     org_crypthing_security_cms_CMSEnvelopedData
- * Method:    nhcmsGetIssuerNode
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nhcmsGetIssuerNode(JNIEnv *, jclass, jlong);
-/*
- * Class:     org_crypthing_security_cms_CMSEnvelopedData
  * Method:    getRID
  * Signature: (J)Lorg/crypthing/security/cms/IssuerAndSerialNumber;
  */
-JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_getRID(JNIEnv *, jobject, jlong);
+JNIEXPORT jobject JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_getRID(JNIEnv *, jclass, jlong);
 /*
  * Class:     org_crypthing_security_cms_CMSEnvelopedData
  * Method:    nhcmsDecrypt
