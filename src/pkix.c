@@ -276,7 +276,7 @@ INLINE NH_UTILITY(NH_RV, parse_names)(_IN_ NH_ASN1_PARSER_HANDLE hParser, _IN_ N
 			if (NH_SUCCESS(rv)) rv = NHIX_parse_name(hParser, node, &ignored);
 			break;
 		case 0x07:
-			rv = hParser->parse_octetstring(node);
+			rv = hParser->parse_octetstring(hParser, node);
 			break;
 		case 0x08:
 			rv = hParser->parse_oid(hParser, node);

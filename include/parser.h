@@ -530,24 +530,6 @@ typedef NH_METHOD(NH_RV, NH_ASN1_READSIZE_FUNCTION)(_IN_ unsigned char*, _IN_ un
  *
  */
 /*
- ****f* NH_ASN1_PARSER_HANDLE/parse_octetstring
- *
- * NAME
- *	parse_octetstring
- *
- * PURPOSE
- *	Parses ASN.1 OCTET STRING type.
- *
- * ARGUMENTS
- *	_INOUT_ NH_ASN1_NODE_STR *node: node to parse.
- *
- * RESULT
- *	NH_INVALID_DER_TYPE if identifier octet is not an OCTET STRING.
- *
- ******
- *
- */
-/*
  ****f* NH_ASN1_PARSER_HANDLE/parse_string
  *
  * NAME
@@ -622,6 +604,24 @@ typedef NH_METHOD(NH_RV, NH_ASN1_READSIZE_FUNCTION)(_IN_ unsigned char*, _IN_ un
 typedef NH_METHOD(NH_RV, NH_ASN1_NODE_FUNCTION)(_INOUT_ NH_ASN1_NODE_STR*);
 
 
+/*
+ ****f* NH_ASN1_PARSER_HANDLE/parse_octetstring
+ *
+ * NAME
+ *	parse_octetstring
+ *
+ * PURPOSE
+ *	Parses ASN.1 OCTET STRING type.
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_ASN1_NODE_STR *node: node to parse.
+ *
+ * RESULT
+ *	NH_INVALID_DER_TYPE if identifier octet is not an OCTET STRING.
+ *
+ ******
+ *
+ */
 /*
  ****f* NH_ASN1_PARSER_HANDLE/parse_little_integer
  *
@@ -1492,7 +1492,7 @@ struct NH_ASN1_PARSER_STR
 	NH_ASN1_NODE_FUNCTION		parse_integer;		/* Parses a INTEGER ASN.1 type */
 	NH_ASN1_NODE_FUNCTION		parse_real;			/* Parses a REAL ASN.1 type */
 	NH_ASN1_PARSE_FUNCTION		parse_bitstring;		/* Parses a BIT STRING ASN.1 type */
-	NH_ASN1_NODE_FUNCTION		parse_octetstring;	/* Parses an OCTET STRING ASN.1 type */
+	NH_ASN1_PARSE_FUNCTION		parse_octetstring;	/* Parses an OCTET STRING ASN.1 type */
 	NH_ASN1_PARSE_FUNCTION		parse_oid;			/* Parses an OBJECT IDENTIFIER ASN.1 type  */
 	NH_ASN1_PARSEOID_FUNCTION	parse_objectid;		/* Parses an OBJECT IDENTIFIER ASN.1 type  */
 	NH_ASN1_NODE_FUNCTION		parse_string;		/* Parses an ASN.1 type of any string type */

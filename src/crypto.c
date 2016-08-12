@@ -912,7 +912,7 @@ NH_UTILITY(NH_RV, NH_decode_symkey)
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
 	if (ASN_IS_TAG(node, KEY_PLAIN_KNOWLEDGE_CHOICE))
 	{
-		if (NH_FAIL(rv = hParser->parse_octetstring(node))) return rv;
+		if (NH_FAIL(rv = hParser->parse_octetstring(hParser, node))) return rv;
 		buflen = node->valuelen;
 		if (!(buffer = (unsigned char*) malloc(buflen))) return NH_OUT_OF_MEMORY_ERROR;
 		memcpy(buffer, node->value, buflen);
@@ -925,11 +925,11 @@ NH_UTILITY(NH_RV, NH_decode_symkey)
 		if (NH_FAIL(rv = hParser->parse_little_integer(hParser, node))) return rv;
 		mechanism = *(CK_MECHANISM_TYPE*) node->value;
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (NH_FAIL(rv = hParser->parse_octetstring(node))) return rv;
+		if (NH_FAIL(rv = hParser->parse_octetstring(hParser, node))) return rv;
 		iv.data = (unsigned char*) node->value;
 		iv.length = node->valuelen;
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (NH_FAIL(rv = hParser->parse_octetstring(node))) return rv;
+		if (NH_FAIL(rv = hParser->parse_octetstring(hParser, node))) return rv;
 		if (NH_FAIL(rv = hEncryption->decrypt_init(hEncryption, mechanism, &iv))) return rv;
 		if (NH_FAIL(rv = hEncryption->decrypt(hEncryption, (unsigned char*) node->value, node->valuelen, NULL, &buflen))) return rv;
 		if (!(buffer = (unsigned char*) malloc(buflen))) return NH_OUT_OF_MEMORY_ERROR;
@@ -1818,40 +1818,40 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_decode)
 		if (NH_FAIL(rv = hParser->parse_little_integer(hParser, node))) return rv;
 		mechanism = *(CK_MECHANISM_TYPE*) node->value;
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (NH_FAIL(rv = hParser->parse_octetstring(node))) return rv;
+		if (NH_FAIL(rv = hParser->parse_octetstring(hParser, node))) return rv;
 		iv.data = (unsigned char*) node->value;
 		iv.length = node->valuelen;
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (NH_FAIL(rv = hParser->parse_octetstring(node))) return rv;
+		if (NH_FAIL(rv = hParser->parse_octetstring(hParser, node))) return rv;
 		rv = decode_encrypted_bignum(node, hEncryption, mechanism, &iv, &d);
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node))
 		{
-			rv = hParser->parse_octetstring(node);
+			rv = hParser->parse_octetstring(hParser, node);
 			if (NH_SUCCESS(rv)) rv = decode_encrypted_bignum(node, hEncryption, mechanism, &iv, &p);
 		}
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node))
 		{
-			rv = hParser->parse_octetstring(node);
+			rv = hParser->parse_octetstring(hParser, node);
 			if (NH_SUCCESS(rv)) rv = decode_encrypted_bignum(node, hEncryption, mechanism, &iv, &q);
 		}
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node))
 		{
-			rv = hParser->parse_octetstring(node);
+			rv = hParser->parse_octetstring(hParser, node);
 			if (NH_SUCCESS(rv)) rv = decode_encrypted_bignum(node, hEncryption, mechanism, &iv, &dmp);
 		}
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node))
 		{
-			rv = hParser->parse_octetstring(node);
+			rv = hParser->parse_octetstring(hParser, node);
 			if (NH_SUCCESS(rv)) rv = decode_encrypted_bignum(node, hEncryption, mechanism, &iv, &dmq);
 		}
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node))
 		{
-			rv = hParser->parse_octetstring(node);
+			rv = hParser->parse_octetstring(hParser, node);
 			if (NH_SUCCESS(rv)) rv = decode_encrypted_bignum(node, hEncryption, mechanism, &iv, &qmp);
 		}
 		clean = CK_TRUE;
@@ -2005,7 +2005,7 @@ NH_UTILITY(NH_RV, NH_RSA_from_privkey_info)(_INOUT_ NH_RSA_PRIVKEY_HANDLER_STR *
 	if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node);
 	if (NH_SUCCESS(rv)) rv = NH_match_oid(rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT, node->value, node->valuelen) ? NH_OK : NH_UNSUP_PKEY_ERROR;
 	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(hParser->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(node);
+	if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, node);
 	if (NH_SUCCESS(rv)) rv = (pkey = hParser->add_child(hParser->container, node)) ? NH_OK : NH_UNEXPECTED_ENCODING;
 	if (NH_SUCCESS(rv))
 	{

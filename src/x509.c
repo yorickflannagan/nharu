@@ -130,7 +130,7 @@ INLINE NH_UTILITY(NH_RV, find_extension)
 				if (!(next->next) || !(next = next->next->next)) return NH_UNEXPECTED_ENCODING;
 				GUARD(mutex, gRV,
 				{
-					if (!ASN_IS_PARSED(next)) rv = hParser->parse_octetstring(next);
+					if (!ASN_IS_PARSED(next)) rv = hParser->parse_octetstring(hParser, next);
 				})
 				if (NH_FAIL(gRV)) rv = gRV;
 				if (NH_FAIL(rv)) return rv;
@@ -564,7 +564,7 @@ NH_UTILITY(NH_RV, aki)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT_ NH_ASN1_PNOD
 					rv = self->hParser->map_from(self->hParser, value, pkix_aki_map, ASN_NODE_WAY_COUNT(pkix_aki_map));
 				}
 				if (NH_SUCCESS(rv)) rv = (cur = value->child) ? NH_OK : NH_UNEXPECTED_ENCODING;
-				if (NH_SUCCESS(rv) && ASN_IS_PRESENT(cur)) rv = self->hParser->parse_octetstring(cur);
+				if (NH_SUCCESS(rv) && ASN_IS_PRESENT(cur)) rv = self->hParser->parse_octetstring(self->hParser, cur);
 				if (NH_SUCCESS(rv)) rv = (cur = cur->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 				if (NH_SUCCESS(rv) && ASN_IS_PRESENT(cur) && cur->child) rv = NHIX_parse_general_name(self->hParser, cur->child);
 				if (NH_SUCCESS(rv)) rv = (cur = cur->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
@@ -610,7 +610,7 @@ NH_UTILITY(NH_RV, ski)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT_ NH_ASN1_PNOD
 					value->identifier = extnValue->contents;
 					rv = self->hParser->map_from(self->hParser, value, pkix_ski_map, ASN_NODE_WAY_COUNT(pkix_ski_map));
 				}
-				if (NH_SUCCESS(rv)) rv = self->hParser->parse_octetstring(value);
+				if (NH_SUCCESS(rv)) rv = self->hParser->parse_octetstring(self->hParser, value);
 			}
 		})
 		if (NH_FAIL(gRV)) rv = gRV;
@@ -1084,7 +1084,7 @@ INLINE NH_UTILITY(NH_RV, parse_revoked)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _
 			if (!(next = next->next)) return NH_UNEXPECTED_ENCODING;
 			if (ASN_IS_PRESENT(next) && !ASN_IS_PARSED(next)) if (NH_FAIL(rv = hParser->parse_boolean(next))) return rv;
 			if (!(next = next->next)) return NH_UNEXPECTED_ENCODING;
-			if (!ASN_IS_PARSED(next)) if (NH_FAIL(rv = hParser->parse_octetstring(next))) return rv;
+			if (!ASN_IS_PARSED(next)) if (NH_FAIL(rv = hParser->parse_octetstring(hParser, next))) return rv;
 			node = node->next;
 		}
 	}

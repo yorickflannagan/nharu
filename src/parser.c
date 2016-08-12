@@ -449,9 +449,60 @@ NH_UTILITY(NH_RV, NH_parse_bitstring)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_
 	return NH_OK;
 }
 
-NH_UTILITY(NH_RV, NH_parse_octetstring)(_INOUT_ NH_ASN1_NODE_STR *node)
+NH_UTILITY(NH_RV, parse_constructed_octetstring)(_IN_ NH_ASN1_PARSER_STR*, _INOUT_ NH_ASN1_NODE_STR*);
+INLINE NH_UTILITY(NH_RV, parse_child_constructed_octetstring)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node)
 {
+	if (ASN_IS_CONSTRUCTED((*node->identifier))) return parse_constructed_octetstring(self, node);
 	return parse(node, NH_ASN1_OCTET_STRING);
+}
+const static NH_NODE_WAY octet_maze[] = {{ NH_PARSE_ROOT, NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT, NULL, 0 }};
+INLINE NH_UTILITY(NH_RV, parse_constructed_octetstring)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE current;
+
+
+	if (!(current = node->child)) return NH_TYPE_INCOMPATIBLE;
+	rv = self->map_set_of(self, current, octet_maze, ASN_NODE_WAY_COUNT(octet_maze));
+	while (NH_SUCCESS(rv) && current)
+	{
+		rv = parse_child_constructed_octetstring(self, current);
+		current = current->next;
+	}
+	return rv;
+}
+INLINE NH_UTILITY(void, set_octetstring_value)(_INOUT_ NH_ASN1_NODE_STR *odin, _IN_ NH_ASN1_NODE_STR *thor)
+{
+	NH_ASN1_PNODE current = (NH_ASN1_PNODE) thor;
+
+	while (current)
+	{
+		if (current->child) set_octetstring_value(odin, current->child);
+		else
+		{
+			memcpy((unsigned char*) odin->value + odin->valuelen, current->value, current->valuelen);
+			odin->valuelen += current->valuelen;
+		}
+		current = current->next;
+	}
+
+}
+NH_UTILITY(NH_RV, NH_parse_octetstring)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node)
+{
+	NH_RV rv;
+
+	if
+	(
+		ASN_IS_CONSTRUCTED(*node->identifier) &&
+		NH_SUCCESS(rv = parse_constructed_octetstring(self, node)) &&
+		NH_SUCCESS(rv = self->container->bite_chunk(self->container, node->size, (void*) &node->value))
+	)
+	{
+		node->valuelen = 0;
+		set_octetstring_value(node, node->child);
+	}
+	else rv = parse(node, NH_ASN1_OCTET_STRING);
+	return rv;
 }
 
 NH_UTILITY(NH_RV, NH_parse_oid)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node)

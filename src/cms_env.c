@@ -297,12 +297,12 @@ NH_FUNCTION(NH_RV, NH_cms_parse_enveloped_data)(_IN_ unsigned char *encoding, _I
 		if (NH_SUCCESS(rv))
 		{
 			if (ASN_TAG_IS_PRESENT(node, NH_ASN1_SEQUENCE)) rv = hParser->map_from(hParser, node, cms_issuer_serial, CMS_ISSUERSERIAL_MAP_COUNT);
-			else rv = hParser->parse_octetstring(node);
+			else rv = hParser->parse_octetstring(hParser, node);
 		}
 		if (NH_SUCCESS(rv)) rv = (node = hParser->sail(recip, (NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 2) << 8) |NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node);
 		if (NH_SUCCESS(rv)) rv = (node = hParser->sail(recip, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3))) ? NH_OK : NH_UNEXPECTED_ENCODING;
-		if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(node);
+		if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, node);
 		recip = recip->next;
 		count++;
 
@@ -321,9 +321,9 @@ NH_FUNCTION(NH_RV, NH_cms_parse_enveloped_data)(_IN_ unsigned char *encoding, _I
 	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(content, (NH_SAIL_SKIP_SOUTH << 24) | ((NH_PARSE_EAST | 3) << 16) | (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST))  && node->child ? NH_OK : NH_UNEXPECTED_ENCODING;
 	if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node->child);
 	if (NH_SUCCESS(rv)) rv = node->child->next && ASN_TAG_IS_PRESENT(node->child->next, NH_ASN1_OCTET_STRING) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(node->child->next);
+	if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, node->child->next);
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(node);
+	if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, node);
 	if (NH_SUCCESS(rv)) rv = (ret = (NH_CMS_ENV_PARSER) malloc(sizeof(NH_CMS_ENV_PARSER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
 	if (NH_SUCCESS(rv))
 	{

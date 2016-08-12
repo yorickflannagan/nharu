@@ -1101,7 +1101,7 @@ public abstract class CMSDocument
 		"MOA+128:901,78'" + CRLF +
 		"TAX+7+VAT+++:::16+S'" + CRLF +
 		"UNT+28+INVOIC0001'" + CRLF +
-		"UNZ+1+9908021557'" + CRLF;
+		"UNZ+1+9908021557'" + CRLF + CRLF;
 	private static boolean openas2Test()
 	{
 		System.out.print("OpenAS2 compatibility parsing test... ");

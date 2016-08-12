@@ -289,7 +289,7 @@ NH_UTILITY(NH_RV, cms_sd_validate)(_IN_ NH_CMS_SD_PARSER_STR *self, _IN_ unsigne
 						GUARD(self->mutex, gRV,
 						{
 							if (!ASN_IS_PARSED(cur)) rv = self->hParser->map_from(self->hParser, cur, message_digest_map, ASN_NODE_WAY_COUNT(message_digest_map));
-							if (NH_SUCCESS(rv) && !ASN_IS_PARSED(cur)) rv = self->hParser->parse_octetstring(cur);
+							if (NH_SUCCESS(rv) && !ASN_IS_PARSED(cur)) rv = self->hParser->parse_octetstring(self->hParser, cur);
 						})
 						if (NH_FAIL(gRV)) rv = gRV;
 					}
@@ -538,7 +538,7 @@ NH_FUNCTION(NH_RV, NH_cms_parse_signed_data)(_IN_ unsigned char *buffer, _IN_ si
 	if (NH_SUCCESS(rv)) rv = (node = encapContentInfo->child) ? NH_OK : NH_UNEXPECTED_ENCODING;
 	if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node);
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node) && (node = node->child)) rv = hParser->parse_octetstring(node);
+	if (NH_SUCCESS(rv) && ASN_IS_PRESENT(node) && (node = node->child)) rv = hParser->parse_octetstring(hParser, node);
 	if (NH_SUCCESS(rv)) rv = (certificates = encapContentInfo->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 	if (NH_SUCCESS(rv) && ASN_IS_PRESENT(certificates)) rv = hParser->map_set_of(hParser, certificates->child, cms_certificates, ASN_NODE_WAY_COUNT(cms_certificates));
 	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(content, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5))) ? NH_OK : NH_UNEXPECTED_ENCODING;
@@ -554,7 +554,7 @@ NH_FUNCTION(NH_RV, NH_cms_parse_signed_data)(_IN_ unsigned char *buffer, _IN_ si
 		if (NH_SUCCESS(rv = (node = hParser->sail(signer, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_UNEXPECTED_ENCODING))
 		{
 			if (ASN_TAG_IS_PRESENT(node, NH_ASN1_SEQUENCE)) rv = hParser->map_from(hParser, node, cms_issuer_serial, CMS_ISSUERSERIAL_MAP_COUNT);
-			else rv = hParser->parse_octetstring(node);
+			else rv = hParser->parse_octetstring(hParser, node);
 			if (NH_SUCCESS(rv)) rv = (node = hParser->sail(signer, (NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 2) << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING;
 			if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node);
 			if (NH_SUCCESS(rv)) rv = (node = hParser->sail(signer, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3))) ? NH_OK : NH_UNEXPECTED_ENCODING;
@@ -569,7 +569,7 @@ NH_FUNCTION(NH_RV, NH_cms_parse_signed_data)(_IN_ unsigned char *buffer, _IN_ si
 			if (NH_SUCCESS(rv)) rv = (node = hParser->sail(signer, (NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 4) << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING;
 			if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node);
 			if (NH_SUCCESS(rv)) rv = (node = hParser->sail(signer, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5))) ? NH_OK : NH_UNEXPECTED_ENCODING;
-			if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(node);
+			if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, node);
 		}
 		signer = signer->next;
 		count++;

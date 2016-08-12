@@ -67,7 +67,7 @@ NH_FUNCTION(NH_RV, NH_parse_pkibr_extension)(_IN_ unsigned char *buffer, _IN_ si
 				if (NH_SUCCESS(rv)) rv = (cur = node->child) ? NH_OK : NH_UNEXPECTED_ENCODING;
 				if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, cur);
 				if (NH_SUCCESS(rv)) rv = (cur = cur->next) && (cur = cur->child) ? NH_OK : NH_UNEXPECTED_ENCODING;
-				if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(cur);
+				if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, cur);
 			}
 			node = node->next;
 		}

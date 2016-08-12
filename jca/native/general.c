@@ -47,7 +47,7 @@ EXTERN
 #endif
 INLINE NH_UTILITY(jsize, pem_to_DER)(_IN_ jbyte *from, _IN_ jsize len, _OUT_ jbyte *to)
 {
-	jsize newlen;
+	jsize newlen = 0;
 	jbyte *start;
 	base64_decodestate state_in;
 
