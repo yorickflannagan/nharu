@@ -133,7 +133,7 @@ public final class CMSSignedData
 		nhcmsValidate(hHandle, eContent);
 	}
 
-	public void verfiy(final byte[] eContent, final CertificateResolver callback) throws CMSParsingException, CertificateException, CMSSignatureException, CMSInvalidAttributesException
+	public void verify(final byte[] eContent, final CertificateResolver callback) throws CMSParsingException, CertificateException, CMSSignatureException, CMSInvalidAttributesException
 	{
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		final int count = countSigners();

@@ -952,7 +952,7 @@ public abstract class CMSDocument
 			{
 				if (!doc.hasCertificatesAttached())
 				{
-					doc.verfiy(SIGNED.getBytes(), new CertificateResolver()
+					doc.verify(SIGNED.getBytes(), new CertificateResolver()
 					{
 						@Override
 						public X509Certificate getCertificate(final SignerIdentifier signer)

@@ -19,12 +19,12 @@
 					<Add option="-g" />
 				</Compiler>
 				<MakeCommands>
-					<Build command="$make -f $makefile DEBUG=1 VERSION=1.1.0" />
-					<CompileFile command="$make -f $makefile $file DEBUG=1 VERSION=1.1.0" />
-					<Clean command="$make -f $makefile clean DEBUG=1 VERSION=1.1.0" />
+					<Build command="$make -f $makefile DEBUG=1 VERSION=1.1.1" />
+					<CompileFile command="$make -f $makefile $file DEBUG=1 VERSION=1.1.1" />
+					<Clean command="$make -f $makefile clean DEBUG=1 VERSION=1.1.1" />
 					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile DEBUG=1 VERSION=1.1.0" />
-					<SilentBuild command="$make -f $makefile DEBUG=1 VERSION=1.1.0 &gt; $(CMD_NULL)" />
+					<AskRebuildNeeded command="$make -q -f $makefile DEBUG=1 VERSION=1.1.1" />
+					<SilentBuild command="$make -f $makefile DEBUG=1 VERSION=1.1.1 &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 			<Target title="Release">
@@ -41,12 +41,12 @@
 					<Add option="-s" />
 				</Linker>
 				<MakeCommands>
-					<Build command="$make -f $makefile" />
-					<CompileFile command="$make -f $makefile $file" />
-					<Clean command="$make -f $makefile clean" />
+					<Build command="$make -f $makefile VERSION=1.1.1" />
+					<CompileFile command="$make -f $makefile $file VERSION=1.1.1" />
+					<Clean command="$make -f $makefile VERSION=1.1.1 clean" />
 					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="$make -q -f $makefile" />
-					<SilentBuild command="$make -f $makefile &gt; $(CMD_NULL)" />
+					<AskRebuildNeeded command="$make -q -f $makefile VERSION=1.1.1" />
+					<SilentBuild command="$make -f $makefile VERSION=1.1.1 &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 		</Build>
