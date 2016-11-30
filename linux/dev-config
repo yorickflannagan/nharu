@@ -47,9 +47,11 @@ _ARFLAGS_="-r -s"
 _CXXFLAGS_="-shared -shared-libgcc -Xlinker -z -Xlinker defs"
 
 # COMMAND LINE
+parm=0
 sep='='
 while [ $# -ne 0 ]
 do
+	parm=1
 	case $1 in
 	  (*"$sep"*)
 	    key=${1%%"$sep"*}
@@ -85,11 +87,19 @@ do
 		;;
 		(*)
 			printf "Invalid argument %s\n" "$key"
+			usage
 			exit 1
 		;;
 	esac
     shift
 done
+
+if [ "$parm" ==  "0"   ]; then
+	printf "Invalid empty argument list.\n\n"
+	usage
+	exit 1
+fi
+
 
 # DEPENDENCIES
 printf "%s\n" "Checking project dependencies..."
