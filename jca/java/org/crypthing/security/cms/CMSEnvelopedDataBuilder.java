@@ -42,7 +42,7 @@ public final class CMSEnvelopedDataBuilder
 
 	/**
 	 * Encrypts enveloped contents. This method must be called prior to addKeyTransRecip();
-	 * @param keyGenAlgortihm: symetric key generation algorithm
+	 * @param keyGenAlgortihm: symmetric key generation algorithm
 	 * @param keySize: key size. Must be consistent to keyGenAlgortihm. Only DESede, RC2 and AES are supported.
 	 * @param cipherAlgorithm: encryption algorithm. Must be consistent to keyGenAlgortihm. Only DESede-CBC, RC2-CBC and AES-CBC are supported.
 	 * @throws CMSEncryptException
