@@ -447,3 +447,56 @@
    ...
 }
 
+{
+   <cond_bn_add_words>
+   Memcheck:Cond
+   fun:bn_add_words
+}
+{
+   <value4_bn_add_words>
+   Memcheck:Value4
+   fun:bn_add_words
+}
+{
+   <value4_bn_sub_words>
+   Memcheck:Value4
+   fun:bn_sub_words
+}
+{
+   <cond_bn_sub_words>
+   Memcheck:Cond
+   fun:bn_sub_words
+}
+{
+   <value4_bn_sqr_comba8>
+   Memcheck:Value4
+   fun:bn_sqr_comba8
+}
+{
+   <value4_bn_mul_mont>
+   Memcheck:Value4
+   fun:bn_mul_mont
+}
+{
+   <cond_BN_num_bits_word>
+   Memcheck:Cond
+   fun:BN_num_bits_word
+   fun:BN_num_bits
+   ...
+}
+{
+   <value4_BN_num_bits_word>
+   Memcheck:Value4
+   fun:BN_num_bits_word
+   fun:BN_num_bits
+   ...
+}
+{
+   <cond_BN_bin2bn>
+   Memcheck:Cond
+   fun:BN_bin2bn
+   fun:NH_RSA_pubkey_create
+   fun:NH_RSA_pubkey_decode
+   ...
+}
+
