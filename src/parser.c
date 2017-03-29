@@ -905,17 +905,18 @@ NH_UTILITY(NH_RV, NH_put_real)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_N
 
 NH_UTILITY(NH_RV, NH_put_enumerated)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ void *value, _IN_ size_t size)
 {
-	size_t size;
+	size_t isize;
 	unsigned char buffer[sizeof(int)];
 	int i = 0;
 
-	memcpy(buffer, &value, sizeof(int));
+	if (size > sizeof(int)) return asn_put_value(self->container, node, value, size, NH_ASN1_ENUMERATED);
+	memcpy(buffer, value, sizeof(int));
 #ifdef UNIX_IMPL
 	NH_swap(buffer, sizeof(int));
 #endif
 	while (!buffer[i] && i < sizeof(int) - 1) i++;
-	size = sizeof(int) - i;
-	return asn_put_value(self->container, node, (void*) &buffer[i], size, NH_ASN1_ENUMERATED);
+	isize = sizeof(int) - i;
+	return asn_put_value(self->container, node, (void*) &buffer[i], isize, NH_ASN1_ENUMERATED);
 }
 
 NH_UTILITY(NH_RV, NH_put_embedded_pdv)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ void *value, _IN_ size_t size)
