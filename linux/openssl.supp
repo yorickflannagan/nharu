@@ -499,4 +499,24 @@
    fun:NH_RSA_pubkey_decode
    ...
 }
+{
+   <cond_NH_RSA_privkey_decode>
+   Memcheck:Cond
+   fun:decode_bignum
+   fun:NH_RSA_privkey_decode
+   ...
+}
+{
+   <cond_NH_RSA_privkey_create>
+   Memcheck:Cond
+   fun:BN_bin2bn
+   fun:NH_RSA_privkey_create
+   fun:NH_RSA_privkey_decode
+   ...
+}
+{
+   <cond_bn_mul_words
+   Memcheck:Cond
+   fun:bn_mul_words
+}
 
