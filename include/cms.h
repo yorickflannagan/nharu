@@ -848,10 +848,10 @@ NH_FUNCTION(NH_RV, NH_cms_parse_enveloped_data)(_IN_ unsigned char*, _IN_ size_t
 NH_FUNCTION(void, NH_cms_release_env_parser)(_INOUT_ NH_CMS_ENV_PARSER);
 
 /*
- ****f* CMS/NH_cms_encode_encode_enveloped_data
+ ****f* CMS/NH_cms_encode_enveloped_data
  *
  * NAME
- *	NH_cms_encode_encode_enveloped_data
+ *	NH_cms_encode_enveloped_data
  *
  * PURPOSE
  *	Initializes a CMS EnvelopedData encoder
@@ -867,7 +867,7 @@ NH_FUNCTION(void, NH_cms_release_env_parser)(_INOUT_ NH_CMS_ENV_PARSER);
  ******
  *
  */
-NH_FUNCTION(NH_RV, NH_cms_encode_encode_enveloped_data)(_IN_ NH_BLOB*, _OUT_ NH_CMS_ENV_ENCODER*);
+NH_FUNCTION(NH_RV, NH_cms_encode_enveloped_data)(_IN_ NH_BLOB*, _OUT_ NH_CMS_ENV_ENCODER*);
 
 /*
  ****f* CMS/NH_cms_release_env_encoder

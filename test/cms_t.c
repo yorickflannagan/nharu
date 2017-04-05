@@ -684,7 +684,7 @@ int test_enveloped_data()
 	NH_CMS_ENV_PARSER hParser;
 
 	printf("Testing CMS EnvelopedData encoding... ");
-	if (NH_SUCCESS(rv = NH_cms_encode_encode_enveloped_data(&eContent, &hHandler)))
+	if (NH_SUCCESS(rv = NH_cms_encode_enveloped_data(&eContent, &hHandler)))
 	{
 		if (NH_SUCCESS(rv = hHandler->encrypt(hHandler, CKM_DES3_KEY_GEN, 24, CKM_DES3_CBC)))
 		{

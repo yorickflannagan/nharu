@@ -599,7 +599,7 @@ const static NH_CMS_ENV_ENCODER_STR defCMS_ENV_encoder =
 	cms_env_key_trans_recip
 };
 
-NH_FUNCTION(NH_RV, NH_cms_encode_encode_enveloped_data)(_IN_ NH_BLOB *eContent, _OUT_ NH_CMS_ENV_ENCODER *hHandler)
+NH_FUNCTION(NH_RV, NH_cms_encode_enveloped_data)(_IN_ NH_BLOB *eContent, _OUT_ NH_CMS_ENV_ENCODER *hHandler)
 {
 	NH_RV rv;
 	NH_ASN1_ENCODER_HANDLE hEncoder;

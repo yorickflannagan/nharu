@@ -795,7 +795,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBuilder_
 			{
 				memcpy(hRet->eContent.data, jbuffer, len);
 				hRet->eContent.length = len;
-				if (NH_SUCCESS(rv = NH_cms_encode_encode_enveloped_data(&hRet->eContent, &hRet->hBuilder))) ret = (jlong) hRet;
+				if (NH_SUCCESS(rv = NH_cms_encode_enveloped_data(&hRet->eContent, &hRet->hBuilder))) ret = (jlong) hRet;
 				else
 				{
 					free(hRet->eContent.data);
