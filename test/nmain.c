@@ -16,6 +16,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_cms_signed_data();
 	if (NH_SUCCESS(rv)) rv = test_openssl_cms_enveloped_data();
 	if (NH_SUCCESS(rv)) rv = test_enveloped_data();
+	if (NH_SUCCESS(rv)) rv = test_fake_enveloped_data();
 	if (NH_SUCCESS(rv)) rv = test_indefinite_length_form();
 	return rv;
 }

@@ -534,6 +534,32 @@ typedef NH_METHOD(NH_RV, NH_CMSENV_ENC_FUNCTION)(_INOUT_ NH_CMS_ENV_ENCODER_STR*
 typedef NH_METHOD(NH_RV, NH_CMSENV_RCP_FUNCTION)(_INOUT_ NH_CMS_ENV_ENCODER_STR*, _IN_ NH_CERTIFICATE_HANDLER, _IN_ CK_MECHANISM_TYPE);
 
 /*
+ ****f* NH_CMS_ENV_PARSER/rsa_key_trans_recip
+ *
+ * NAME
+ *	rsa_key_trans_recip
+ *
+ * PURPOSE
+ *	Adds a new KeyTransRecipientInfo using specified RSA public key handler
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_ENV_ENCODER_STR *self: the handler
+ *	_IN_ CK_MECHANISM_TYPE mechanism: key encryption mechanism
+ *	_IN_ NH_BLOB *keyid: subject key identifier
+ *	_IN_ NH_RSA_PUBKEY_HANDLER hPubKey: RSA public key handler
+ *
+ * RESULT
+ *	NH_UNSUPPORTED_MECH_ERROR
+ *	NH_CMS_ENV_NOKEY_ERROR
+ *	NH_CANNOT_SAIL
+ *	NH_OUT_OF_MEMORY_ERROR
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSENV_RSARCP_FUNCTION)(_INOUT_ NH_CMS_ENV_ENCODER_STR*, _IN_ CK_MECHANISM_TYPE, _IN_ NH_BLOB*, _IN_ NH_RSA_PUBKEY_HANDLER);
+
+/*
  ****s* CMS/NH_CMS_ENV_PARSER
  *
  * NAME
@@ -548,12 +574,13 @@ struct NH_CMS_ENV_ENCODER_STR
 {
 	NH_ASN1_ENCODER_HANDLE	hEncoder;
 
-	NH_ASN1_PNODE		content;		/* Shortcut to CMSEnvelopedData root node */
-	NH_BLOB			plainContent;	/* Contents to be encrypted */
-	NH_BLOB			key;			/* Encryption key */
+	NH_ASN1_PNODE			content;		/* Shortcut to CMSEnvelopedData root node */
+	NH_BLOB				plainContent;	/* Contents to be encrypted */
+	NH_BLOB				key;			/* Encryption key */
 
-	NH_CMSENV_ENC_FUNCTION	encrypt;		/* Encrypts content. The content-encryption key is generated at random. The EncryptedContentInfo ContentType will be data... */
-	NH_CMSENV_RCP_FUNCTION	key_trans_recip;
+	NH_CMSENV_ENC_FUNCTION		encrypt;		/* Encrypts content. The content-encryption key is generated at random. The EncryptedContentInfo ContentType will be data... */
+	NH_CMSENV_RCP_FUNCTION		key_trans_recip;
+	NH_CMSENV_RSARCP_FUNCTION	rsa_key_trans_recip;
 };
 /* ****** */
 typedef struct NH_CMS_ENV_ENCODER_STR*	NH_CMS_ENV_ENCODER;
@@ -902,6 +929,8 @@ EXTERN NH_NODE_WAY cms_issuer_serial[];
 #define CMS_ISSUERSERIAL_MAP_COUNT		3
 EXTERN NH_NODE_WAY issuer_serial_map[];
 #define ISSUER_SERIAL_MAP_COUNT		1
+EXTERN NH_NODE_WAY subkeyid_map[];
+#define SUBJECT_KEYID_MAP_COUNT		1
 
 EXTERN NH_NODE_WAY cms_map[];
 #define CMS_MAP					3

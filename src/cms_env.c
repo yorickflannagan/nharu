@@ -127,7 +127,7 @@ const static NH_NODE_WAY key_trans_recip_info[] =
 	},
 	{	/* rid/subjectKeyIdentifier */
 		NH_PARSE_ROOT,
-		NH_ASN1_OCTET_STRING | NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_HAS_NEXT_BIT,
+		NH_ASN1_OCTET_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_HAS_NEXT_BIT,
 		NULL,
 		0
 	},
@@ -534,6 +534,7 @@ NH_UTILITY(NH_RV, cms_env_key_trans_recip)
 	if (!(node = node->child)) return NH_CANNOT_SAIL;
 	if (NH_FAIL(rv = self->hEncoder->put_little_integer(self->hEncoder, node, 0))) return rv;
 	if (!(node = node->next)) return NH_CANNOT_SAIL;
+
 	if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, issuer_serial_map, ISSUER_SERIAL_MAP_COUNT))) return rv;
 	if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, cms_issuer_serial, CMS_ISSUERSERIAL_MAP_COUNT))) return rv;
 	if (!node->child) return NH_CANNOT_SAIL;
@@ -588,6 +589,75 @@ NH_UTILITY(NH_RV, cms_env_key_trans_recip)
 	return rv;
 }
 
+NH_UTILITY(NH_RV, cms_env_rsa_key_trans_recip)
+(
+	_INOUT_ NH_CMS_ENV_ENCODER_STR *self,
+	_IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ NH_BLOB *keyid,
+	_IN_ NH_RSA_PUBKEY_HANDLER hPubKey
+)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE node;
+	unsigned int *oid;
+	size_t oidCount;
+	unsigned char *buffer;
+	size_t buflen;
+
+	switch (mechanism)
+	{
+	case CKM_RSA_PKCS_OAEP:
+		oid = rsaes_oaep_oid;
+		oidCount = NHC_RSAES_OAEP_OID_COUNT;
+		break;
+	case CKM_RSA_PKCS:
+		oid = rsaEncryption_oid;
+		oidCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	case CKM_RSA_X_509:
+		oid = rsa_x509_oid;
+		oidCount = NHC_RSA_X509_OID_COUNT;
+		break;
+	default: return NH_UNSUPPORTED_MECH_ERROR;
+	}
+	if
+	(
+		NH_SUCCESS(rv = self->key.data ? NH_OK : NH_CMS_ENV_NOKEY_ERROR) &&
+		NH_SUCCESS(rv = (node = self->hEncoder->sail(self->content, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) ? NH_OK : NH_CANNOT_SAIL) &&
+		NH_SUCCESS(rv = (node = self->hEncoder->add_to_set(self->hEncoder->container, node)) ? NH_OK : NH_CANNOT_SAIL) &&
+		NH_SUCCESS(rv = self->hEncoder->chart_from(self->hEncoder, node, key_trans_recip_map, ASN_NODE_WAY_COUNT(key_trans_recip_map))) &&
+		NH_SUCCESS(rv = self->hEncoder->chart_from(self->hEncoder, node, key_trans_recip_info, ASN_NODE_WAY_COUNT(key_trans_recip_info))) &&
+		NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
+		NH_SUCCESS(rv = self->hEncoder->put_little_integer(self->hEncoder, node, 2)) &&
+		NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+		NH_SUCCESS(rv = self->hEncoder->chart_from(self->hEncoder, node, subkeyid_map, SUBJECT_KEYID_MAP_COUNT)) &&
+		NH_SUCCESS(rv = self->hEncoder->put_octet_string(self->hEncoder, node, keyid->data, keyid->length)) &&
+		NH_SUCCESS(rv = (node = node->next) && (node->child) ? NH_OK : NH_CANNOT_SAIL) &&
+		NH_SUCCESS(rv = self->hEncoder->put_objectid(self->hEncoder, node->child, oid, oidCount, CK_FALSE))
+	)
+	{
+		if (mechanism == CKM_RSA_PKCS_OAEP)
+		{
+			if (!(node->child->next)) return NH_CANNOT_SAIL;
+			*node->child->next->identifier = NH_ASN1_SEQUENCE;
+		}
+		if
+		(
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hPubKey->encrypt(hPubKey, mechanism, self->key.data, self->key.length, NULL, &buflen)) &&
+			NH_SUCCESS(rv = (buffer = (unsigned char*) malloc(buflen)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if
+			(
+				NH_SUCCESS(rv = hPubKey->encrypt(hPubKey, mechanism, self->key.data, self->key.length, buffer, &buflen))
+			)	rv = self->hEncoder->put_octet_string(self->hEncoder, node, buffer, buflen);
+			free(buffer);
+		}
+	}
+	return rv;
+}
+
 const static NH_CMS_ENV_ENCODER_STR defCMS_ENV_encoder =
 {
 	NULL,			/* hEncoder */
@@ -596,7 +666,8 @@ const static NH_CMS_ENV_ENCODER_STR defCMS_ENV_encoder =
 	{ NULL, 0 },	/* key */
 
 	cms_env_encrypt,
-	cms_env_key_trans_recip
+	cms_env_key_trans_recip,
+	cms_env_rsa_key_trans_recip
 };
 
 NH_FUNCTION(NH_RV, NH_cms_encode_enveloped_data)(_IN_ NH_BLOB *eContent, _OUT_ NH_CMS_ENV_ENCODER *hHandler)

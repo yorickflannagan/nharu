@@ -717,3 +717,67 @@ int test_enveloped_data()
 	else printf("Failed\n");
 	return rv;
 }
+
+static unsigned char id[] =
+{
+	 1,  2,  3,  4,  5,  6,  7,  8,
+	 9, 10, 11, 12, 13, 14, 15, 16,
+	17, 18, 19, 20, 21, 22, 23, 24,
+	25, 26, 27, 28, 29, 30, 31, 32
+};
+const static NH_BLOB keyid = { id, 32 };
+NH_RV fake_decrypt(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_ _IN_ void *params, _OUT_ unsigned char *plaintext, _INOUT_ size_t *plainSize)
+{
+	NH_RSA_PRIVKEY_HANDLER hKey = (NH_RSA_PRIVKEY_HANDLER) params;
+	return hKey->decrypt(hKey, mechanism, data->data, data->length, plaintext, plainSize);
+}
+int test_fake_enveloped_data()
+{
+	NH_RV rv;
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+	NH_CMS_ENV_ENCODER hHandler;
+	unsigned char *encoding;
+	size_t size;
+	NH_CMS_ENV_PARSER hParser;
+
+	printf("Testing CMS EnvelopedData encoding with SubjectPublicKeyId... ");
+	if (NH_SUCCESS(rv = NH_generate_RSA_keys(2048, 65537, &hPubKey, &hPrivKey)))
+	{
+		if (NH_SUCCESS(rv = NH_cms_encode_enveloped_data(&eContent, &hHandler)))
+		{
+			if
+			(
+				NH_SUCCESS(rv = hHandler->encrypt(hHandler, CKM_DES3_KEY_GEN, 24, CKM_DES3_CBC)) &&
+				NH_SUCCESS(rv = hHandler->rsa_key_trans_recip(hHandler, CKM_RSA_PKCS_OAEP, &keyid, hPubKey)) &&
+				(size = hHandler->hEncoder->encoded_size(hHandler->hEncoder, hHandler->hEncoder->root)) &&
+				NH_SUCCESS(rv = (encoding = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				if
+				(
+					NH_SUCCESS(rv = hHandler->hEncoder->encode(hHandler->hEncoder, hHandler->hEncoder->root, encoding)) &&
+					NH_SUCCESS(rv = NH_cms_parse_enveloped_data(encoding, size, &hParser))
+				)
+				{
+					if (NH_SUCCESS(rv = hParser->decrypt(hParser, 0, fake_decrypt, hPrivKey)))
+					{
+						rv =
+						(
+							hParser->plaintext.length == eContent.length &&
+							memcmp(hParser->plaintext.data, eContent.data, hParser->plaintext.length) == 0
+						) ? NH_OK : NH_PKIX_ERROR;
+					}
+					NH_cms_release_env_parser(hParser);
+				}
+				free(encoding);
+			}
+			NH_cms_release_env_encoder(hHandler);
+		}
+		NH_release_RSA_pubkey_handler(hPubKey);
+		NH_release_RSA_privkey_handler(hPrivKey);
+	}
+	if (NH_SUCCESS(rv)) printf("Done!\n");
+	else printf("Failed\n");
+	return rv;
+}

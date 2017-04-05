@@ -15,5 +15,6 @@ int test_cms_signed_data();
 int test_openssl_cms_enveloped_data();
 int test_enveloped_data();
 int test_indefinite_length_form();
+int test_fake_enveloped_data();
 
 #endif

@@ -660,7 +660,7 @@ NH_UTILITY(NH_RV, cms_sd_add_cert)(_INOUT_ NH_CMS_SD_ENCODER_STR *self, _IN_ NH_
 	return NH_asn_clone_node(self->hEncoder->container, hCert->hParser->root, &node);
 }
 
-const static NH_NODE_WAY subkeyid_map[] =
+NH_NODE_WAY subkeyid_map[] =
 {
 	{
 		NH_PARSE_ROOT,
