@@ -1729,7 +1729,7 @@ NH_FUNCTION(NH_RV, NH_release_encoder)(_IN_ NH_ASN1_ENCODER_HANDLE);
  *	the identifier octet.
  *
  *******/
-INLINE NH_FUNCTION(unsigned char, NH_asn_get_tag)(_IN_ int);
+NH_FUNCTION(unsigned char, NH_asn_get_tag)(_IN_ int);
 
 NH_UTILITY(NH_RV, NH_asn_clone_node)(_INOUT_ NH_CARGO_CONTAINER, _IN_ NH_ASN1_PNODE, _INOUT_ NH_ASN1_PNODE*);
 
