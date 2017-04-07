@@ -136,6 +136,33 @@ typedef NH_METHOD(NH_RV, NH_CMSSD_CERT_FUNCTION)(_IN_ NH_CMS_SD_PARSER_STR*, _IN
 typedef NH_METHOD(NH_RV, NH_CMSSD_VRFY_FUNCTION)(_IN_ NH_CMS_SD_PARSER_STR*, _IN_ size_t, _IN_ NH_ASN1_PNODE);
 
 /*
+ ****f* NH_CMS_SD_PARSER/verify_rsa
+ *
+ * NAME
+ *	verify_rsa
+ *
+ * PURPOSE
+ *	Verifies signed attributes of specified SignerInfo using an RSA public key
+ *
+ * ARGUMENTS
+ *	_IN_ NH_CMS_SD_PARSER_STR *self: the handler
+ *	_IN_ size_t idx: SignerInfo index. Must be between 0 and count.
+ *	_IN_ NH_RSA_PUBKEY_HANDLER pubKey: public key used to verify signature
+ *
+ * RESULT
+ *	NH_INVALID_SIGNER_ERROR
+ *	NH_UNEXPECTED_ENCODING
+ *	NH_UNSUPPORTED_MECH_ERROR
+ *	NH_CMS_NO_SIGATTRS_ERROR
+ *	NH_HASH_HANDLER return codes
+ *	NH_OUT_OF_MEMORY_ERROR
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSSD_VRFYRSA_FUNCTION)(_IN_ NH_CMS_SD_PARSER_STR*, _IN_ size_t, _IN_ NH_RSA_PUBKEY_HANDLER);
+
+/*
  ****f* NH_CMS_SD_PARSER/validate
  *
  * NAME
@@ -204,17 +231,18 @@ struct NH_CMS_SD_PARSER_STR
 	NH_MUTEX_HANDLE		mutex;
 	NH_ASN1_PARSER_HANDLE	hParser;
 
-	NH_ASN1_PNODE		content;		/* Shortcut to CMSSignedData root node */
-	NH_ASN1_PNODE		encapContentInfo;	/* Shortcut to  EncapsulatedContentInfo node */
-	NH_ASN1_PNODE		certificates;	/* Shortcut to CertificateSet not */
-	NH_ASN1_PNODE*		signers;		/* Array of shortcuts to SignerInfo nodes */
-	size_t			count;		/* Count of signers */
+	NH_ASN1_PNODE			content;		/* Shortcut to CMSSignedData root node */
+	NH_ASN1_PNODE			encapContentInfo;	/* Shortcut to  EncapsulatedContentInfo node */
+	NH_ASN1_PNODE			certificates;	/* Shortcut to CertificateSet not */
+	NH_ASN1_PNODE*			signers;		/* Array of shortcuts to SignerInfo nodes */
+	size_t				count;		/* Count of signers */
 
-	NH_CMSSD_SID_FUNCTION	get_sid;		/* Gets the SignerIdentifier CMS field for the specified SignerInfo. */
-	NH_CMSSD_CERT_FUNCTION	get_cert;		/* Gets the signing certificate if it was embedded in this CMS. */
-	NH_CMSSD_VRFY_FUNCTION	verify;		/* Verifies signed attributes of specified SignerInfo */
-	NH_CMSSD_VDTE_FUNCTION	validate;		/* Validates Content Type and Message Digest signed attributes of all SignerInfos against specified eContent */
-	NH_CMSSD_VDTEA_FUNCTION	validate_attached;/* Validates Content Type and Message Digest signed attributes of all SignerInfos against embbeded EncapsulatedContentInfo */
+	NH_CMSSD_SID_FUNCTION		get_sid;		/* Gets the SignerIdentifier CMS field for the specified SignerInfo. */
+	NH_CMSSD_CERT_FUNCTION		get_cert;		/* Gets the signing certificate if it was embedded in this CMS. */
+	NH_CMSSD_VRFY_FUNCTION		verify;		/* Verifies signed attributes of specified SignerInfo */
+	NH_CMSSD_VRFYRSA_FUNCTION	verify_rsa;		/* _IN_ NH_CMS_SD_PARSER_STR*, _IN_ size_t, _IN_ NH_RSA_PUBKEY_HANDLER */
+	NH_CMSSD_VDTE_FUNCTION		validate;		/* Validates Content Type and Message Digest signed attributes of all SignerInfos against specified eContent */
+	NH_CMSSD_VDTEA_FUNCTION		validate_attached;/* Validates Content Type and Message Digest signed attributes of all SignerInfos against embbeded EncapsulatedContentInfo */
 };
 /* ****** */
 typedef struct NH_CMS_SD_PARSER_STR*	NH_CMS_SD_PARSER;

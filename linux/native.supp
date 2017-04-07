@@ -297,4 +297,11 @@
    fun:test_enveloped_data
    fun:main
 }
+{
+   <Cond_fake>
+   Memcheck:Cond
+   ...
+   fun:test_fake_enveloped_data
+   ...
+}
 

@@ -199,6 +199,99 @@ NH_UTILITY(NH_RV, cms_sd_verify)(_IN_ NH_CMS_SD_PARSER_STR *self, _IN_ size_t id
 	return rv;
 }
 
+
+NH_UTILITY(NH_RV, _verify_signature_)
+(
+	_IN_ NH_ASN1_PNODE node,
+	_IN_ NH_RSA_PUBKEY_HANDLER pubKey,
+	_IN_ CK_MECHANISM_TYPE hashAlg,
+	_IN_ NH_ASN1_PNODE sig
+)
+{
+	NH_RV rv;
+	NH_HASH_HANDLER hHash;
+	unsigned char *hash, *signature;
+	size_t hashsize, siglen;
+	CK_MECHANISM_TYPE sigAlg;
+
+	if (NH_SUCCESS(rv = NH_new_hash(&hHash)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
+			NH_SUCCESS(rv = hHash->digest(hHash, node->identifier, node->contents - node->identifier + node->size, NULL, &hashsize)) &&
+			NH_SUCCESS(rv = (hash = (unsigned char*) malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if (NH_SUCCESS(rv = hHash->digest(hHash, node->identifier, node->contents - node->identifier + node->size, hash, &hashsize)))
+			{
+				switch (hashAlg)
+				{
+				case CKM_SHA_1:
+					sigAlg = CKM_SHA1_RSA_PKCS;
+					break;
+				case CKM_SHA256:
+					sigAlg = CKM_SHA256_RSA_PKCS;
+					break;
+				case CKM_SHA384:
+					sigAlg = CKM_SHA384_RSA_PKCS;
+					break;
+				case CKM_SHA512:
+					sigAlg = CKM_SHA512_RSA_PKCS;
+					break;
+				case CKM_MD5:
+					sigAlg = CKM_MD5_RSA_PKCS;
+					break;
+				default: rv = NH_UNSUPPORTED_MECH_ERROR;
+				}
+				if (NH_SUCCESS(rv))
+				{
+					if (ASN_TAG_IS_PRESENT(sig, NH_ASN1_BIT_STRING))
+					{
+						signature = ((NH_PBITSTRING_VALUE) sig->value)->string;
+						siglen = ((NH_PBITSTRING_VALUE) sig->value)->len;
+					}
+					else
+					{
+						signature = sig->value;
+						siglen = sig->valuelen;
+					}
+					rv = pubKey->verify(pubKey, sigAlg, hash, hashsize, signature, siglen);
+				}
+			}
+			free(hash);
+		}
+		NH_release_hash(hHash);
+	}
+	return rv;
+}
+#define HASH_PATH_KNOWLEDGE		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 2) << 8) | NH_SAIL_SKIP_SOUTH)
+#define SIGNATURE_PATH_KNOWLEDGE	((NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5))
+#define SIGNED_DATA_PATH_KNOWLEDGE	((NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3))
+NH_UTILITY(NH_RV, cms_sd_verify_rsa)(_IN_ NH_CMS_SD_PARSER_STR *self, _IN_ size_t idx, _IN_ NH_RSA_PUBKEY_HANDLER pubKey)
+{
+	NH_ASN1_PNODE node, sig;
+	CK_MECHANISM_TYPE hashAlg;
+	NH_RV rv;
+
+	if
+	(
+		NH_SUCCESS(rv = idx < self->count && self->signers ? NH_OK : NH_INVALID_SIGNER_ERROR) &&
+		NH_SUCCESS(rv = (node = self->hParser->sail(self->signers[idx], HASH_PATH_KNOWLEDGE)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+		NH_SUCCESS(rv = (hashAlg = NH_oid_to_mechanism(node->value, node->valuelen)) != CK_UNAVAILABLE_INFORMATION ? NH_OK : NH_UNSUPPORTED_MECH_ERROR) &&
+		NH_SUCCESS(rv = (sig = self->hParser->sail(self->signers[idx], SIGNATURE_PATH_KNOWLEDGE)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+		NH_SUCCESS(rv = ASN_IS_PARSED(sig) ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = (node = self->hParser->sail(self->signers[idx], SIGNED_DATA_PATH_KNOWLEDGE)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+		NH_SUCCESS(rv = ASN_IS_PRESENT(node) ? NH_OK : NH_CMS_NO_SIGATTRS_ERROR)
+	)
+	{
+		*node->identifier = NH_ASN1_SET;
+		rv = _verify_signature_(node, pubKey, hashAlg, sig);
+		*node->identifier = 0xA0;
+	}
+	return rv;
+}
+
 static const unsigned int content_type_oid[]	= { 1, 2, 840, 113549, 1, 9, 3 };
 static const unsigned int message_digest_oid[]	= { 1, 2, 840, 113549, 1, 9, 4 };
 static const unsigned int signing_time_oid[]	= { 1, 2, 840, 113549, 1, 9, 5 };
@@ -326,6 +419,7 @@ const static NH_CMS_SD_PARSER_STR defCMS_SD_parser =
 	cms_sd_get_sid,			/* get_sid */
 	cms_sd_get_cert,			/* get_cert */
 	cms_sd_verify,			/* verify */
+	cms_sd_verify_rsa,		/* verify_rsa */
 	cms_sd_validate,			/* validate */
 	cms_sd_validate_attached	/* validate_attached */
 };

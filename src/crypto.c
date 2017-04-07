@@ -512,7 +512,7 @@ NH_UTILITY(NH_RV, NH_generate_key)(_INOUT_ NH_SYMKEY_HANDLER_STR *self, _IN_ siz
 NH_UTILITY(NH_RV, NH_new_iv)(_IN_ CK_MECHANISM_TYPE mechanism, _OUT_ NH_IV **iv)
 {
 	NH_IV *ret = NULL;
-	size_t len;
+	size_t len = 0;
 	unsigned char *piv;
 	NH_NOISE_HANDLER hNoise;
 	NH_RV rv;

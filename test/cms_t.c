@@ -524,6 +524,70 @@ int test_cms_signed_data()
 }
 
 
+NH_RV sign_callback(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
+{
+	NH_RSA_PRIVKEY_HANDLER hHandler = (NH_RSA_PRIVKEY_HANDLER) params;
+	return hHandler->sign(hHandler, mechanism, data->data, data->length, signature, sigSize);
+}
+int test_cms_signed_data_with_pubkey()
+{
+	NH_RV  rv;
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+	NH_CMS_SD_ENCODER hCMSEncoder;
+	NH_CERTIFICATE_HANDLER hCert;
+	NH_CMS_ISSUER_SERIAL_STR sid = { NULL, NULL, NULL };
+	unsigned char *encoding;
+	size_t size;
+	NH_CMS_SD_PARSER hCMSParser;
+
+	printf("Testing CMS SignedData encoding with RSA public key validation... ");
+	if (NH_SUCCESS(rv = NH_generate_RSA_keys(2048, 65537, &hPubKey, &hPrivKey)))
+	{
+		if (NH_SUCCESS(rv = NH_cms_encode_signed_data(&eContent, &hCMSEncoder)))
+		{
+			if
+			(
+				NH_SUCCESS(rv = hCMSEncoder->data_ctype(hCMSEncoder, CK_TRUE)) &&
+				NH_SUCCESS(rv = NH_parse_certificate(sign_cert, sizeof(sign_cert), &hCert))
+			)
+			{
+				sid.name = hCert->issuer;
+				sid.serial = hCert->serialNumber;
+				if
+				(
+					NH_SUCCESS(rv = hCMSEncoder->sign(hCMSEncoder, &sid, CKM_SHA1_RSA_PKCS, sign_callback, hPrivKey)) &&
+					(size = hCMSEncoder->hEncoder->encoded_size(hCMSEncoder->hEncoder, hCMSEncoder->hEncoder->root)) &&
+					NH_SUCCESS((encoding = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				)
+				{
+					if
+					(
+						NH_SUCCESS(rv = hCMSEncoder->hEncoder->encode(hCMSEncoder->hEncoder, hCMSEncoder->hEncoder->root, encoding)) &&
+						NH_SUCCESS(rv = NH_cms_discover(encoding, size) == NH_SIGNED_DATA_CTYPE ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+						NH_SUCCESS(rv = NH_cms_parse_signed_data(encoding, size, &hCMSParser))
+					)
+					{
+						if
+						(
+							NH_SUCCESS(rv = hCMSParser->verify_rsa(hCMSParser, 0, hPubKey))
+						)	rv = hCMSParser->validate_attached(hCMSParser);
+						NH_cms_release_sd_parser(hCMSParser);
+					}
+					free(encoding);
+				}
+				NH_release_certificate(hCert);
+			}
+			NH_cms_release_sd_encoder(hCMSEncoder);
+		}
+		NH_release_RSA_pubkey_handler(hPubKey);
+		NH_release_RSA_privkey_handler(hPrivKey);
+	}
+	if (NH_SUCCESS(rv)) printf("Done!\n");
+	else printf("Failed\n");
+	return rv;
+}
+
 
 static unsigned char enveloped_cms[] =
 {
