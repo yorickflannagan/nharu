@@ -545,3 +545,81 @@
    ...
 }
 
+{
+   <Value4__x86_DES_encrypt>
+   Memcheck:Value4
+   fun:_x86_DES_encrypt
+   ...
+}
+{
+   <Value4__x86_DES_decrypt>
+   Memcheck:Value4
+   fun:_x86_DES_decrypt
+   ...
+}
+{
+   <Cond_bn_expand2>
+   Memcheck:Cond
+   fun:bn_expand2
+   ...
+}
+{
+   <Cond_bn_sub_part_words>
+   Memcheck:Cond
+   fun:bn_sub_part_words
+   ...
+}
+{
+   <Cond_bn_mul_mont>
+   Memcheck:Cond
+   fun:bn_mul_mont
+   ...
+}
+{
+   <Cond_EVP_CIPHER_CTX_set_key_length>
+   Memcheck:Cond
+   fun:EVP_CIPHER_CTX_set_key_length
+   ...
+}
+{
+   <Cond_EVP_DigestUpdate>
+   Memcheck:Cond
+   ...
+   fun:EVP_DigestUpdate
+   fun:ssleay_rand_bytes
+   ...
+}
+{
+   <Value4_ssleay_rand_bytes>
+   Memcheck:Value4
+   ...
+   fun:EVP_DigestUpdate
+   fun:ssleay_rand_bytes
+   ...
+}
+{
+   <Cond_EVP_DigestFinal_ex>
+   Memcheck:Cond
+   ...
+   fun:EVP_DigestFinal_ex
+   fun:ssleay_rand_bytes
+   ...
+}
+{
+   <Value4_EVP_DigestFinal_ex>
+   Memcheck:Value4
+   ...
+   fun:EVP_DigestFinal_ex
+   fun:ssleay_rand_bytes
+   ...
+}
+{
+   <Cond_bn_expand2>
+   Memcheck:Cond
+   ...
+   fun:bn_expand2
+   ...
+   fun:RSA_eay_public_encrypt
+   ...
+}
+
