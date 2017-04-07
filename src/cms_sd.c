@@ -400,7 +400,7 @@ NH_UTILITY(NH_RV, cms_sd_validate)(_IN_ NH_CMS_SD_PARSER_STR *self, _IN_ unsigne
 
 NH_UTILITY(NH_RV, cms_sd_validate_attached)(_IN_ NH_CMS_SD_PARSER_STR *self)
 {
-	NH_ASN1_PNODE eContent = self->hParser->sail(self->encapContentInfo, (NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH);
+	NH_ASN1_PNODE eContent = self->hParser->sail(self->encapContentInfo, NH_ECONTENT_INFO_PATH);
 	if (!eContent) return NH_CMS_SD_NOECONTENT_ERROR;
 	return self->validate(self, eContent->value, eContent->valuelen);
 }

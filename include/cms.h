@@ -246,6 +246,7 @@ struct NH_CMS_SD_PARSER_STR
 };
 /* ****** */
 typedef struct NH_CMS_SD_PARSER_STR*	NH_CMS_SD_PARSER;
+#define NH_ECONTENT_INFO_PATH			((NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)
 
 /* TODO: NH_CMS_SD_PARSER must support another features:
  *	Verify signature without signed attributes;
