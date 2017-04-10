@@ -622,4 +622,44 @@
    fun:RSA_eay_public_encrypt
    ...
 }
+{
+   <Cond_SHA256_Update>
+   Memcheck:Cond
+   ...
+   fun:SHA256_Update
+   ...
+   fun:EVP_DigestUpdate
+   fun:NH_hash_update
+   ...
+}
+{
+   <Value4_SHA256_Update>
+   Memcheck:Value4
+   ...
+   fun:SHA256_Update
+   ...
+   fun:EVP_DigestUpdate
+   fun:NH_hash_update
+   ...
+}
+{
+   <Value4_sha256_block_data_order>
+   Memcheck:Value4
+   fun:sha256_block_data_order
+}
+{
+   <Cond_sha256_block_data_order>
+   Memcheck:Cond
+   fun:sha256_block_data_order
+}
+{
+   <Cond_SHA256_Final>
+   Memcheck:Cond
+   ...
+   fun:SHA256_Final
+   ...
+   fun:EVP_DigestFinal_ex
+   fun:NH_hash_finish
+   ...
+}
 
