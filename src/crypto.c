@@ -6,7 +6,7 @@
 #ifdef UNIX_IMPL
 #include <stdio.h>
 #include <errno.h>
-#ifdef NH_DEBUG
+#if defined(_DEBUG_)
 #define RND_SOURCE			"/dev/urandom"
 #else
 #define RND_SOURCE			"/dev/random"
@@ -19,6 +19,7 @@
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
+
 
 
 /*
@@ -102,6 +103,7 @@ NH_UTILITY(NH_RV, NH_rand)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 {
 	if (!buffer) return NH_INVALID_ARG;
 	if (!RAND_bytes(buffer, len)) return (S_SYSERROR(ERR_get_error()) | NH_RND_GEN_ERROR);
+	_MEM_CHECK_DISABLE_(buffer, len);
 	return NH_OK;
 }
 
@@ -1376,6 +1378,7 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_sign)
 )
 {
 	int rsa_size, nid;
+	NH_RV rv;
 
 	if (!data) return NH_INVALID_ARG;
 	if (!hHandler->key) return NH_INVALID_STATE_ERROR;
@@ -1405,7 +1408,9 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_sign)
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	return RSA_sign(nid, data, size, signature, sigSize, hHandler->key) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_SIGN_ERROR;
+	rv = RSA_sign(nid, data, size, signature, sigSize, hHandler->key) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_SIGN_ERROR;
+	_MEM_CHECK_DISABLE_(signature, sigSize);
+	return rv;
 }
 
 NH_UTILITY(NH_RV, NH_RSA_privkey_decrypt)

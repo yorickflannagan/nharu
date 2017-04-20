@@ -142,4 +142,12 @@ typedef struct NH_BLOB
 #define EXTERN				extern
 #endif
 
+/* OpenSSL warnings suppression for Valgrind */
+#if defined(_DEBUG_)
+#include <valgrind/memcheck.h>
+#define _MEM_CHECK_DISABLE_(_qzz_addr,_qzz_len)		VALGRIND_MAKE_MEM_DEFINED(_qzz_addr,_qzz_len)
+#else
+#define _MEM_CHECK_DISABLE_(_qzz_addr,_qzz_len)		_NOP_
+#endif
+
 #endif /* BASE_H */
