@@ -52,6 +52,17 @@
 #define NH_MAX_IV_LENGTH		EVP_MAX_IV_LENGTH
 #endif
 
+
+/* OpenSSL warnings suppression for Valgrind */
+#if defined(_DEBUG_)
+#include <valgrind/memcheck.h>
+#define NH_MALLOC				debug_malloc
+#else
+#define NH_MALLOC				malloc
+#endif
+
+
+
 /** **********************
  *  Noise device handler
  *  **********************/
@@ -1787,6 +1798,11 @@ NH_UTILITY(CK_BBOOL, NH_match_oid)(_IN_ unsigned int*, _IN_ size_t, _IN_ unsigne
  */
 NH_UTILITY(CK_MECHANISM_TYPE, NH_oid_to_mechanism)(_IN_ unsigned int*, _IN_ size_t);
 
+
+#if defined(_DEBUG_)
+NH_FUNCTION(void*, debug_malloc)(size_t);
+#endif
+
 #if defined(__cplusplus)
 }
 #endif
@@ -1862,7 +1878,6 @@ EXTERN unsigned int dsa_oid[];
  */
 EXTERN NH_NODE_WAY pkix_algid_map[];
 #define PKIX_ALGID_COUNT		3
-
 
 #if defined(_ALIGN_)
 #pragma pack(pop, _crypto_align)

@@ -19,6 +19,9 @@
 					<Add option="-Wall" />
 					<Add option="-g" />
 				</Compiler>
+				<Environment>
+					<Variable name="_DEBUG_" value="1" />
+				</Environment>
 				<MakeCommands>
 					<Build command="$make -f $makefile DEBUG=1" />
 					<CompileFile command="$make -f $makefile $file DEBUG=1" />

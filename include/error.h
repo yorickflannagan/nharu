@@ -69,6 +69,7 @@ typedef int					NH_SYSRV;
 #define NH_RSA_DECRYPT_ERROR		(NH_CRYPTO_ERROR + 17)	/* RSA private key decryption error */
 #define NH_RSA_CLONE_ERROR		(NH_CRYPTO_ERROR + 18)	/* RSA key clone error */
 #define NH_UNSUP_PKEY_ERROR		(NH_CRYPTO_ERROR + 19)	/* Unsupported private key error */
+#define NH_OPENSSL_INIT_ERROR		(NH_CRYPTO_ERROR + 20)	/* Could not initialize OpenSSL for debug */
 
 /* X.509 parsing errors */
 #define NH_PKIX_ERROR			(NH_CRYPTO_ERROR + 32)

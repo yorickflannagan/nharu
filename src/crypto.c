@@ -103,7 +103,6 @@ NH_UTILITY(NH_RV, NH_rand)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 {
 	if (!buffer) return NH_INVALID_ARG;
 	if (!RAND_bytes(buffer, len)) return (S_SYSERROR(ERR_get_error()) | NH_RND_GEN_ERROR);
-	_MEM_CHECK_DISABLE_(buffer, len);
 	return NH_OK;
 }
 
@@ -127,15 +126,33 @@ static NH_NOISE_HANDLER_STR hDevice =
 	NH_safe_zeroize
 };
 
+#if defined(_DEBUG_)
+NH_FUNCTION(void*, debug_malloc)(size_t num)
+{
+	void *ret = malloc(num);
+	VALGRIND_MAKE_MEM_DEFINED(ret, num);
+	return ret;
+}
+#endif
 INLINE NH_UTILITY(NH_RV, seed)()
 {
-	NH_RV rv;
+	NH_RV rv = NH_OK;
 	unsigned char seedb[NH_DEFAULT_SEED];
+#if defined(_DEBUG_)
+	void *(*r)(void *, size_t) = NULL;
+	void (*f)(void *) = NULL;
+#endif
 	if (!hDevice.seeded)
 	{
-		if (NH_FAIL(rv = NH_noise(seedb, NH_DEFAULT_SEED))) return rv;
-		if (NH_FAIL(rv = NH_seed((unsigned char*) seedb, NH_DEFAULT_SEED))) return rv;
-		hDevice.seeded = TRUE;
+#if defined(_DEBUG_)
+		CRYPTO_get_mem_functions(NULL, &r, &f);
+		if (NH_FAIL(CRYPTO_set_mem_functions(debug_malloc, r, f))) return NH_OPENSSL_INIT_ERROR;
+#endif
+		if
+		(
+			NH_SUCCESS(rv = NH_noise(seedb, NH_DEFAULT_SEED)) &&
+			NH_SUCCESS(rv = NH_seed((unsigned char*) seedb, NH_DEFAULT_SEED))
+		)	hDevice.seeded = TRUE;
 	}
 	return rv;
 }
@@ -143,12 +160,17 @@ INLINE NH_UTILITY(NH_RV, seed)()
 NH_FUNCTION(NH_RV, NH_new_noise_device)(_OUT_ NH_NOISE_HANDLER *self)
 {
 	NH_NOISE_HANDLER out;
-
-	seed();
-	if (!(out = (NH_NOISE_HANDLER) malloc(sizeof(NH_NOISE_HANDLER_STR)))) return NH_OUT_OF_MEMORY_ERROR;
-	memcpy(out, &hDevice, sizeof(NH_NOISE_HANDLER_STR));
-	*self = out;
-	return NH_OK;
+	NH_RV rv;
+	if
+	(
+		NH_SUCCESS(rv = seed()) &&
+		NH_SUCCESS(rv = (out = (NH_NOISE_HANDLER) malloc(sizeof(NH_NOISE_HANDLER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+	)
+	{
+		memcpy(out, &hDevice, sizeof(NH_NOISE_HANDLER_STR));
+		*self = out;
+	}
+	return rv;
 }
 
 NH_FUNCTION(void, NH_release_noise_device)(_IN_ NH_NOISE_HANDLER self)
@@ -210,7 +232,7 @@ NH_UTILITY(NH_RV, NH_split_shares)
 	NH_RV rv;
 
 	if (k > n || n != self->count) return NH_INVALID_ARG;
-	if (!(rnd_xxx = (unsigned char*) malloc(n))) return NH_OUT_OF_MEMORY_ERROR;
+	if (!(rnd_xxx = (unsigned char*) NH_MALLOC(n))) return NH_OUT_OF_MEMORY_ERROR;
 	gfshare_fill_rand = rand_func;
 	fill_no_zeros(rnd_xxx, n);
 	if (NH_SUCCESS(rv = (G = gfshare_ctx_init_enc(rnd_xxx, n, k, size)) ? NH_OK : NH_SHARE_INIT_ERROR))
@@ -487,7 +509,7 @@ NH_UTILITY(NH_RV, NH_generate_key)(_INOUT_ NH_SYMKEY_HANDLER_STR *self, _IN_ siz
 	if (NH_SUCCESS(rv))
 	{
 		memset(key, 0, sizeof(NH_SYMKEY));
-		rv = (key->data = (unsigned char*) malloc(keysize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
+		rv = (key->data = (unsigned char*) NH_MALLOC(keysize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
 		if (NH_SUCCESS(rv))
 		{
 			key->length = keysize;
@@ -530,20 +552,23 @@ NH_UTILITY(NH_RV, NH_new_iv)(_IN_ CK_MECHANISM_TYPE mechanism, _OUT_ NH_IV **iv)
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	if (!(piv = (unsigned char*) malloc(len))) return NH_OUT_OF_MEMORY_ERROR;
-	if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise))) rv = hNoise->rand(piv, len);
-	NH_release_noise_device(hNoise);
-	if (NH_SUCCESS(rv)) rv = (ret = (NH_IV*) malloc(sizeof(NH_IV))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
-	if (NH_SUCCESS(rv))
+	if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise)))
 	{
-		ret->data = piv;
-		ret->length = len;
-		*iv = ret;
-	}
-	else
-	{
-		if (ret) free(ret);
-		free(piv);
+		if (NH_SUCCESS(rv = (piv = (unsigned char*) NH_MALLOC(len)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+		{
+			if
+			(
+				NH_SUCCESS(rv = hNoise->rand(piv, len)) &&
+				NH_SUCCESS(rv = (ret = (NH_IV*) malloc(sizeof(NH_IV))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				ret->data = piv;
+				ret->length = len;
+				*iv = ret;
+			}
+			else free(piv);
+		}
+		NH_release_noise_device(hNoise);
 	}
 	return rv;
 }
@@ -1409,7 +1434,6 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_sign)
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
 	rv = RSA_sign(nid, data, size, signature, sigSize, hHandler->key) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_SIGN_ERROR;
-	_MEM_CHECK_DISABLE_(signature, sigSize);
 	return rv;
 }
 
@@ -2129,34 +2153,32 @@ NH_FUNCTION(NH_RV, NH_generate_RSA_keys)
 )
 {
 	NH_RV rv;
-	BIGNUM *e;
+	BIGNUM *e = NULL;
 	RSA *key = NULL, *pub = NULL;
 	NH_RSA_PUBKEY_HANDLER pubKey = NULL;
 	NH_RSA_PRIVKEY_HANDLER privKey;
 
-	if (!bits) return NH_INVALID_ARG;
-	e = BN_new();
-	rv = BN_set_word(e, exponent) ? NH_OK : NH_RSA_GEN_ERROR;
-	if (NH_SUCCESS(rv)) rv = (key = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_generate_key_ex(key, bits, e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR;
-	BN_free(e);
-	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (pub = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR))
+	if
+	(
+		NH_SUCCESS(rv = (e = BN_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = BN_set_word(e, exponent) ? NH_OK : NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = (key = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = RSA_generate_key_ex(key, bits, e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = (pub = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = (pub->n = BN_dup(key->n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = (pub->e = BN_dup(key->e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&pubKey)) &&
+		NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&privKey))
+	)
 	{
-		rv = (pub->n = BN_dup(key->n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR;
-		if (NH_SUCCESS(rv)) rv = (pub->e = BN_dup(key->e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR;
+		pubKey->key = pub;
+		pubKey->size = bits;
+		privKey->key = key;
+		*hPubKey = pubKey;
+		*hPrivKey = privKey;
+
 	}
-	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&pubKey)))
-	{
-		rv = NH_new_RSA_privkey_handler(&privKey);
-		if (NH_SUCCESS(rv))
-		{
-			pubKey->key = pub;
-			pubKey->size = bits;
-			privKey->key = key;
-			*hPubKey = pubKey;
-			*hPrivKey = privKey;
-		}
-	}
+	if (e) BN_free(e);
 	if (NH_FAIL(rv))
 	{
 		if (key) RSA_free(key);

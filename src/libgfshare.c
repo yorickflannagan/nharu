@@ -31,7 +31,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define XMALLOC malloc
+#include "crypto.h"
+#define XMALLOC NH_MALLOC
 #define XFREE free
 
 struct _gfshare_ctx {
