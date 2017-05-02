@@ -1,8 +1,9 @@
 Libidn:
-	- requirements: autopoint, gperf, gengetopt, texinfo, help2man
+	- requirements: autopoint, gperf, gengetopt, texinfo, help2man, fig2ps
 	- gettext 0.19.3: ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/gettext
+	- edit po/LINGUAS
 	- checkout libidn-1-32
-	- ./configure --enable-gcc-warnings
+	- ./configure --disable-silent-rules --enable-threads=posix
 
 OpenSSL:
 	- checkout OpenSSL_1_0_2g
