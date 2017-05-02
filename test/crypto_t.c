@@ -531,6 +531,6 @@ int test_rsa()
 		NH_release_RSA_pubkey_handler(hPubKey);
 		NH_release_RSA_privkey_handler(hPrivKey);
 	}
-	rv = test_pkcs8();
+	if (NH_SUCCESS(rv)) rv = test_pkcs8();
 	return rv;
 }

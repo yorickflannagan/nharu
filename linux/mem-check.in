@@ -4,7 +4,7 @@ LIBS=_LIBS_
 
 TEST_DIR="$HOME_DIR/test"
 CMD_LINE="$TEST_DIR/ntest-app"
-SUPP_SSL=""
+SUPP_SSL="--suppressions=$HOME_DIR/linux/openssl.supp"
 SUPP_FILES="$SUPP_SSL"
 SHOW_REACH="--show-reachable=yes"
 LOG_FILE="--log-file=valgrind.txt"
