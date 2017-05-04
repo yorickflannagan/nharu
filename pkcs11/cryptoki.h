@@ -39,11 +39,23 @@
 #else
 #define CK_EXPORT_SPEC		CK_IMPORT_SPEC
 #endif
+#if defined (_WIN32)
 #define CK_CALL_SPEC		__cdecl			/* Ensures the calling convention for Win32 builds */
+#else
+#define CK_CALL_SPEC
+#endif
+#elif defined(__GNUC__)
+#define CK_IMPORT_SPEC
+#define CK_EXPORT_SPEC
+#if defined(__x86_64__)
+#define CK_CALL_SPEC
+#else
+#define CK_CALL_SPEC 		__attribute__((cdecl))
+#endif
 #else
 #define CK_IMPORT_SPEC
 #define CK_EXPORT_SPEC
-#define CK_CALL_SPEC 		__attribute__((cdecl))
+#define CK_CALL_SPEC
 #endif
 
 

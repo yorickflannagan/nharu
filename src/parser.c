@@ -306,7 +306,7 @@ NH_UTILITY(NH_RV, NH_map_node)
 		buffer = node->identifier;
 		if (buffer == last_byte) return NH_SMALL_DER_ENCODING;
 		buffer++;
-		if (NH_FAIL(rv = self->read_size(buffer, last_byte, &node->size, &node->contents, &next))) return rv;
+		if (NH_FAIL(rv = self->read_size(buffer, last_byte, (size_t *) &node->size, &node->contents, &next))) return rv;
 		node->knowledge = knowledge;
 		if (ASN_IS_CONSTRUCTED(*node->identifier))	/* A constructed encoding MUST have a child node */
 		{

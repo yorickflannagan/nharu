@@ -66,10 +66,10 @@
 #define NH_EXPORT
 #define NH_HIDDEN				__attribute__((__visibility__("internal")))
 #define NH_EXTERNAL
-#if defined (_WIN32) && !defined (_WIN64)
-#define NH_CALL_SPEC			__attribute__((cdecl))
-#else
+#if defined(__x86_64__)
 #define NH_CALL_SPEC
+#else
+#define NH_CALL_SPEC			__attribute__((cdecl))
 #endif
 #define INLINE				__inline__
 #define _NOP_				__asm__("nop")

@@ -398,7 +398,7 @@ NH_UTILITY(NH_RV, NH_hash_finish)(_INOUT_ NH_HASH_HANDLER_STR *hHash, _OUT_ unsi
 		return NH_OK;
 	}
 	if (*size < len) return NH_BUF_TOO_SMALL;
-	rv = EVP_DigestFinal_ex(hHash->ctx, buffer, size) ? NH_OK : NH_HASH_ERROR;
+	rv = EVP_DigestFinal_ex(hHash->ctx, buffer, (unsigned int*)size) ? NH_OK : NH_HASH_ERROR;
 	hHash->md = NULL;
 	hHash->mechanism = UINT_MAX;
 	return rv;
@@ -1433,7 +1433,7 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_sign)
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	rv = RSA_sign(nid, data, size, signature, sigSize, hHandler->key) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_SIGN_ERROR;
+	rv = RSA_sign(nid, data, (unsigned int)size, signature, (unsigned int*)sigSize, hHandler->key) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_SIGN_ERROR;
 	return rv;
 }
 
