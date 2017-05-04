@@ -1,0 +1,198 @@
+#!/bin/bash
+isContained() { [ -z "${2##*$1*}" ]; }
+
+usage() {
+	printf "%s\n"     "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+	printf "%s\n"     "Nharu libraries installation tool"
+	printf "%s\n"     "Optional arguments:"
+	printf "%s\n"     "--prefix: libraries install directory. Default value:"
+	printf "\t%s\n"   "[nharu]/libs, where [nharu] refers to project diretory"
+	printf "%s\n"     "--openssl: OpenSSL installation directoy. If not supplied,"
+	printf "\t%s\n"   "it is sought from user's home directory"
+	printf "%s\n"     "--idn: GNU Libidn installation directoy. If not supplied,"
+	printf "\t%s\n"   "it is sought from user's home directory"
+	printf "%s\n"     "--enable-FEATURE or --disable-FEATURE. Available features:"
+	printf "\t%s\n"   "java: if enabled, Java packages are built by Apache Ant;"
+	printf "\t%s\n"   "shared: if disabled JNI shared library is not built."
+	printf "%s\n"     "if --enable-java the following resources must be supplied:"
+	printf "\t%s\n"   "--jdk: JDK installation directoy. If not supplied and a"
+	printf "\t\t%s\n" "JAVA_HOME environment variable is not defined,"
+	printf "\t\t%s\n" "it is sought from user's home directory"
+	printf "\t%s\n"   "--ant: Apache Ant Java compiler utility. If not supplied,"
+	printf "\t\t%s\n" "it is sought from user's home directory"
+	printf "\t%s\n"   "--ant-contrib: Apache Ant utility. If not supplied,"
+	printf "\t\t%s\n" "it is sought from user's home directory"
+	printf "%s\n"     "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+}
+
+
+printf "%s\n" "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+printf "%s\n" "Nharu libraries install configuration"
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ]; do
+  dir="$( cd -P "$( dirname "$source" )" && pwd )"
+  source="$(readlink "$source")"
+  [[ $source != /* ]] && source="$dir/$source"
+done
+CUR="$( cd -P "$( dirname "$source" )" && pwd )"
+PARENT=$(dirname $CUR)
+BUILD_TARGET="$PARENT/libs"
+ENABLE_JAVA=
+ENABLE_SHARED="true"
+
+# COMMAND LINE
+parm=0
+sep='='
+while [ $# -ne 0 ]
+do
+	parm=1
+	case $1 in
+		(*"$sep"*)
+			key=${1%%"$sep"*}
+			value=${1#*"$sep"}
+			;;
+		(*)
+			key=$1
+			value=
+			;;
+	esac
+	case $key in
+		(--prefix) BUILD_TARGET="$value"
+		;;
+		(--enable-java) ENABLE_JAVA="true"
+		;;
+		(--disable-java) ENABLE_JAVA=
+		;;
+		(--enable-shared) ENABLE_SHARED="true"
+		;;
+		(--disable-shared) ENABLE_SHARED=
+		;;
+		(--openssl) OPENSSL="$value"
+		;;
+		(--idn) IDN="$value"
+		;;
+		(--jdk) JDK="$value"
+		;;
+		(--ant) ANT_HOME="$value"
+		;;
+		(--ant-contrib) ANT_CONTRIB="$value"
+		;;
+		(--help)
+			usage
+			exit 0
+		;;
+		(*)
+			printf "Invalid argument %s\n" "$key"
+			usage
+			exit 1
+		;;
+	esac
+	shift
+done
+
+# DEPENDENCIES
+printf "%s\n" "Checking project dependencies..."
+if [ -z "$OPENSSL" ]; then
+	found=$(find $HOME -type d ! -perm -g+r,u+r,o+r -prune -o -name opensslconf.h -printf "%T@ %p\n" | sort -n | tail -1 | cut -f2- -d" ")
+	if [ -n "$found" ]; then
+		OPENSSL=$(dirname $(dirname $(dirname $found)))
+	fi
+fi
+if [ -f "$OPENSSL/include/openssl/opensslconf.h" -a -f "$OPENSSL/lib/libcrypto.a" ]; then
+	OPENSSL_INCLUDE="$OPENSSL/include"
+	OPENSSL_LIB="$OPENSSL/lib"
+else
+	printf "Could not find OpenSSL instalation directory %s\n" "$OPENSSL"
+	exit 1
+fi
+printf "OpenSSL found at directory %s\n" "$OPENSSL"
+
+if [ -z "$IDN" ]; then
+	found=$(find $HOME -type d ! -perm -g+r,u+r,o+r -prune -o -name stringprep.h -printf "%T@ %p\n" | sort -n | tail -1 | cut -f2- -d" ")
+	if [ -n "$found" ]; then
+		IDN=$(dirname $(dirname $found))
+	fi
+fi
+if [ -f "$IDN/include/stringprep.h" -a -f "$IDN/lib/libidn.a" ]; then
+	IDN_INCLUDE="$IDN/include"
+	IDN_DIR="$IDN/lib"
+else
+	printf "Could not find GNU Libidn instalation directory %s\n" "$IDN"
+	exit 1
+fi
+printf "GNU Libidn found at directory %s\n" "$IDN"
+
+# JAVA DEPENDENCIES
+if [ -n "$ENABLE_JAVA" ]; then
+# TODO
+printf ""
+fi
+
+
+# COMPILATION FLAGS
+if [ -z "$CC" ]; then
+	CC="gcc"
+fi
+if [ -z "$AR" ]; then
+	AR="ar"
+fi
+if [ -z "$CXX" ]; then
+	CXX="gcc"
+fi
+if [ -z "$CFLAGS" ]; then
+	CFLAGS="-pedantic-errors -pedantic -Wall -ansi -pthread -Winline -Wunused-parameter"
+fi
+if [ -z "$ARFLAGS" ]; then
+	ARFLAGS="-r -s"
+fi
+if [ -z "$CXXFLAGS" ]; then
+	CXXFLAGS="-shared -shared-libgcc -Xlinker -z -Xlinker defs"
+fi
+CC="$CC"
+AR="$AR"
+CXX="$CXX"
+CFLAGS="$CFLAGS"
+ARFLAGS="$ARFLAGS"
+CXXFLAGS="$CXXFLAGS"
+sys=$(uname -a | grep x86_64)
+if [ -n "$sys" ]; then
+	CFLAGS="$CFLAGS -fPIC"
+	CXXFLAGS="$CXXFLAGS -fPIC"
+fi
+
+
+#CLEAN-UP
+printf "%s\n" "Nharu library old configuration clean-up..."
+if [ -f "$PARENT/src/Makefile" ]; then
+	make --directory="$PARENT/src" clean
+	rm -f "$PARENT/src/Makefile"
+fi
+if [ -f "$PARENT/jca/native/Makefile" ]; then
+	make --directory="$PARENT/jca/native" clean
+	rm -f "$PARENT/jca/native/Makefile"
+fi
+if [ -f "$PARENT/test/Makefile" ]; then
+	make --directory="$PARENT/test" clean
+	rm -f "$PARENT/test/Makefile"
+fi
+if [ -f "$PARENT/Makefile" ]; then
+	rm -f "$PARENT/Makefile"
+fi
+
+
+printf "%s\n" "Makefiles generation..."
+# OUTPUT DIRECTORY CREATION
+mkdir -p "$BUILD_TARGET"
+if [ $? -ne 0 ]; then
+	printf "Could not create output %s directory\n" "$BUILD_TARGET"
+	exit $?
+fi
+
+printf "CC      = %s\n" "$CC"
+printf "AR      = %s\n" "$AR"
+printf "Install = %s\n" "$BUILD_TARGET"
+printf "CFLAGS  = %s\n" "$CFLAGS"
+printf "ARFLAGS = %s\n" "$ARFLAGS"
+printf "OpenSSL = %s\n" "$OPENSSL_INCLUDE"
+printf "GNU IDN = %s\n" "$IDN_INCLUDE"
+

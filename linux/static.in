@@ -1,0 +1,46 @@
+SHELL           = /bin/bash
+FILES          := $(shell find . -name '*.c')
+CC              = _CC_
+AR              = _AR_
+BUILD_TARGET    = _BUILD_TARGET_
+CFLAGS          = _CFLAGS_
+ARFLAGS         = _ARFLAGS_
+OPENSSL_INCLUDE = _OPENSSL_INCLUDE_
+IDN_INCLUDE     = _IDN_INCLUDE_
+
+TARGET_NAME     = $(BUILD_TARGET)/libnharu.a
+INCLUDES        = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
+OBJ_FILES       = $(FILES:.c=.o)
+VPATH           = .:$(BUILD_TARGET)
+
+# Debugging
+ifeq ($(DEBUG), 1)
+CFLAGS += -D_DEBUG_
+endif
+
+# Struct alignment
+ifeq ($(ALIGN), 1)
+CFLAGS += -D_ALIGN_
+endif
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(TARGET_NAME): $(OBJ_FILES)
+	$(AR) $(ARFLAGS) $@ $(OBJ_FILES)
+
+.PHONY: clean
+clean:
+	find . -type f -regex ".*\.\(so\|o\|a\|i\|d\|s\)" -exec rm -f {} \;
+	rm -f $(TARGET_NAME)
+
+files.d: $(FILES)
+	cat /dev/null > files.d;                         \
+	for i in $(FILES); do                            \
+		$(CC) -MM $$i $(INCLUDES) >> files.d;      \
+	done;                                            \
+	touch -m ./files.d
+
+include ./files.d
+
+
