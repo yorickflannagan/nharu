@@ -1,0 +1,47 @@
+SHELL         = /bin/sh
+FILES        := $(shell find . -name '*.c')
+CC              = _CC_
+CXX             = _CXX_
+CFLAGS          = _CFLAGS_
+CXXFLAGS        =
+OPENSSL_INCLUDE = _OPENSSL_INCLUDE_
+IDN_INCLUDE     = _IDN_INCLUDE_
+OPENSSL_LIB     = _OPENSSL_LIB_
+IDN_LIB         = _IDN_LIB_
+DLA_LIB         = _DLA_LIB_
+
+TARGET_NAME    = ntest-app
+INCLUDES      = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
+OBJ_FILES     = $(FILES:.c=.o)
+VPATH         = .
+IMP_LIBS      = -Wl,-Bstatic -lnharu -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
+LDLIBS        = -L../libs -L$(OPENSSL_LIB) -L$(IDN_LIB) -L$(DLA_LIB)
+
+# Debugging
+ifeq ($(DEBUG), 1)
+CFLAGS       += -D_DEBUG_
+endif
+
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(TARGET_NAME): $(OBJ_FILES)
+	$(CXX) $(CXXFLAGS) $(LDLIBS) $(OBJ_FILES) -o $@ $(IMP_LIBS)
+
+.PHONY: clean donothing
+clean:
+	find . -type f -regex ".*\.\(so\|o\|a\|i\|d\|s\)" -exec rm -f {} \;
+	rm -f ntest-app
+
+files.d: $(FILES)
+	cat /dev/null > files.d;                         \
+	for i in $(FILES); do                            \
+		$(CC) -MM $$i $(INCLUDES) >> files.d;      \
+	done;                                            \
+	touch -m ./files.d
+
+
+include ./files.d
+
+
