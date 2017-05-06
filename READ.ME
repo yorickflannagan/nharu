@@ -1,9 +1,15 @@
+When building for multiple platforms, run make distclean before configure
+
+Libiconv (required by Libidn)
+	https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz
+	./configure --with-pic --prefix=
+
 Libidn:
 	- requirements: autopoint, gperf, gengetopt, texinfo, help2man, fig2ps
 	- gettext 0.19.3: ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/gettext
 	- edit po/LINGUAS
 	- checkout libidn-1-32
-	- ./configure --disable-silent-rules --enable-threads=posix --disable-shared --with-pic
+	- ./configure --disable-silent-rules --enable-threads=posix --disable-shared --with-pic --with-libiconv-prefix=[DIR]
 
 OpenSSL:
 	- checkout OpenSSL_1_0_2g
