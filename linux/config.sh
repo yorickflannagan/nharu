@@ -129,7 +129,7 @@ if [ -n "$ENABLE_SHARED" -o -n "$ENABLE_JAVA" ]; then
 		else
 			java=$(find $HOME -type d ! -perm -g+r,u+r,o+r -prune -o -name jni.h -printf "%T@ %p\n" | sort -n | tail -1 | cut -f2- -d" ")
 			if [ -n "$java" ]; then
-				JDK=$(dirname $(dirname($java)))
+				JDK=$(dirname $(dirname ($java)))
 			fi
 		fi
 	fi
@@ -221,7 +221,7 @@ fi
 
 # GENERATE NHARU ARCHIVE
 if [ ! -f "$CUR/static.in" ]; then
-	printf "Could not find file %s/src.in\n" "$CUR"
+	printf "Could not find file %s/static.in\n" "$CUR"
 	exit 1
 fi
 printf "%s\n" "# # # # # # # # # # # # # # # # # # # # # # # #">"$PARENT/src/Makefile"
