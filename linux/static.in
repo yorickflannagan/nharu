@@ -8,20 +8,10 @@ ARFLAGS         = _ARFLAGS_
 OPENSSL_INCLUDE = _OPENSSL_INCLUDE_
 IDN_INCLUDE     = _IDN_INCLUDE_
 
-TARGET_NAME     = $(BUILD_TARGET)/libnharu.a
+TARGET_NAME     = libnharu.a
 INCLUDES        = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
 OBJ_FILES       = $(FILES:.c=.o)
-VPATH           = .:$(BUILD_TARGET)
-
-# Debugging
-ifeq ($(DEBUG), 1)
-CFLAGS += -D_DEBUG_
-endif
-
-# Struct alignment
-ifeq ($(ALIGN), 1)
-CFLAGS += -D_ALIGN_
-endif
+VPATH           = .
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
@@ -29,18 +19,24 @@ endif
 $(TARGET_NAME): $(OBJ_FILES)
 	$(AR) $(ARFLAGS) $@ $(OBJ_FILES)
 
-.PHONY: clean
+.PHONY: clean install
 clean:
-	find . -type f -regex ".*\.\(so\|o\|a\|i\|d\|s\)" -exec rm -f {} \;
-	rm -f $(TARGET_NAME)
+	@find . -type f -regex ".*\.\(so\|o\|a\|i\|d\|s\)" -exec rm -f {} \;
+	@rm -f $(TARGET_NAME)
+
+install:
+	@mkdir -p "$(BUILD_TARGET)/include/libnharu";               \
+	mkdir -p "$(BUILD_TARGET)/include/pkcs11";                  \
+	mkdir -p "$(BUILD_TARGET)/lib";                             \
+	cp -f ../include/*.h -t "$(BUILD_TARGET)/include/libnharu"; \
+	cp -f ../pkcs11/*.h -t "$(BUILD_TARGET)/include/pkcs11";    \
+	cp -f "$(TARGET_NAME)" -t "$(BUILD_TARGET)/lib"
 
 files.d: $(FILES)
-	cat /dev/null > files.d;                         \
-	for i in $(FILES); do                            \
-		$(CC) -MM $$i $(INCLUDES) >> files.d;      \
-	done;                                            \
+	cat /dev/null > files.d;                      \
+	for i in $(FILES); do                         \
+		$(CC) -MM $$i $(INCLUDES) >> files.d; \
+	done;                                         \
 	touch -m ./files.d
 
 include ./files.d
-
-
