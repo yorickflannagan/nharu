@@ -2,7 +2,7 @@ When building for multiple platforms, run make distclean before configure
 
 Libiconv (required by Libidn)
 	https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz
-	./configure --with-pic --prefix=
+	./configure --with-pic --enable-threads=posix --prefix=
 
 Libidn:
 	- requirements: autopoint, gperf, gengetopt, texinfo, help2man, fig2ps

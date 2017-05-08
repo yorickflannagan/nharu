@@ -120,7 +120,7 @@ INLINE NH_UTILITY(NH_RV, handle_spaces)(_IN_ char *buffer, _OUT_ char *prepared,
 	*start = current;
 	return NH_OK;
 }
-INLINE NH_UTILITY(NH_RV, prep_name)
+NH_UTILITY(NH_RV, prep_name)
 (
 	_INOUT_ NH_ASN1_PARSER_HANDLE hParser,
 	_IN_ size_t max,

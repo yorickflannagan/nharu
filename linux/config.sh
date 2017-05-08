@@ -168,14 +168,12 @@ if [ -n "$ENABLE_SHARED" -o -n "$ENABLE_JAVA" ]; then
 	fi
 	printf "JDK found at directory %s\n" "$JDK"
 fi
-if [ -n "$ENABLE_SHARED" ]; then
-	DLA_LIB=$(dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen))
-	if [ ! -d "$DLA_LIB" ]; then
-		printf "%s\n" "Could not find libdl.a"
-		exit 1
-	fi
-	printf "libdl.a found at %s\n" "$DLA_LIB"
+DLA_LIB=$(dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen))
+if [ ! -d "$DLA_LIB" ]; then
+	printf "%s\n" "Could not find libdl.a"
+	exit 1
 fi
+printf "libdl.a found at %s\n" "$DLA_LIB"
 
 # JAVA DEPENDENCIES
 if [ -n "$ENABLE_JAVA" ]; then
@@ -212,7 +210,7 @@ if [ -z "$ARFLAGS" ]; then
 	ARFLAGS="-r -s"
 fi
 if [ -z "$LDFLAGS" ]; then
-	LDFLAGS="-shared -shared-libgcc -Xlinker -z -Xlinker defs"
+	LDFLAGS="-shared-libgcc -Xlinker -z -Xlinker defs"
 	sys=$(uname -a | grep x86_64)
 	if [ -n "$sys" ]; then LDFLAGS="$LDFLAGS -fPIC"; fi
 fi
@@ -221,7 +219,6 @@ AR="$AR"
 CFLAGS="$CFLAGS"
 ARFLAGS="$ARFLAGS"
 LDFLAGS="$LDFLAGS"
-if ! isContained "-shared" "$LDFLAGS" ; then LDFLAGS="$LDFLAGS -shared"; fi
 if ! isContained "-pthread" "$CFLAGS" ; then CFLAGS="$CFLAGS -pthread"; fi
 
 
