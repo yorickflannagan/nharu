@@ -391,8 +391,7 @@ NH_UTILITY(NH_RV, NH_parse_boolean)(_INOUT_ NH_ASN1_NODE_STR *node)
 NH_UTILITY(NH_RV, NH_parse_little_integer)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node)
 {
 	unsigned int roll = 0;
-	int value = 0;
-	unsigned int *block;
+	long int value = 0;
 	NH_RV rv;
 
 	if (ASN_IS_CONSTRUCTED(*node->identifier) || !ASN_IS_TAG(node, NH_ASN1_INTEGER)) return NH_INVALID_DER_TYPE;
@@ -412,10 +411,9 @@ NH_UTILITY(NH_RV, NH_parse_little_integer)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT
 		break;
 	default: return NH_INVALID_DER_TYPE;
 	}
-	if (NH_FAIL(rv = self->container->bite_chunk(self->container, sizeof(int), (void*) &block))) return rv;
-	*block = value;
-	node->value = block;
-	node->valuelen = sizeof(int);
+	if (NH_FAIL(rv = self->container->bite_chunk(self->container, sizeof(long int), &node->value))) return rv;
+	*(long int*)node->value = value;
+	node->valuelen = sizeof(long int);
 	return NH_OK;
 }
 
@@ -1309,8 +1307,8 @@ void printASNTree(NH_ASN1_PNODE node, int level)
 
 		printf
 		(
-			"%d, identifier: 0x%X, tag %d, size: %d, knowledge: %d, valuelen: %d, optional: %d, value:[",
-			(int) node,
+			"%p, identifier: 0x%X, tag %d, size: %d, knowledge: %d, valuelen: %d, optional: %d, value:[",
+			(void*) node,
 			id,
 			tag,
 			node->size,

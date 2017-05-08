@@ -119,7 +119,7 @@ NH_RV test_encoding()
 	if (NH_SUCCESS(rv))
 	{
 		rv = hHandler->generate(hHandler, 24);
-		if (NH_SUCCESS(rv)) rv = NH_new_encoder(SYMKEY_MAP_COUNT, 128, &hEncoder);
+		if (NH_SUCCESS(rv)) rv = NH_new_encoder(SYMKEY_MAP_COUNT, 2048, &hEncoder);
 		if (NH_SUCCESS(rv))
 		{
 			rv = hEncoder->chart(hEncoder, symkey_map, SYMKEY_MAP_COUNT, &node);
@@ -131,7 +131,7 @@ NH_RV test_encoding()
 				{
 					if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, node, eBuffer)))
 					{
-						if (NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, SYMKEY_MAP_COUNT, 128, &hParser)))
+						if (NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, SYMKEY_MAP_COUNT, 2048, &hParser)))
 						{
 							if (NH_SUCCESS(rv)) rv = hParser->map(hParser, symkey_map, SYMKEY_MAP_COUNT);
 							if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hLoaded)))
@@ -301,7 +301,7 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 	NH_RSA_PUBKEY_HANDLER hLoaded;
 
 	printf("Testing RSA public key encode... ");
-	if (NH_SUCCESS(rv = NH_new_encoder(PUBKEY_MAP_COUNT, 128, &hEncoder)))
+	if (NH_SUCCESS(rv = NH_new_encoder(PUBKEY_MAP_COUNT, 2048, &hEncoder)))
 	{
 		rv = hEncoder->chart(hEncoder, pubkey_map, PUBKEY_MAP_COUNT, &node);
 		if (NH_SUCCESS(rv)) rv = hPubKey->encode(hPubKey, hEncoder, NH_PARSE_ROOT);
@@ -311,7 +311,7 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 			if NH_SUCCESS(rv = (eBuffer = (unsigned char*) malloc(eSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 			{
 				rv = hEncoder->encode(hEncoder, node, eBuffer);
-				if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PUBKEY_MAP_COUNT, 128, &hParser)))
+				if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PUBKEY_MAP_COUNT, 2048, &hParser)))
 				{
 					rv = hParser->map(hParser, pubkey_map, PUBKEY_MAP_COUNT);
 					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&hLoaded)))
@@ -343,7 +343,7 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	NH_RSA_PRIVKEY_HANDLER hLoaded;
 
 	printf("Testing RSA private key encoding... ");
-	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 128, &hEncoder)))
+	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 2048, &hEncoder)))
 	{
 		rv = hEncoder->chart(hEncoder, privatekey_map, PRIVKEY_MAP_COUNT, &node);
 		if (NH_SUCCESS(rv)) rv = hPrivKey->encode(hPrivKey, CK_UNAVAILABLE_INFORMATION, NULL, hEncoder, NH_PARSE_ROOT);
@@ -353,7 +353,7 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 			if NH_SUCCESS(rv = (eBuffer = (unsigned char*) malloc(eSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 			{
 				rv = hEncoder->encode(hEncoder, node, eBuffer);
-				if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PRIVKEY_MAP_COUNT, 128, &hParser)))
+				if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PRIVKEY_MAP_COUNT, 2048, &hParser)))
 				{
 					rv = hParser->map(hParser, privatekey_map, PRIVKEY_MAP_COUNT);
 					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hLoaded)))
@@ -386,7 +386,7 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	NH_SYMKEY_HANDLER hKey;
 
 	printf("Testing RSA private key encrypted encoding... ");
-	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 128, &hEncoder)))
+	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 2048, &hEncoder)))
 	{
 		rv = hEncoder->chart(hEncoder, privatekey_map, PRIVKEY_MAP_COUNT, &node);
 		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hKey)))
@@ -397,7 +397,7 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 				if NH_SUCCESS(rv = (eBuffer = (unsigned char*) malloc(eSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 				{
 					rv = hEncoder->encode(hEncoder, node, eBuffer);
-					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PRIVKEY_MAP_COUNT, 128, &hParser)))
+					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PRIVKEY_MAP_COUNT, 2048, &hParser)))
 					{
 						rv = hParser->map(hParser, privatekey_map, PRIVKEY_MAP_COUNT);
 						if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hLoaded)))

@@ -4,6 +4,7 @@
 int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
 	int rv = NH_OK;
+	NH_NOISE_HANDLER hNoise; if (NH_SUCCESS(NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
 	printf("Testing Nharu Library...\n");
 	rv = test_encoder();
 	if (NH_SUCCESS(rv)) rv = test_secret_sharing();
