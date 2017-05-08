@@ -211,14 +211,17 @@ if [ -z "$ARFLAGS" ]; then
 fi
 if [ -z "$LDFLAGS" ]; then
 	LDFLAGS="-shared-libgcc -Xlinker -z -Xlinker defs"
-	sys=$(uname -a | grep x86_64)
-	if [ -n "$sys" ]; then LDFLAGS="$LDFLAGS -fPIC"; fi
 fi
 CC="$CC"
 AR="$AR"
 CFLAGS="$CFLAGS"
 ARFLAGS="$ARFLAGS"
 LDFLAGS="$LDFLAGS"
+sys=$(uname -a | grep x86_64)
+if [ -n "$sys" ]; then
+	if ! isContained "-fPIC" "$LDFLAGS" ; then LDFLAGS="$LDFLAGS -fPIC"; fi
+	if ! isContained "-fPIC" "$CFLAGS" ; then CFLAGS="$CFLAGS -fPIC"; fi
+fi
 if ! isContained "-pthread" "$CFLAGS" ; then CFLAGS="$CFLAGS -pthread"; fi
 
 
