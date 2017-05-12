@@ -168,7 +168,17 @@ if [ -n "$ENABLE_SHARED" -o -n "$ENABLE_JAVA" ]; then
 	fi
 	printf "JDK found at directory %s\n" "$JDK"
 fi
-DLA_LIB=$(dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen))
+
+# TODO input parameter
+DLIB=$(find /usr -name libdl.* 2>/dev/null)
+
+DLA_LIB=$(echo "$DLIB" | grep libdl.dylib | tail -1)
+if [ -z $DLA_LIB ]; then
+   DLA_LIB=$(echo "$DLIB" | grep libdl.so | tail -1)
+fi
+
+DLA_LIB=$(dirname $DLA_LIB)
+
 if [ ! -d "$DLA_LIB" ]; then
 	printf "%s\n" "Could not find libdl.a"
 	exit 1

@@ -1,10 +1,10 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#ifdef UNIX_IMPL
+#if defined(UNIX_IMPL) || defined(__APPLE__)
 #include <stdlib.h>	/* Required to include random() */
 #else
-int random(void);
+long int random(void);
 #endif
 
 #endif

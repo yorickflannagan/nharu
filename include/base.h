@@ -35,7 +35,7 @@
 #endif
 
 /* Supported OS: Linux, Windows and Solaris */
-#if (defined(linux) || defined(__linux) || defined(__linux__) || defined(__gnu_linux))
+#if (defined(__APPLE__) || defined(linux) || defined(__linux) || defined(__linux__) || defined(__gnu_linux))
 #define NH_LINUX_IMPL
 #elif (defined(_WIN32) || defined(_WIN64))
 #define NH_WINDOWS_IMPL
