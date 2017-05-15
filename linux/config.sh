@@ -326,7 +326,7 @@ while read -r line || [[ -n "$line" ]]; do
 	new="${new/\_DLA_LIB_/$DLA_LIB}"
 	printf "%s\n" $new>>"$PARENT/test/Makefile"
 done < "$CUR/native-test.in"
-printf "%s\n" "Nharu JCA static library test application Makefile generated"
+printf "%s\n" "Nharu static library test application Makefile generated"
 
 
 printf "CC          = %s\n" "$CC"

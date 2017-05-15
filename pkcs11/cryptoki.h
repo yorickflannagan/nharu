@@ -47,7 +47,7 @@
 #elif defined(__GNUC__)
 #define CK_IMPORT_SPEC
 #define CK_EXPORT_SPEC
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__arm__)
 #define CK_CALL_SPEC
 #else
 #define CK_CALL_SPEC 		__attribute__((cdecl))

@@ -23,6 +23,7 @@
  *
  */
 
+#include "crypto.h"
 #include "config.h"
 #include "libgfshare.h"
 #include "libgfshare_tables.h"
@@ -31,7 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "crypto.h"
 #define XMALLOC NH_MALLOC
 #define XFREE free
 

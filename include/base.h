@@ -66,7 +66,7 @@
 #define NH_EXPORT
 #define NH_HIDDEN				__attribute__((__visibility__("internal")))
 #define NH_EXTERNAL
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__arm__)
 #define NH_CALL_SPEC
 #else
 #define NH_CALL_SPEC			__attribute__((cdecl))

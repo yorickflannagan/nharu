@@ -3,29 +3,19 @@
 	ARGUMENTS (-D)
 	ANT_CONTRIB_LIB: Ant contrib support library
 	VERSION: provider version
-	OUTPUT: output JAR directory
 	DEBUG
 	JAVA_LOG_PATH: logging class package
   -->
 <project basedir = "." default = "build" name = "nharu-provider">
 	<target name = "init">
-		<tstamp />
-
 		<property environment = "env"/>
-
 		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 			<classpath>
 				<pathelement location="${ANT_CONTRIB_LIB}"/>
 			</classpath>
 		</taskdef>
-
-		<buildnumber/>
-		<property name = "provider.version" value = "${VERSION}" />
-		<property name = "full.version" value = "${provider.version}.${build.number}" />
-		<property name = "native.dir" value = "native" />
 		<property name = "src.dir" value = "java" />
 		<property name = "bin.dir" value = "java-bin" />
-		<property name = "dist.dir" value = "${OUTPUT}" />
 		<property name = "target.file" value = "nharujca.jar" />
 		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
 			<and>
@@ -39,26 +29,32 @@
 			<isset property = "JAVA_LOG_PATH" />
 		</condition>
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
-
 	</target>
 
-	<target name = "check" depends = "init">
+	<target name = "ver" depends = "init">
+		<tstamp />
+		<buildnumber/>
+		<condition property = "provider.version" value = "${VERSION}" else = "0.0.0">
+			<isset property="VERSION" />
+		</condition>
+		<property name = "full.version" value = "${provider.version}.${build.number}" />
+
 		<echo message="provider.version"> ${provider.version} </echo>
 		<echo message="full.version"> ${full.version} </echo>
-		<echo message="native.dir"> ${provider.version} </echo>
 		<echo message="src.dir"> ${src.dir} </echo>
 		<echo message="bin.dir"> ${bin.dir} </echo>
-		<echo message="dist.dir"> ${dist.dir} </echo>
 		<echo message="target.file"> ${target.file} </echo>
 		<echo message="log.level"> ${log.level} </echo>
 		<echo message="target"> ${target} </echo>
 		<echo message="source"> ${source} </echo>
 		<echo message="log.package"> ${log.package} </echo>
 		<echo message="log.dir"> ${log.dir} </echo>
+	</target>
 
-		<mkdir dir = "${bin.dir}" />
+	<target name = "prepare" depends = "ver">
+		<mkdir  dir  = "${bin.dir}" />
 		<delete file = "${src.dir}/${log.dir}/LogDevice.java" />
-		<echo file = "${src.dir}/${log.dir}/LogDevice.java">
+		<echo   file = "${src.dir}/${log.dir}/LogDevice.java">
 package ${log.package};
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -115,30 +111,27 @@ import java.util.logging.Logger;
 
 	<target name = "clean" depends = "init">
 		<delete dir = "${bin.dir}" />
-		<delete file = "${dist.dir}/${target.file}" />
 	</target>
 
-	<target name = "compile" depends = "check">
-		<javac	debug = "true"
-				debuglevel = "source,lines,vars"
-				srcdir = "${src.dir}"
-				destdir = "${bin.dir}"
-				source = "${source}"
-				target = "${target}"
-				includeantruntime = "false">
+	<target name = "compile" depends   = "prepare">
+		<javac	debug              = "true"
+			debuglevel         = "source,lines,vars"
+			srcdir             = "${src.dir}"
+			destdir            = "${bin.dir}"
+			source             = "${source}"
+			target             = "${target}"
+			includeantruntime  = "false">
 			<compilerarg value = "-XDignore.symbol.file" />
 		</javac>
 	</target>
 
 	<target name = "build" depends = "compile">
-		<jar destfile = "${dist.dir}/${target.file}" level = "9" strict = "fail" >
+		<jar destfile = "${target.file}" level = "9" strict = "fail" >
 			<fileset dir = "${bin.dir}" />
-			<fileset file = "${dist.dir}/libnharujca.so" />
-			<fileset file = "${dist.dir}/nharujca.dll" />
 			<manifest>
-				<attribute name = "Implementation-Title" value = "Nharu Provider" />
-				<attribute name = "Implementation-Vendor" value = "The Crypthing Initiative" />
-				<attribute name = "Implementation-Version" value = "${provider.version} ${TODAY}" />
+				<attribute name = "Implementation-Title"   value = "Nharu Provider" />
+				<attribute name = "Implementation-Vendor"  value = "The Crypthing Initiative" />
+				<attribute name = "Implementation-Version" value = "${full.version} ${TODAY}" />
 			</manifest>
 		</jar>
 	</target>
