@@ -14,6 +14,7 @@
 #	OPENSSL_LIB: OpenSSL libraries (required if --enable-shared)
 #	IDN_INCLUDE: GNU IDN headers
 #	IDN_LIB: GNU IDN library (required if --enable-shared)
+#       ICONV_LIB: GNU Iconv library (if required)
 #	JAVA_INCLUDE: JDK base include header (required if --enable-java or --enable-shared)
 #	JAVA_PLATFORM: JDK system dependent include header (required if --enable-java or --enable-shared)
 #	DLA_LIB: Linux libdl.a (required if --enable-shared)
@@ -35,6 +36,7 @@
 #	Warn: under debug must specify -D_DEBUG_
 
 isContained() { [ -z "${2##*$1*}" ]; }
+error() { printf "%s\n" "$1"; exit 1; }
 usage() {
 	printf "%s\n"     "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
 	printf "%s\n"     "Nharu libraries installation tool"
@@ -42,10 +44,13 @@ usage() {
 	printf "%s\n"     "--target: target platform. Default value: linux"
 	printf "%s\n"     "--prefix: libraries root install directory for each target. Default value: $HOME/development/build"
 	printf "%s\n"     "--with-openssl: OpenSSL installation directoy. If not supplied, it is sought from $HOME directory"
-	printf "%s\n"     "--with-idn: GNU Libidn installation directoy. If not supplied, it is sought from $HOME directory"
+	printf "%s\n"     "--with-idn: GNU IDN installation directoy. If not supplied, it is sought from $HOME directory"
+	printf "%s\n"     "--with-iconv: GNU Iconv installation directory. If not supplied, it is presumed system wide available."
+	printf "%s\n"     "--syslib: location of system libraries libdl.so and libpthread.so"
 	printf "%s\n"     "--enable-FEATURE or --disable-FEATURE. Available features:"
 	printf "\t%s\n"   "java: if enabled, Java packages are built by Apache Ant;"
 	printf "\t%s\n"   "shared: if disabled JNI shared library is not built."
+	printf "\t%s\n"   "pthread: if disabled libpthread.so is not included in linkage"
 	printf "%s\n"     "if --enable-java the following resources must be supplied:"
 	printf "\t%s\n"   "--with-jdk: JDK installation directoy or $JAVA_HOME environment variable"
 	printf "\t%s\n"   "--with-ant: Apache Ant Java compiler utility. If not supplied, it is sought from $HOME directory"
@@ -58,9 +63,9 @@ printf "%s\n" "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 printf "%s\n" "Nharu libraries install configuration"
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ]; do
-  dir="$( cd -P "$( dirname "$source" )" && pwd )"
-  source="$(readlink "$source")"
-  [[ $source != /* ]] && source="$dir/$source"
+	dir="$( cd -P "$( dirname "$source" )" && pwd )"
+	source="$(readlink "$source")"
+	[[ $source != /* ]] && source="$dir/$source"
 done
 CUR="$( cd -P "$( dirname "$source" )" && pwd )"
 PARENT=$(dirname $CUR)
@@ -68,6 +73,7 @@ TARGET="linux"
 BUILD_TARGET="$HOME/development/build"
 ENABLE_JAVA=
 ENABLE_SHARED="true"
+ENABLE_PTHREAD="true"
 
 # COMMAND LINE
 parm=0
@@ -98,15 +104,23 @@ do
 		;;
 		(--disable-shared) ENABLE_SHARED=
 		;;
+		(--enable-pthread) ENABLE_PTHREAD="true"
+		;;
+		(--disable-pthread) ENABLE_PTHREAD=
+		;;
 		(--with-openssl) OPENSSL="$value"
 		;;
 		(--with-idn) IDN="$value"
+		;;
+		(--with-iconv) LIB_ICONV="$value"
 		;;
 		(--with-jdk) JDK="$value"
 		;;
 		(--with-ant) ANT_HOME="$value"
 		;;
 		(--with-ant-contrib) ANT_CONTRIB="$value"
+		;;
+		(--syslib) DLA_LIB="$value"
 		;;
 		(--help)
 			usage
@@ -122,33 +136,48 @@ do
 done
 BUILD_TARGET="$BUILD_TARGET/nharu/$TARGET"
 
+
 # DEPENDENCIES
 printf "%s\n" "Checking project dependencies..."
 if [ -z "$OPENSSL" ]; then
 	found=$(find $HOME -type d ! -perm -g+r,u+r,o+r -prune -o -name opensslconf.h -printf "%T@ %p\n" | sort -n | tail -1 | cut -f2- -d" ")
 	if [ -n "$found" ]; then OPENSSL=$(dirname $(dirname $(dirname $found))); fi
 fi
+
 if [ -f "$OPENSSL/include/openssl/opensslconf.h" -a -f "$OPENSSL/lib/libcrypto.a" ]; then
 	OPENSSL_INCLUDE="$OPENSSL/include"
 	OPENSSL_LIB="$OPENSSL/lib"
-else
-	printf "Could not find OpenSSL instalation directory %s\n" "$OPENSSL"
-	exit 1
-fi
+else error "Could not find OpenSSL instalation directory"; fi
 printf "OpenSSL found at directory %s\n" "$OPENSSL"
 
 if [ -z "$IDN" ]; then
 	found=$(find $HOME -type d ! -perm -g+r,u+r,o+r -prune -o -name stringprep.h -printf "%T@ %p\n" | sort -n | tail -1 | cut -f2- -d" ")
 	if [ -n "$found" ]; then IDN=$(dirname $(dirname $found)); fi
 fi
+
 if [ -f "$IDN/include/stringprep.h" -a -f "$IDN/lib/libidn.a" ]; then
 	IDN_INCLUDE="$IDN/include"
 	IDN_LIB="$IDN/lib"
-else
-	printf "Could not find GNU Libidn instalation directory %s\n" "$IDN"
-	exit 1
-fi
+else error "Could not find GNU Libidn instalation directory"; fi
 printf "GNU Libidn found at directory %s\n" "$IDN"
+
+if [ -z "$DLA_LIB" ]; then
+	DLIB=$(find /usr -name libdl.* 2>/dev/null)
+	DLA_LIB=$(echo "$DLIB" | grep libdl.dylib | tail -1)
+	if [ -z $DLA_LIB ]; then DLA_LIB=$(echo "$DLIB" | grep libdl.so | tail -1); fi
+	DLA_LIB=$(dirname $DLA_LIB)
+fi
+if [ ! -f "$DLA_LIB/libdl.so"  -a  ! -f "$DLA_LIB/libdl.dylib" ]; then error "Could not find system libraries"; fi
+printf "System library found at %s\n" "$DLA_LIB"
+
+if [ -n "$LIB_ICONV" ]; then
+	if [ ! -f "$LIB_ICONV/lib/libiconv.a" ]; then error "Could not find GNU Iconv installation directory"; fi
+	BASE_LIBS="-lnharu -lcrypto -lidn -liconv"
+	ICONV_LIB="-L$LIB_ICONV/lib"
+else BASE_LIBS="-lnharu -lcrypto -lidn"; fi
+if [ -n "$ENABLE_PTHREAD" ]; then SYS_LIBS="-lpthread -ldl";
+else SYS_LIBS="-ldl"; fi
+IMP_LIBS="$BASE_LIBS $SYS_LIBS"
 
 # JNI DEPENDENCIES
 if [ -n "$ENABLE_SHARED" -o -n "$ENABLE_JAVA" ]; then
@@ -162,28 +191,9 @@ if [ -n "$ENABLE_SHARED" -o -n "$ENABLE_JAVA" ]; then
 	if [ -f "$JDK/include/jni.h" -a -f "$JDK/include/linux/jni_md.h" ]; then
 		JAVA_INCLUDE="$JDK/include"
 		JAVA_PLATFORM="$JDK/include/linux"
-	else
-		printf "%s\n" "Could not find JDK instalation directory"
-		exit 1
-	fi
+	else error "Could not find JDK instalation directory"; fi
 	printf "JDK found at directory %s\n" "$JDK"
 fi
-
-# TODO input parameter
-DLIB=$(find /usr -name libdl.* 2>/dev/null)
-
-DLA_LIB=$(echo "$DLIB" | grep libdl.dylib | tail -1)
-if [ -z $DLA_LIB ]; then
-   DLA_LIB=$(echo "$DLIB" | grep libdl.so | tail -1)
-fi
-
-DLA_LIB=$(dirname $DLA_LIB)
-
-if [ ! -d "$DLA_LIB" ]; then
-	printf "%s\n" "Could not find libdl.a"
-	exit 1
-fi
-printf "libdl.a found at %s\n" "$DLA_LIB"
 
 # JAVA DEPENDENCIES
 if [ -n "$ENABLE_JAVA" ]; then
@@ -214,7 +224,8 @@ if [ -z "$AR" ]; then
 	AR="ar"
 fi
 if [ -z "$CFLAGS" ]; then
-	CFLAGS="-pthread -pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -O2"
+	CFLAGS="-pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -O2"
+	if [ -n "$ENABLE_PTHREAD" ]; then CFLAGS="$CFLAGS -pthread"; fi
 fi
 if [ -z "$ARFLAGS" ]; then
 	ARFLAGS="-r -s"
@@ -232,7 +243,9 @@ if [ -n "$sys" ]; then
 	if ! isContained "-fPIC" "$LDFLAGS" ; then LDFLAGS="$LDFLAGS -fPIC"; fi
 	if ! isContained "-fPIC" "$CFLAGS" ; then CFLAGS="$CFLAGS -fPIC"; fi
 fi
-if ! isContained "-pthread" "$CFLAGS" ; then CFLAGS="$CFLAGS -pthread"; fi
+if [ -n "$ENABLE_PTHREAD" ]; then
+	if ! isContained "-pthread" "$CFLAGS" ; then CFLAGS="$CFLAGS -pthread"; fi
+fi
 
 
 #CLEAN-UP
@@ -296,6 +309,8 @@ if [ -n "$ENABLE_SHARED" ]; then
 		new="${new/\_OPENSSL_LIB_/$OPENSSL_LIB}"
 		new="${new/\_IDN_LIB_/$IDN_LIB}"
 		new="${new/\_DLA_LIB_/$DLA_LIB}"
+		new="${new/\_IMP_LIBS_/$IMP_LIBS}"
+		new="${new/\_ICONV_LIB_/$ICONV_LIB}"
 		printf "%s\n" $new>>"$PARENT/jca/native/Makefile"
 	done < "$CUR/shared.in"
 	printf "%s\n" "Nharu JCA shared library Makefile generated"
@@ -324,11 +339,13 @@ while read -r line || [[ -n "$line" ]]; do
 	new="${new/\_OPENSSL_LIB_/$OPENSSL_LIB}"
 	new="${new/\_IDN_LIB_/$IDN_LIB}"
 	new="${new/\_DLA_LIB_/$DLA_LIB}"
+	new="${new/\_IMP_LIBS_/$IMP_LIBS}"
+	new="${new/\_ICONV_LIB_/$ICONV_LIB}"
 	printf "%s\n" $new>>"$PARENT/test/Makefile"
 done < "$CUR/native-test.in"
 printf "%s\n" "Nharu static library test application Makefile generated"
 
-
+printf ".............\n"
 printf "CC          = %s\n" "$CC"
 printf "AR          = %s\n" "$AR"
 if [ -n "$CXX" ]; then
@@ -345,11 +362,13 @@ printf "ARFLAGS     = %s\n" "$ARFLAGS"
 if [ -n "$CXXFLAGS" ]; then
 printf "CXXFLAGS    = %s\n" "$CXXFLAGS"
 fi
-printf "OpenSSL     = %s\n" "$OPENSSL_INCLUDE"
-printf "GNU IDN     = %s\n" "$IDN_INCLUDE"
+printf "OpenSSL     = %s\n" "$OPENSSL"
+printf "GNU IDN     = %s\n" "$IDN"
+if [ -n "$LIB_ICONV" ]; then
+printf "GNU Iconv   = %s\n" "$LIB_ICONV"
+fi
+printf ".............\n"
 
 
 printf "%s\n" "Nharu environment configuration complete!"
 printf "%s\n" "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
-
-

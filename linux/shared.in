@@ -11,13 +11,14 @@ JAVA_PLATFORM   = _JAVA_PLATFORM_
 OPENSSL_LIB     = _OPENSSL_LIB_
 IDN_LIB         = _IDN_LIB_
 DLA_LIB         = _DLA_LIB_
+IMP_LIBS        = _IMP_LIBS_
+ICONV_LIB       = _ICONV_LIB_
 
 TARGET_NAME   = libnharujca.so
 INCLUDES      = -I. -I../../include -I../../pkcs11 -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .
-IMP_LIBS      = -Wl,-Bstatic -lnharu -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
-LDLIBS        = -L../../src -L$(OPENSSL_LIB) -L$(IDN_LIB) -L$(DLA_LIB)
+LDLIBS        = -L../../src -L$(OPENSSL_LIB) -L$(IDN_LIB) $(ICONV_LIB) -L$(DLA_LIB)
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
@@ -31,7 +32,8 @@ clean:
 	rm -f $(TARGET_NAME)
 
 install:
-	@mkdir -p "$(BUILD_TARGET)/lib";                \
+	@if [ ! -d "$(BUILD_TARGET)/lib" ]; then \
+	mkdir -p "$(BUILD_TARGET)/lib"; fi;      \
 	cp -f "$(TARGET_NAME)" -t "$(BUILD_TARGET)/lib"
 
 

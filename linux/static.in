@@ -25,9 +25,12 @@ clean:
 	@rm -f $(TARGET_NAME)
 
 install:
-	@mkdir -p "$(BUILD_TARGET)/include/libnharu";               \
-	mkdir -p "$(BUILD_TARGET)/include/pkcs11";                  \
-	mkdir -p "$(BUILD_TARGET)/lib";                             \
+	@if [ ! -d "$(BUILD_TARGET)/include/libnharu" ]; then       \
+	mkdir -p "$(BUILD_TARGET)/include/libnharu"; fi;            \
+	if [ ! -d "$(BUILD_TARGET)/include/pkcs11" ]; then          \
+	mkdir -p "$(BUILD_TARGET)/include/pkcs11"; fi;              \
+	if [ ! -d "$(BUILD_TARGET)/lib" ]; then                     \
+	mkdir -p "$(BUILD_TARGET)/lib"; fi;                         \
 	cp -f ../include/*.h -t "$(BUILD_TARGET)/include/libnharu"; \
 	cp -f ../pkcs11/*.h -t "$(BUILD_TARGET)/include/pkcs11";    \
 	cp -f "$(TARGET_NAME)" -t "$(BUILD_TARGET)/lib"

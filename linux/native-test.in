@@ -8,13 +8,14 @@ IDN_INCLUDE     = _IDN_INCLUDE_
 OPENSSL_LIB     = _OPENSSL_LIB_
 IDN_LIB         = _IDN_LIB_
 DLA_LIB         = _DLA_LIB_
+IMP_LIBS        = _IMP_LIBS_
+ICONV_LIB       = _ICONV_LIB_
 
 TARGET_NAME   = ntest-app
 INCLUDES      = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .
-IMP_LIBS      = -Wl,-Bstatic -lnharu -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
-LDLIBS        = -L../src -L$(OPENSSL_LIB) -L$(IDN_LIB) -L$(DLA_LIB)
+LDLIBS        = -L../src -L$(OPENSSL_LIB) -L$(IDN_LIB) $(ICONV_LIB) -L$(DLA_LIB)
 
 
 %.o: %.c
