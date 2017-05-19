@@ -15,7 +15,7 @@ IMP_LIBS        = _IMP_LIBS_
 ICONV_LIB       = _ICONV_LIB_
 
 TARGET_NAME   = libnharujca.so
-INCLUDES      = -I. -I../../include -I../../pkcs11 -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
+INCLUDES      = -I. -I../../include -I../.. -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .
 LDLIBS        = -L../../src -L$(OPENSSL_LIB) -L$(IDN_LIB) $(ICONV_LIB) -L$(DLA_LIB)

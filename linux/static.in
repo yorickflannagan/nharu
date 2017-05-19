@@ -9,7 +9,7 @@ OPENSSL_INCLUDE = _OPENSSL_INCLUDE_
 IDN_INCLUDE     = _IDN_INCLUDE_
 
 TARGET_NAME     = libnharu.a
-INCLUDES        = -I. -I../include -I../pkcs11 -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
+INCLUDES        = -I. -I../include -I.. -I$(OPENSSL_INCLUDE) -I$(IDN_INCLUDE)
 OBJ_FILES       = $(FILES:.c=.o)
 VPATH           = .
 

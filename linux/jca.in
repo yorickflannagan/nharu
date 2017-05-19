@@ -15,7 +15,7 @@ IDN_DIR         = _IDN_DIR_
 DLA_DIR         = _DLA_DIR_
 
 TARGET_NAME    = $(OUTPUT_DIR)/libnharujca.so
-INCLUDES      = -I. -I../../include -I../../pkcs11 -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
+INCLUDES      = -I. -I../../include -I../.. -I$(OPENSSL_INCLUDE) -I$(JAVA_INCLUDE) -I$(JAVA_PLATFORM) -I$(IDN_INCLUDE)
 OBJ_FILES     = $(FILES:.c=.o)
 VPATH         = .:$(OUTPUT_DIR)
 IMP_LIBS      = -Wl,-Bstatic -lnharu -lcrypto -lidn -Wl,-Bdynamic -lpthread -ldl
