@@ -28,7 +28,7 @@
 #ifndef __BASE_H__
 #define __BASE_H__
 
-#include "cryptoki.h"
+#include "pkcs11/cryptoki.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)	/* Do not care Microsoft's deprecations... */
