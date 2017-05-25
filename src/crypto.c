@@ -2219,18 +2219,18 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_clone)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandle
 	if (NH_SUCCESS(rv) && iqmp) rv = (iqmp = BN_dup(iqmp)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-	if (NH_SUCCESS(rv)) rv = RSA_set0_key(dolly->key,n,e,d) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_set0_factors(dolly->key,p,q) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_set0_crt_params(dolly->key,dmp1,dmq1,iqmp) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_key(dolly,n,e,d) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_factors(dolly,p,q) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_crt_params(dolly,dmp1,dmq1,iqmp) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
 #else
-	dolly->key->e=e;
-	dolly->key->n=n;
-	dolly->key->d=d;
-	dolly->key->p=p;
-	dolly->key->q=q;
-	dolly->key->dmp1=dmp1;
-	dolly->key->dmq1=dmq1;
-	dolly->key->iqmp=iqmp;
+	dolly->e=e;
+	dolly->n=n;
+	dolly->d=d;
+	dolly->p=p;
+	dolly->q=q;
+	dolly->dmp1=dmp1;
+	dolly->dmq1=dmq1;
+	dolly->iqmp=iqmp;
 #endif
 
 	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hNew)))
