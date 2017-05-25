@@ -1264,7 +1264,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encode)
 	if (!(node = node->child)) return NH_UNEXPECTED_ENCODING;
 
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-	RSA_get0_key(hHandler->key, &n, &e, NULL);
+	RSA_get0_key((const RSA *)hHandler->key, (const BIGNUM **)&n, (const BIGNUM **)&e, NULL);
     #else
 	n=hHandler->key->n;
 	e=hHandler->key->e;
@@ -1341,7 +1341,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_create)
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
 	rv = (_n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = (_e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_set0_key(hHandler->key, &_n, &_e, NULL);
+	if (NH_SUCCESS(rv)) rv = RSA_set0_key(hHandler->key, &_n, &_e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
     #else
 	rv = (key->n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = (key->e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
@@ -1360,9 +1360,26 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_clone)(_IN_ NH_RSA_PUBKEY_HANDLER_STR *hHandler,
 	NH_RV rv;
 	RSA *dolly;
 	NH_RSA_PUBKEY_HANDLER hNew;
+	BIGNUM *e;
+	BIGNUM *n;
+
+
+	if (hHandler->key) return NH_INVALID_STATE_ERROR;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	RSA_get0_key((const RSA *)hHandler->key,(const BIGNUM **)&n,(const BIGNUM **)&e,NULL);
+#else
+	e=hHandler->key->e;
+	n=hHandler->key->n;
+#endif
 
 	if (!(dolly = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv = (dolly->n = BN_dup(hHandler->key->n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR)) rv = (dolly->e = BN_dup(hHandler->key->e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv = (n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR)) rv = (e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	rv = RSA_set0_key(key,n,e,NULL) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR);
+#endif
+
 	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&hNew)))
 	{
 		hNew->key = dolly;
@@ -1383,7 +1400,7 @@ NH_UTILITY(size_t, NH_rsa_pubkey_size)(_IN_ NH_RSA_PUBKEY_HANDLER_STR *hHandler)
 	if (hHandler->key)
 	{
 		#if OPENSSL_VERSION_NUMBER >= 0x10100001L
-			RSA_get0_key(hHandler->key,&n,&e,NULL);
+			RSA_get0_key((const RSA *)hHandler->key,(const BIGNUM **)&n,(const BIGNUM **)&e,NULL);
 		#else
 			e=hHandler->key->e;
 			n=hHandler->key->n;
@@ -1740,9 +1757,9 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_encode)
 
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-	RSA_get0_key(hHandler->key,&n,&e,&d);
-	RSA_get0_factors(hHandler->key,&p,&q);
-	RSA_get0_crt_params(hHandler->key,&dmp1,&dmq1,&iqmp);
+	RSA_get0_key((const RSA *)hHandler->key,(const BIGNUM **)&n,(const BIGNUM **)&e,(const BIGNUM **)&d);
+	RSA_get0_factors((const RSA *)hHandler->key,(const BIGNUM **)&p,(const BIGNUM **)&q);
+	RSA_get0_crt_params((const RSA *)hHandler->key,(const BIGNUM **)&dmp1,(const BIGNUM **)&dmq1,(const BIGNUM **)&iqmp);
 #else
 	e=hHandler->key->e;
 	n=hHandler->key->n;
@@ -2001,9 +2018,9 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_create)
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
 
-	if (NH_SUCCESS(rv)) rv = RSA_set0_key(key,n,e,d);
-	if (NH_SUCCESS(rv)) rv = RSA_set0_factors(key,p,q);
-	if (NH_SUCCESS(rv)) rv = RSA_set0_crt_params(key,dmp1,dmq1,iqmp);
+	if (NH_SUCCESS(rv)) rv = RSA_set0_key(key,n,e,d) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_factors(key,p,q) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_crt_params(key,dmp1,dmq1,iqmp) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 #else
 	key->e=e;
 	key->n=n;
@@ -2177,12 +2194,10 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_clone)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandle
 	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!(dolly = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
 
-
-
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-	RSA_get0_key(hHandler->key,&n,&e,&d);
-	RSA_get0_factors(hHandler->key,&p,&q);
-	RSA_get0_crt_params(hHandler->key,&dmp1,&dmq1,&iqmp);
+	RSA_get0_key((const RSA *)hHandler->key,(const BIGNUM **)&n,(const BIGNUM **)&e,(const BIGNUM **)&d);
+	RSA_get0_factors((const RSA *)hHandler->key,(const BIGNUM **)&p,(const BIGNUM **)&q);
+	RSA_get0_crt_params((const RSA *)hHandler->key,(const BIGNUM **)&dmp1,(const BIGNUM **)&dmq1,(const BIGNUM **)&iqmp);
 #else
 	e=hHandler->key->e;
 	n=hHandler->key->n;
@@ -2194,14 +2209,30 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_clone)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandle
 	iqmp=hHandler->key->iqmp;
 #endif
 
-	rv = (dolly->n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && e) rv = (dolly->e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv)) rv = (dolly->d = BN_dup(d)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && p) rv = (dolly->p = BN_dup(p)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && q) rv = (dolly->q = BN_dup(q)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && dmp1) rv = (dolly->dmp1 = BN_dup(dmp1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && dmq1) rv = (dolly->dmq1 = BN_dup(dmq1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && iqmp) rv = (dolly->iqmp = BN_dup(iqmp)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	rv = (n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && e) rv = (e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv)) rv = (d = BN_dup(d)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && p) rv = (p = BN_dup(p)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && q) rv = (q = BN_dup(q)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && dmp1) rv = (dmp1 = BN_dup(dmp1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && dmq1) rv = (dmq1 = BN_dup(dmq1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && iqmp) rv = (iqmp = BN_dup(iqmp)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	if (NH_SUCCESS(rv) rv = RSA_set0_key(dolly->key,n,e,d) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) rv = RSA_set0_factors(dolly->key,p,q) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) rv = RSA_set0_crt_params(dolly->key,dmp1,dmq1,iqmp) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+#else
+	dolly->key->e=e;
+	dolly->key->n=n;
+	dolly->key->d=d;
+	dolly->key->p=p;
+	dolly->key->q=q;
+	dolly->key->dmp1=dmp1;
+	dolly->key->dmq1=dmq1;
+	dolly->key->iqmp=iqmp;
+#endif
+
 	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hNew)))
 	{
 		hNew->key = dolly;
@@ -2227,9 +2258,9 @@ NH_UTILITY(size_t, NH_rsa_privkey_size)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandle
 	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-	RSA_get0_key(hHandler->key,&n,&e,&d);
-	RSA_get0_factors(hHandler->key,&p,&q);
-	RSA_get0_crt_params(hHandler->key,&dmp1,&dmq1,&iqmp);
+	RSA_get0_key((const RSA *)hHandler->key,(const BIGNUM **)&n,(const BIGNUM **)&e,(const BIGNUM **)&d);
+	RSA_get0_factors((const RSA *)hHandler->key,(const BIGNUM **)&p,(const BIGNUM **)&q);
+	RSA_get0_crt_params((const RSA *)hHandler->key,(const BIGNUM **)&dmp1,(const BIGNUM **)&dmq1,(const BIGNUM **)&iqmp);
 #else
 	e=hHandler->key->e;
 	n=hHandler->key->n;
@@ -2315,12 +2346,12 @@ NH_FUNCTION(NH_RV, NH_generate_RSA_keys)
 	)
 	{
 	#if OPENSSL_VERSION_NUMBER >= 0x10100001L
-		RSA_get0_key(key,&n,&e,NULL);
+		RSA_get0_key((const RSA *)key,(const BIGNUM **)&n,(const BIGNUM **)&e,NULL);
 		if
 		(
 			NH_SUCCESS(rv = (n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
 			NH_SUCCESS(rv = (e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-			NH_SUCCESS(rv = RSA_set0_key(key,n,e,NULL)) &&
+			NH_SUCCESS(rv = RSA_set0_key(key,n,e,NULL) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) ) &&
 	#else
 		if
 		(
