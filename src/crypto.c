@@ -1042,7 +1042,11 @@ NH_FUNCTION(NH_RV, NH_new_symkey_handler)(_IN_ CK_MECHANISM_TYPE keygen, _OUT_ N
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	if (!(ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX)))) return NH_OUT_OF_MEMORY_ERROR;
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+        if (!(ctx = EVP_CIPHER_CTX_new())) return NH_OUT_OF_MEMORY_ERROR;
+    #else
+        if (!(ctx = (EVP_CIPHER_CTX *) malloc(sizeof(EVP_CIPHER_CTX)))) return NH_OUT_OF_MEMORY_ERROR;
+    #endif
 	EVP_CIPHER_CTX_init(ctx);
 	rv = (ret = (NH_SYMKEY_HANDLER) malloc(sizeof(NH_SYMKEY_HANDLER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
 	if (NH_SUCCESS(rv))
@@ -1246,6 +1250,9 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encode)
 {
 	NH_RV rv;
 	NH_ASN1_PNODE node;
+	BIGNUM *e;
+	BIGNUM *n;
+
 
 	if (!hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!hEncoder) return NH_INVALID_ARG;
@@ -1255,9 +1262,16 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encode)
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
 	if (NH_FAIL(rv = hEncoder->chart_from(hEncoder, node, rsa_pubkey_map, ASN_NODE_WAY_COUNT(rsa_pubkey_map)))) return rv;
 	if (!(node = node->child)) return NH_UNEXPECTED_ENCODING;
-	if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->n))) return rv;
+
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	RSA_get0_key(hHandler->key, &n, &e, NULL);
+    #else
+	n=hHandler->key->n;
+	e=hHandler->key->e;
+    #endif
+	if (NH_FAIL(rv = encode_bignum(hEncoder, node, n))) return rv;
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-	return encode_bignum(hEncoder, node, hHandler->key->e);
+	return encode_bignum(hEncoder, node, e);
 }
 
 NH_UTILITY(NH_RV, decode_bignum)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _INOUT_ NH_ASN1_PNODE node, _OUT_ NH_BIG_INTEGER *n)
@@ -1315,12 +1329,23 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_create)
 {
 	NH_RV rv;
 	RSA *key;
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	BIGNUM *_e;
+	BIGNUM *_n;
+    #endif
 
 	if (!n || !e || !n->data || !e->data) return NH_INVALID_ARG;
 	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!(key = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	rv = (_n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = (_e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_key(hHandler->key, &_n, &_e, NULL);
+    #else
 	rv = (key->n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = (key->e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+    #endif
 	if (NH_SUCCESS(rv))
 	{
 		hHandler->key = key;
@@ -1351,10 +1376,20 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_clone)(_IN_ NH_RSA_PUBKEY_HANDLER_STR *hHandler,
 NH_UTILITY(size_t, NH_rsa_pubkey_size)(_IN_ NH_RSA_PUBKEY_HANDLER_STR *hHandler)
 {
 	size_t size = sizeof(NH_RSA_PUBKEY_HANDLER_STR);
+	BIGNUM *e=NULL;
+	BIGNUM *n=NULL;
+
+
 	if (hHandler->key)
 	{
-		if (hHandler->key->n) size += BN_num_bytes(hHandler->key->n);
-		if (hHandler->key->e) size += BN_num_bytes(hHandler->key->e);
+		#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+			RSA_get0_key(hHandler->key,&n,&e,NULL);
+		#else
+			e=hHandler->key->e;
+			n=hHandler->key->n;
+		#endif
+		if (n) size += BN_num_bytes(n);
+		if (e) size += BN_num_bytes(e);
 	}
 	return size;
 }
@@ -1682,6 +1717,15 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_encode)
 	NH_RV rv;
 	NH_ASN1_PNODE node;
 	NH_IV *iv;
+	BIGNUM *e;
+	BIGNUM *n;
+	BIGNUM *d;
+	BIGNUM *p;
+	BIGNUM *q;
+	BIGNUM *dmp1;
+	BIGNUM *dmq1;
+	BIGNUM *iqmp;
+
 
 	if (!hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!hEncoder) return NH_INVALID_ARG;
@@ -1692,13 +1736,31 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_encode)
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
 	if (NH_FAIL(rv = hEncoder->chart_from(hEncoder, node, rsa_privkey_map, ASN_NODE_WAY_COUNT(rsa_privkey_map)))) return rv;
 	if (!(node = node->child)) return NH_UNEXPECTED_ENCODING;
-	if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->n))) return rv;
+
+
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	RSA_get0_key(hHandler->key,&n,&e,&d);
+	RSA_get0_factors(hHandler->key,&p,&q);
+	RSA_get0_crt_params(hHandler->key,&dmp1,&dmq1,&iqmp);
+#else
+	e=hHandler->key->e;
+	n=hHandler->key->n;
+	d=hHandler->key->d;
+	p=hHandler->key->p;
+	q=hHandler->key->q;
+	dmp1=hHandler->key->dmp1;
+	dmq1=hHandler->key->dmq1;
+	iqmp=hHandler->key->iqmp;
+#endif
+
+	if (NH_FAIL(rv = encode_bignum(hEncoder, node, n))) return rv;
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-	if (hHandler->key->e)
+	if (e)
 	{
 		node->knowledge = NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_OPTIONAL_BIT;
 		hEncoder->register_optional(node);
-		if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->e))) return rv;
+		if (NH_FAIL(rv = encode_bignum(hEncoder, node, e))) return rv;
 	}
 
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
@@ -1706,41 +1768,41 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_encode)
 	{
 		if (NH_FAIL(rv = hEncoder->chart_from(hEncoder, node, rsa_keymaterial_map, ASN_NODE_WAY_COUNT(rsa_keymaterial_map)))) return rv;
 		if (!(node = node->child)) return NH_UNEXPECTED_ENCODING;
-		if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->d))) return rv;
+		if (NH_FAIL(rv = encode_bignum(hEncoder, node, d))) return rv;
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (hHandler->key->p)
+		if (p)
 		{
 			node->knowledge = NH_ASN1_INTEGER | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0;
 			hEncoder->register_optional(node);
-			if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->p))) return rv;
+			if (NH_FAIL(rv = encode_bignum(hEncoder, node, p))) return rv;
 		}
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (hHandler->key->q)
+		if (q)
 		{
 			node->knowledge = NH_ASN1_INTEGER | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_1;
 			hEncoder->register_optional(node);
-			if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->q))) return rv;
+			if (NH_FAIL(rv = encode_bignum(hEncoder, node, q))) return rv;
 		}
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (hHandler->key->dmp1)
+		if (dmp1)
 		{
 			node->knowledge = NH_ASN1_INTEGER | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_2;
 			hEncoder->register_optional(node);
-			if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->dmp1))) return rv;
+			if (NH_FAIL(rv = encode_bignum(hEncoder, node, dmp1))) return rv;
 		}
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (hHandler->key->dmq1)
+		if (dmq1)
 		{
 			node->knowledge = NH_ASN1_INTEGER | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_3;
 			hEncoder->register_optional(node);
-			if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->dmq1))) return rv;
+			if (NH_FAIL(rv = encode_bignum(hEncoder, node, dmq1))) return rv;
 		}
 		if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
-		if (hHandler->key->iqmp)
+		if (iqmp)
 		{
 			node->knowledge = NH_ASN1_INTEGER | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_4;
 			hEncoder->register_optional(node);
-			if (NH_FAIL(rv = encode_bignum(hEncoder, node, hHandler->key->iqmp))) return rv;
+			if (NH_FAIL(rv = encode_bignum(hEncoder, node, iqmp))) return rv;
 		}
 	}
 
@@ -1753,12 +1815,12 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_encode)
 		if (NH_FAIL(rv = hEncryption->new_iv(mechanism, &iv))) return rv;
 		rv = hEncoder->put_octet_string(hEncoder, node, iv->data, iv->length);
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-		if (NH_SUCCESS(rv)) rv = encode_encrypted_bignum(hEncoder, node, hHandler->key->d, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && hHandler->key->p)  rv = encode_encrypted_bignum(hEncoder, node, hHandler->key->p, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && hHandler->key->q)  rv = encode_encrypted_bignum(hEncoder, node, hHandler->key->q, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && hHandler->key->dmp1)  rv = encode_encrypted_bignum(hEncoder, node, hHandler->key->dmp1, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && hHandler->key->dmq1)  rv = encode_encrypted_bignum(hEncoder, node, hHandler->key->dmq1, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && hHandler->key->iqmp)  rv = encode_encrypted_bignum(hEncoder, node, hHandler->key->iqmp, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv)) rv = encode_encrypted_bignum(hEncoder, node, d, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && p)  rv = encode_encrypted_bignum(hEncoder, node, p, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && q)  rv = encode_encrypted_bignum(hEncoder, node, q, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && dmp1)  rv = encode_encrypted_bignum(hEncoder, node, dmp1, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && dmq1)  rv = encode_encrypted_bignum(hEncoder, node, dmq1, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && iqmp)  rv = encode_encrypted_bignum(hEncoder, node, iqmp, hEncryption, mechanism, iv);
 		hEncryption->release_iv(iv);
 	}
 	return rv;
@@ -1914,17 +1976,45 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_create)
 	NH_RV rv;
 	RSA *key;
 
+	BIGNUM *e;
+	BIGNUM *n;
+	BIGNUM *d;
+	BIGNUM *p;
+	BIGNUM *q;
+	BIGNUM *dmp1;
+	BIGNUM *dmq1;
+	BIGNUM *iqmp;
+
+
+
 	if (!n || !n->data || !d || !d->data || (e && !e->data) || (p && !p->data) || (q && !q->data) || (dmp && !dmp->data) || (dmq && !dmq->data) || (qmp && !qmp->data)) return NH_INVALID_ARG;
 	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!(key = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	rv = (key->n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = (key->d = BN_bin2bn(d->data, d->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && e) rv = (key->e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && p) rv = (key->p = BN_bin2bn(p->data, p->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && q) rv = (key->q = BN_bin2bn(q->data, q->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && dmp) rv = (key->dmp1 = BN_bin2bn(dmp->data, dmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && dmq) rv = (key->dmq1 = BN_bin2bn(dmq->data, dmq->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && qmp) rv = (key->iqmp = BN_bin2bn(qmp->data, qmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	rv = (n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = (d = BN_bin2bn(d->data, d->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && e) rv = (e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && p) rv = (p = BN_bin2bn(p->data, p->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && q) rv = (q = BN_bin2bn(q->data, q->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && dmp) rv = (dmp1 = BN_bin2bn(dmp->data, dmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && dmq) rv = (dmq1 = BN_bin2bn(dmq->data, dmq->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && qmp) rv = (iqmp = BN_bin2bn(qmp->data, qmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+
+	if (NH_SUCCESS(rv)) rv = RSA_set0_key(key,n,e,d);
+	if (NH_SUCCESS(rv)) rv = RSA_set0_factors(key,p,q);
+	if (NH_SUCCESS(rv)) rv = RSA_set0_crt_params(key,dmp1,dmq1,iqmp);
+#else
+	key->e=e;
+	key->n=n;
+	key->d=d;
+	key->p=p;
+	key->q=q;
+	key->dmp1=dmp1;
+	key->dmq1=dmq1;
+	key->iqmp=iqmp;
+#endif
+
 	if (NH_SUCCESS(rv) && p && e && q) rv = RSA_check_key(key) == 1 ? NH_OK : NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) hHandler->key = key;
 	else RSA_free(key);
@@ -2075,16 +2165,43 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_clone)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandle
 	NH_RV rv;
 	RSA *dolly;
 	NH_RSA_PRIVKEY_HANDLER hNew;
+	BIGNUM *e;
+	BIGNUM *n;
+	BIGNUM *d;
+	BIGNUM *p;
+	BIGNUM *q;
+	BIGNUM *dmp1;
+	BIGNUM *dmq1;
+	BIGNUM *iqmp;
 
+	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!(dolly = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	rv = (dolly->n = BN_dup(hHandler->key->n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && hHandler->key->e) rv = (dolly->e = BN_dup(hHandler->key->e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv)) rv = (dolly->d = BN_dup(hHandler->key->d)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && hHandler->key->p) rv = (dolly->p = BN_dup(hHandler->key->p)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && hHandler->key->q) rv = (dolly->q = BN_dup(hHandler->key->q)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && hHandler->key->dmp1) rv = (dolly->dmp1 = BN_dup(hHandler->key->dmp1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && hHandler->key->dmq1) rv = (dolly->dmq1 = BN_dup(hHandler->key->dmq1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
-	if (NH_SUCCESS(rv) && hHandler->key->iqmp) rv = (dolly->iqmp = BN_dup(hHandler->key->iqmp)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+
+
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	RSA_get0_key(hHandler->key,&n,&e,&d);
+	RSA_get0_factors(hHandler->key,&p,&q);
+	RSA_get0_crt_params(hHandler->key,&dmp1,&dmq1,&iqmp);
+#else
+	e=hHandler->key->e;
+	n=hHandler->key->n;
+	d=hHandler->key->d;
+	p=hHandler->key->p;
+	q=hHandler->key->q;
+	dmp1=hHandler->key->dmp1;
+	dmq1=hHandler->key->dmq1;
+	iqmp=hHandler->key->iqmp;
+#endif
+
+	rv = (dolly->n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && e) rv = (dolly->e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv)) rv = (dolly->d = BN_dup(d)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && p) rv = (dolly->p = BN_dup(p)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && q) rv = (dolly->q = BN_dup(q)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && dmp1) rv = (dolly->dmp1 = BN_dup(dmp1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && dmq1) rv = (dolly->dmq1 = BN_dup(dmq1)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
+	if (NH_SUCCESS(rv) && iqmp) rv = (dolly->iqmp = BN_dup(iqmp)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_CLONE_ERROR;
 	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hNew)))
 	{
 		hNew->key = dolly;
@@ -2097,16 +2214,43 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_clone)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandle
 NH_UTILITY(size_t, NH_rsa_privkey_size)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandler)
 {
 	size_t size = sizeof(NH_RSA_PRIVKEY_HANDLER_STR);
+	BIGNUM *e;
+	BIGNUM *n;
+	BIGNUM *d;
+	BIGNUM *p;
+	BIGNUM *q;
+	BIGNUM *dmp1;
+	BIGNUM *dmq1;
+	BIGNUM *iqmp;
+
+
+	if (hHandler->key) return NH_INVALID_STATE_ERROR;
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+	RSA_get0_key(hHandler->key,&n,&e,&d);
+	RSA_get0_factors(hHandler->key,&p,&q);
+	RSA_get0_crt_params(hHandler->key,&dmp1,&dmq1,&iqmp);
+#else
+	e=hHandler->key->e;
+	n=hHandler->key->n;
+	d=hHandler->key->d;
+	p=hHandler->key->p;
+	q=hHandler->key->q;
+	dmp1=hHandler->key->dmp1;
+	dmq1=hHandler->key->dmq1;
+	iqmp=hHandler->key->iqmp;
+#endif
+
 	if (hHandler->key)
 	{
-		if (hHandler->key->n) size += BN_num_bytes(hHandler->key->n);
-		if (hHandler->key->e) size += BN_num_bytes(hHandler->key->e);
-		if (hHandler->key->d) size += BN_num_bytes(hHandler->key->d);
-		if (hHandler->key->p) size += BN_num_bytes(hHandler->key->p);
-		if (hHandler->key->q) size += BN_num_bytes(hHandler->key->q);
-		if (hHandler->key->dmp1) size += BN_num_bytes(hHandler->key->dmp1);
-		if (hHandler->key->dmq1) size += BN_num_bytes(hHandler->key->dmq1);
-		if (hHandler->key->iqmp) size += BN_num_bytes(hHandler->key->iqmp);
+		if (n) size += BN_num_bytes(n);
+		if (e) size += BN_num_bytes(e);
+		if (d) size += BN_num_bytes(d);
+		if (p) size += BN_num_bytes(p);
+		if (q) size += BN_num_bytes(q);
+		if (dmp1) size += BN_num_bytes(dmp1);
+		if (dmq1) size += BN_num_bytes(dmq1);
+		if (iqmp) size += BN_num_bytes(iqmp);
 	}
 	return size;
 }
@@ -2153,32 +2297,49 @@ NH_FUNCTION(NH_RV, NH_generate_RSA_keys)
 )
 {
 	NH_RV rv;
-	BIGNUM *e = NULL;
+	BIGNUM *ex = NULL;
 	RSA *key = NULL, *pub = NULL;
 	NH_RSA_PUBKEY_HANDLER pubKey = NULL;
 	NH_RSA_PRIVKEY_HANDLER privKey;
+	BIGNUM *e;
+	BIGNUM *n;
+
 
 	if
 	(
-		NH_SUCCESS(rv = (e = BN_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-		NH_SUCCESS(rv = BN_set_word(e, exponent) ? NH_OK : NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = (ex = BN_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = BN_set_word(ex, exponent) ? NH_OK : NH_RSA_GEN_ERROR) &&
 		NH_SUCCESS(rv = (key = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-		NH_SUCCESS(rv = RSA_generate_key_ex(key, bits, e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-		NH_SUCCESS(rv = (pub = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-		NH_SUCCESS(rv = (pub->n = BN_dup(key->n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-		NH_SUCCESS(rv = (pub->e = BN_dup(key->e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-		NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&pubKey)) &&
-		NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&privKey))
+		NH_SUCCESS(rv = RSA_generate_key_ex(key, bits, ex, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+		NH_SUCCESS(rv = (pub = RSA_new()) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR)
 	)
 	{
-		pubKey->key = pub;
-		pubKey->size = bits;
-		privKey->key = key;
-		*hPubKey = pubKey;
-		*hPrivKey = privKey;
+	#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+		RSA_get0_key(key,&n,&e,NULL);
+		if
+		(
+			NH_SUCCESS(rv = (n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+			NH_SUCCESS(rv = (e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+			NH_SUCCESS(rv = RSA_set0_key(key,n,e,NULL)) &&
+	#else
+		if
+		(
+			NH_SUCCESS(rv = (pub->n = BN_dup(key->n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+			NH_SUCCESS(rv = (pub->e = BN_dup(key->e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+	#endif
+			NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&pubKey)) &&
+			NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&privKey))
+		)
+		{
+			pubKey->key = pub;
+			pubKey->size = bits;
+			privKey->key = key;
+			*hPubKey = pubKey;
+			*hPrivKey = privKey;
 
+		}
 	}
-	if (e) BN_free(e);
+	if (ex) BN_free(ex);
 	if (NH_FAIL(rv))
 	{
 		if (key) RSA_free(key);
