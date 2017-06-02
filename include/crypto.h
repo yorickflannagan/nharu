@@ -56,9 +56,14 @@
 /* OpenSSL warnings suppression for Valgrind */
 #if defined(_DEBUG_)
 #include <valgrind/memcheck.h>
-#define NH_MALLOC				debug_malloc
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+    #define NH_MALLOC(x)				debug_malloc(x, __FILE__ , __LINE__)
 #else
-#define NH_MALLOC				malloc
+    #define NH_MALLOC(x)				debug_malloc(x)
+#endif
+
+#else
+#define NH_MALLOC(x)				malloc(x)
 #endif
 
 
@@ -1800,7 +1805,11 @@ NH_UTILITY(CK_MECHANISM_TYPE, NH_oid_to_mechanism)(_IN_ unsigned int*, _IN_ size
 
 
 #if defined(_DEBUG_)
-NH_FUNCTION(void*, debug_malloc)(size_t);
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+        NH_FUNCTION(void*, debug_malloc)(size_t, const char *, int);
+    #else
+        NH_FUNCTION(void*, debug_malloc)(size_t);
+    #endif
 #endif
 
 #if defined(__cplusplus)

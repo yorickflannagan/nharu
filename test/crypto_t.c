@@ -299,6 +299,12 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 	size_t eSize;
 	unsigned char *eBuffer;
 	NH_RSA_PUBKEY_HANDLER hLoaded;
+	BIGNUM *e;
+	BIGNUM *n;
+	BIGNUM *_e;
+	BIGNUM *_n;
+
+
 
 	printf("Testing RSA public key encode... ");
 	if (NH_SUCCESS(rv = NH_new_encoder(PUBKEY_MAP_COUNT, 2048, &hEncoder)))
@@ -317,7 +323,16 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&hLoaded)))
 					{
 						rv = hLoaded->decode(hLoaded, hParser, NH_PARSE_ROOT);
-						if (NH_SUCCESS(rv)) rv = (BN_cmp(hPubKey->key->n, hLoaded->key->n) == 0 &&  BN_cmp(hPubKey->key->e, hLoaded->key->e) == 0) ? NH_OK : NH_BASE_ERROR;
+                        #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+                        RSA_get0_key((const RSA *)hPubKey->key, (const BIGNUM **)&n, (const BIGNUM **)&e, NULL);
+                        RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, (const BIGNUM **)&_e, NULL);
+                        #else
+                        n=hPubKey->key->n;
+                        e=hPubKey->key->e;
+                        _n=hLoaded->key->n;
+                        _e=hLoaded->key->e;
+                        #endif
+						if (NH_SUCCESS(rv)) rv = (BN_cmp(n, _n) == 0 &&  BN_cmp(e, _e) == 0) ? NH_OK : NH_BASE_ERROR;
 						NH_release_RSA_pubkey_handler(hLoaded);
 					}
 					NH_release_parser(hParser);
@@ -341,6 +356,10 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	size_t eSize;
 	unsigned char *eBuffer;
 	NH_RSA_PRIVKEY_HANDLER hLoaded;
+	BIGNUM *d;
+	BIGNUM *n;
+	BIGNUM *_d;
+	BIGNUM *_n;
 
 	printf("Testing RSA private key encoding... ");
 	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 2048, &hEncoder)))
@@ -359,7 +378,16 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hLoaded)))
 					{
 						rv = hLoaded->decode(hLoaded, NULL, hParser, NH_PARSE_ROOT);
-						if (NH_SUCCESS(rv)) rv = (BN_cmp(hPrivKey->key->n, hLoaded->key->n) == 0 &&  BN_cmp(hPrivKey->key->d, hLoaded->key->d) == 0) ? NH_OK : NH_BASE_ERROR;
+                        #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+                        RSA_get0_key((const RSA *)hPrivKey->key, (const BIGNUM **)&n, NULL, (const BIGNUM **)&d);
+                        RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, NULL, (const BIGNUM **)&_d);
+                        #else
+                        n=hPrivKey->key->n;
+                        d=hPrivKey->key->d;
+                        _n=hLoaded->key->n;
+                        _d=hLoaded->key->d;
+                        #endif
+						if (NH_SUCCESS(rv)) rv = (BN_cmp(n, _n) == 0 &&  BN_cmp(d, _d) == 0) ? NH_OK : NH_BASE_ERROR;
 						NH_release_RSA_privkey_handler(hLoaded);
 					}
 					NH_release_parser(hParser);
@@ -384,6 +412,10 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	unsigned char *eBuffer;
 	NH_RSA_PRIVKEY_HANDLER hLoaded;
 	NH_SYMKEY_HANDLER hKey;
+	BIGNUM *d;
+	BIGNUM *n;
+	BIGNUM *_d;
+	BIGNUM *_n;
 
 	printf("Testing RSA private key encrypted encoding... ");
 	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 2048, &hEncoder)))
@@ -403,7 +435,16 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 						if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hLoaded)))
 						{
 							rv = hLoaded->decode(hLoaded, hKey, hParser, NH_PARSE_ROOT);
-							if (NH_SUCCESS(rv)) rv = (BN_cmp(hPrivKey->key->n, hLoaded->key->n) == 0 &&  BN_cmp(hPrivKey->key->d, hLoaded->key->d) == 0) ? NH_OK : NH_BASE_ERROR;
+                            #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+                            RSA_get0_key((const RSA *)hPrivKey->key, (const BIGNUM **)&n, NULL, (const BIGNUM **)&d);
+                            RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, NULL, (const BIGNUM **)&_d);
+                            #else
+                            n=hPrivKey->key->n;
+                            d=hPrivKey->key->d;
+                            _n=hLoaded->key->n;
+                            _d=hLoaded->key->d;
+                            #endif
+							if (NH_SUCCESS(rv)) rv = (BN_cmp(n, _n) == 0 &&  BN_cmp(d, _d) == 0) ? NH_OK : NH_BASE_ERROR;
 							NH_release_RSA_privkey_handler(hLoaded);
 						}
 						NH_release_parser(hParser);

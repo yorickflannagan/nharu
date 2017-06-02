@@ -434,7 +434,13 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
 	jlong handle
 )
 {
-	return bignum_to_java_array(env, ((NH_RSA_PRIVKEY_HANDLER) handle)->key->n);
+	BIGNUM *n;
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+    RSA_get0_key((const RSA *)(((NH_RSA_PRIVKEY_HANDLER) handle)->key), (const BIGNUM **)&n, NULL, NULL);
+    #else
+    n=((NH_RSA_PRIVKEY_HANDLER) handle)->key->n;
+    #endif
+	return bignum_to_java_array(env, n);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuGetRSAPrivateExponent
@@ -444,7 +450,13 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
 	jlong handle
 )
 {
-	return bignum_to_java_array(env, ((NH_RSA_PRIVKEY_HANDLER) handle)->key->d);
+	BIGNUM *d;
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+    RSA_get0_key((const RSA *)(((NH_RSA_PRIVKEY_HANDLER) handle)->key), NULL, NULL, (const BIGNUM **)&d);
+    #else
+    n=((NH_RSA_PRIVKEY_HANDLER) handle)->key->d;
+    #endif
+	return bignum_to_java_array(env, d);
 }
 
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nharuRSADecrypt

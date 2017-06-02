@@ -11,6 +11,9 @@
 #ifndef CRC_H_INCLUDED
 #define CRC_H_INCLUDED
 
+#include <stdint.h>
+
+
 #define TEST_CRC_VERSION			"BUILD 2"
 #define CPU_DATA_CACHE_SIZE			0x100000
 #define WARM		1
@@ -41,7 +44,11 @@
 #define MPA_FRAME_INDEX4		19
 #define MPA_FRAME_VALUE4		0x01
 #define MPA_FRAME_CRC			0x84B3864C
-#define UINT8_MAX				255
+
+#ifndef UINT8_MAX
+    #define UINT8_MAX				255
+#endif
+
 #define LONG_WORD_SIZE			4
 #define CRC_FAILED				1
 #define CRC_PASSED				0
@@ -87,14 +94,18 @@
 	#pragma GCC diagnostic ignored "-Wlong-long"
 #endif
 
-typedef char				int8_t;
-typedef unsigned char			uint8_t;
-typedef short				int16_t;
-typedef unsigned short			uint16_t;
-typedef long				int32_t;
-typedef unsigned long			uint32_t;
-typedef long long			int64_t;
-typedef unsigned long long		uint64_t;
+#ifndef __int8_t_defined /* guarda encontrada no stdint.h  */
+    typedef char				int8_t;
+    typedef short				int16_t;
+    typedef long				int32_t;
+    typedef long long			int64_t;
+
+    typedef unsigned char			uint8_t;
+    typedef unsigned short			uint16_t;
+    typedef unsigned long			uint32_t;
+    typedef unsigned long long		uint64_t;
+#endif
+
 
 /**
 	Defines the boolean type.

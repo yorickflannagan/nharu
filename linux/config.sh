@@ -171,7 +171,7 @@ if [ ! -f "$DLA_LIB/libdl.so"  -a  ! -f "$DLA_LIB/libdl.dylib" ]; then error "Co
 printf "System library found at %s\n" "$DLA_LIB"
 
 if [ -n "$LIB_ICONV" ]; then
-	if [ ! -f "$LIB_ICONV/lib/libiconv.a" ]; then error "Could not find GNU Iconv installation directory"; fi
+	if [ ! -f "$LIB_ICONV/lib/libiconv.la" ]; then error "Could not find GNU Iconv installation directory"; fi
 	BASE_LIBS="-lnharu -lcrypto -lidn -liconv"
 	ICONV_LIB="-L$LIB_ICONV/lib"
 else BASE_LIBS="-lnharu -lcrypto -lidn"; fi

@@ -32,7 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define XMALLOC NH_MALLOC
+#define XMALLOC(x) NH_MALLOC(x)
+
 #define XFREE free
 
 struct _gfshare_ctx {

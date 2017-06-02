@@ -127,26 +127,41 @@ static NH_NOISE_HANDLER_STR hDevice =
 };
 
 #if defined(_DEBUG_)
-NH_FUNCTION(void*, debug_malloc)(size_t num)
-{
-	void *ret = malloc(num);
-	VALGRIND_MAKE_MEM_DEFINED(ret, num);
-	return ret;
-}
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+        NH_FUNCTION(void*, debug_malloc)(size_t num, const char * file, int line)
+        {
+            void *ret = malloc(num);
+            VALGRIND_MAKE_MEM_DEFINED(ret, num);
+            /*printf("Allocated %li bytes for %s:%d\n", num, file, line);*/
+            return ret;
+        }
+    #else
+        NH_FUNCTION(void*, debug_malloc)(size_t num)
+        {
+            void *ret = malloc(num);
+            VALGRIND_MAKE_MEM_DEFINED(ret, num);
+            return ret;
+        }
+    #endif
 #endif
 INLINE NH_UTILITY(NH_RV, seed)()
 {
 	NH_RV rv = NH_OK;
 	unsigned char seedb[NH_DEFAULT_SEED];
 #if defined(_DEBUG_)
-	void *(*r)(void *, size_t) = NULL;
-	void (*f)(void *) = NULL;
+    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+         void *(*r)(void *, size_t, const char *, int) = NULL;
+         void (*f)(void *, const char *, int) = NULL;
+    #else
+        void *(*r)(void *, size_t) = NULL;
+        void (*f)(void *) = NULL;
+    #endif
 #endif
 	if (!hDevice.seeded)
 	{
 #if defined(_DEBUG_)
 		CRYPTO_get_mem_functions(NULL, &r, &f);
-		if (NH_FAIL(CRYPTO_set_mem_functions(debug_malloc, r, f))) return NH_OPENSSL_INIT_ERROR;
+		if (!(CRYPTO_set_mem_functions(debug_malloc, r, f))) return NH_OPENSSL_INIT_ERROR;
 #endif
 		if
 		(
@@ -1341,7 +1356,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_create)
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
 	rv = (_n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = (_e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_set0_key(hHandler->key, _n, _e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = RSA_set0_key(key, _n, _e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
     #else
 	rv = (key->n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = (key->e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
@@ -1993,14 +2008,14 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_create)
 	NH_RV rv;
 	RSA *key;
 
-	BIGNUM *_e;
-	BIGNUM *_n;
-	BIGNUM *_d;
-	BIGNUM *_p;
-	BIGNUM *_q;
-	BIGNUM *_dmp1;
-	BIGNUM *_dmq1;
-	BIGNUM *_iqmp;
+	BIGNUM *_e=NULL;
+	BIGNUM *_n=NULL;
+	BIGNUM *_d=NULL;
+	BIGNUM *_p=NULL;
+	BIGNUM *_q=NULL;
+	BIGNUM *_dmp1=NULL;
+	BIGNUM *_dmq1=NULL;
+	BIGNUM *_iqmp=NULL;
 
 
 
@@ -2351,7 +2366,7 @@ NH_FUNCTION(NH_RV, NH_generate_RSA_keys)
 		(
 			NH_SUCCESS(rv = (n = BN_dup(n)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
 			NH_SUCCESS(rv = (e = BN_dup(e)) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
-			NH_SUCCESS(rv = RSA_set0_key(key,n,e,NULL) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
+			NH_SUCCESS(rv = RSA_set0_key(pub,n,e,NULL) ?  NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_GEN_ERROR) &&
 	#else
 		if
 		(
