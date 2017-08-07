@@ -17,19 +17,66 @@
 
 When building for multiple platforms, run make distclean before configure
 
+
+To avoid cloning gnulib 10x:
+export GNULIB_SRCDIR=$HOME/development/3rdParty/gnulib
+That way the first project will make the cloning stuff, others will only enjoy the ride.
+
 Libiconv (required by Libidn)
+   From GIT
+	git clone https://git.savannah.gnu.org/git/libiconv.git
+	checkout v1.15 -b nharu_build
+	sudo apt-get install gperf autoconf automake groff
+	mkdir ~/bin
+	ln -s /usr/bin/autoheader ~/bin/autoheader-2.69
+	ln -s /usr/bin/autoconf ~/bin/autoconf-2.69
+	./autogen.sh
+	./configure --with-pic --enable-threads=posix --prefix=$HOME/development/3rdParty/libiconv/nharu_dist
+	make
+	make install
+
+  From Tarball (yet to test fully)
 	https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.15.tar.gz
-	./configure --with-pic --enable-threads=posix --prefix=
+	./configure --with-pic --enable-threads=posix --prefix=$HOME/development/3rdParty/libiconv/nharu_dist
+	make
+	make install
+
+Gettext
+	sudo apt-get install autopoint gperf gengetopt texinfo help2man fig2ps bison
+	git clone https://git.savannah.gnu.org/git/gettext.git
+	git checkout v0.19.3 -b nharu_build
+	./autogen.sh
+	git apply ~/development/nharu/perl5.22-gettext-patch.diff
+	./configure --prefix=$HOME/development/3rdParty/gettext/nharu/dist --disable-static --docdir=$HOME/development/3rdParty/gettext/nharu/doc/gettext
+	make
+	make install
+
+
 
 Libidn:
-	- requirements: autopoint, gperf, gengetopt, texinfo, help2man, fig2ps
-	- gettext 0.19.3: ./configure --prefix=/usr --disable-static --docdir=/usr/share/doc/gettext
-	- edit po/LINGUAS
-	- checkout libidn-1-32
-	- ./configure --disable-silent-rules --enable-threads=posix --disable-shared --with-pic --with-libiconv-prefix=[DIR]
+	Sugested by libidn:
+		sudo apt-get install make git-core autoconf automake libtool gettext cvs
+		sudo apt-get install texinfo texlive texlive-generic-recommended texlive-extra-utils
+		sudo apt-get install help2man gtk-doc-tools valgrind gengetopt
+		sudo apt-get install gcj-jdk gjdoc transfig mono-mcs gperf
+
+	- requirements: gettext libiconv
+	- edit po/LINGUAS?
+
+	Source:
+	git clone https://git.savannah.gnu.org/git/libidn.git
+	checkout libidn-1-32
+	make bootstrap
+	./configure --disable-silent-rules --enable-threads=posix --disable-shared --with-pic --with-libiconv-prefix=$HOME/development/3rdParty/libiconv/nharu_dist --prefix=$HOME/development/3rdParty/libidn/nharu_dist
+
 
 OpenSSL:
+<<<<<<< HEAD
 	- checkout OpenSSL_1_0_2g or OpenSSL_1_1_0e (for iOS support)
+=======
+	- git clone https://github.com/openssl/openssl
+	- checkout OpenSSL_1_0_2g
+>>>>>>> 8292e00f098b23c61be1fef1cfe0035a11184564
 	- config options: threads no-shared -fPIC
 
 CHANGE HISTORY
