@@ -29,7 +29,7 @@ Libidn:
 	- ./configure --disable-silent-rules --enable-threads=posix --disable-shared --with-pic --with-libiconv-prefix=[DIR]
 
 OpenSSL:
-	- checkout OpenSSL_1_0_2g
+	- checkout OpenSSL_1_0_2g or OpenSSL_1_1_0e (for iOS support)
 	- config options: threads no-shared -fPIC
 
 CHANGE HISTORY
@@ -41,3 +41,4 @@ CHANGE HISTORY
 1.1.1.149: Indefinite length form of DER encoding bug correction
 1.1.2.151: Support to constructed OCTET STRING
 1.1.3.161: CMS Signed-data and Enveloped-data implementation
+1.1.4
