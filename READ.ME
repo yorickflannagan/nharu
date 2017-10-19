@@ -74,6 +74,19 @@ OpenSSL:
 	- git clone https://github.com/openssl/openssl
 	- checkout OpenSSL_1_0_2g
 	- config options: threads no-shared -fPIC
+	./config threads no-shared -fPIC --prefix=$HOME/development/3rdParty/openssl/nharu_dist --openssldir=$HOME/development/3rdParty/openssl/nharu_dist
+	make depend
+	make
+	make install
+
+
+
+Nharu
+	linux/config.sh --prefix=$HOME/development/nharu/nharu_dist  --with-openssl=$HOME/development/3rdParty/openssl/nharu_dist --with-idn=$HOME/development/3rdParty/libidn/nharu_dist  --with-iconv=$HOME/development/3rdParty/libiconv/nharu_dist --disable-shared --enable-pthread 
+	make -C src
+	make -c test
+
+
 
 CHANGE HISTORY
 1.1.0.144: Library refactoring

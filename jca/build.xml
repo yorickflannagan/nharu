@@ -25,7 +25,7 @@
 		</condition>
 		<property name = "target" value = "1.7"/>
 		<property name = "source" value = "1.7"/>
-		<condition property = "log.package" value = "${JAVA_LOG_PATH}" else = "org.crypthing">
+		<condition property = "log.package" value = "${JAVA_LOG_PATH}" else = "org.crypthing.security">
 			<isset property = "JAVA_LOG_PATH" />
 		</condition>
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
@@ -38,9 +38,11 @@
 			<isset property="VERSION" />
 		</condition>
 		<property name = "full.version" value = "${provider.version}.${build.number}" />
+		<propertyregex property="c.version" input="${full.version}"  regexp="\." replace="_" global="true" />
 
 		<echo message="provider.version"> ${provider.version} </echo>
 		<echo message="full.version"> ${full.version} </echo>
+		<echo message="c.version"> ${c.version} </echo>
 		<echo message="src.dir"> ${src.dir} </echo>
 		<echo message="bin.dir"> ${bin.dir} </echo>
 		<echo message="target.file"> ${target.file} </echo>
@@ -52,6 +54,11 @@
 	</target>
 
 	<target name = "prepare" depends = "ver">
+		<delete file = "native/version.c" />
+		<echo   file = "native/version.c" >
+const char *NHARU_VERSION_${c.version} = "${full.version}";
+const char *NHARU_getVersion() { return NHARU_VERSION_${c.version}; }
+		</echo>
 		<mkdir  dir  = "${bin.dir}" />
 		<delete file = "${src.dir}/${log.dir}/LogDevice.java" />
 		<echo   file = "${src.dir}/${log.dir}/LogDevice.java">
