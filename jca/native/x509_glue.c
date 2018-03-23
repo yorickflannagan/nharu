@@ -51,7 +51,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nh
 					throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
 				}
 			}
-			else throw_new(env, J_CERTIFICATE_EX, J_CERT_PARSE_ERROR, rv);
+			else throw_new_with_rv(env, J_NHARU_CERTIFICATE_EX, J_CERT_PARSE_ERROR, rv);
 			if (NH_FAIL(rv))
 			{
 				free(copy);

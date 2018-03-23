@@ -20,7 +20,7 @@ export OPENSSL_HOME="${OPENSSL_HOME:=$HOME/development/3rdParty/libssl/}"
 export IDN_HOME="${IDN_HOME:=$HOME/development/3rdParty/libidn/}"
 export LIB_ICONV="${LIB_ICONV:=$HOME/development/3rdParty/libiconv/}"
 
-export VERSION=1.1.4
+export VERSION=1.1.5
 
 clean()
 {
@@ -46,8 +46,7 @@ clean()
 	export SYS_LIBRARY=
 }
 
-
-ensure()
+ensure_dpkg()
 {
 	while [ -n "$1" ];
 	do
@@ -58,6 +57,30 @@ ensure()
 		fi
 		shift
 	done
+}
+
+ensure_yum()
+{
+	while [ -n "$1" ];
+	do
+		lib=$1
+		inst=$(yum list installed $lib 2>&1 | grep $lib | awk '{ print $1 }')
+		if [ -n "$inst" ]; then
+			yum install $lib
+		fi
+		shift
+	done
+}
+
+
+ensure()
+{
+	if [ -z "$(which yum)" ]; then 
+		ensure_dpkg $*
+	else
+		ensure_yum $*
+	fi
+
 }
 
 dwiconv()
@@ -239,7 +262,7 @@ mknharu()
 			--with-openssl=$1/ssl/$3 --with-idn=$1/idn/$3  \
 			--with-iconv=$1/iconv/$3 --enable-shared --enable-pthread \
 			--enable-java  --with-jdk=$JAVA_HOME --with-ant=$ANT_HOME \
-			--with-ant-contrib=$ANT_CONTRIB --target=$3 
+			--with-ant-contrib=$ANT_CONTRIB --target=$3 --static-gclib 
 	else
 		source $TITI_DIR/droid-libs.sh --target=iconv --prefix=$1 --ndk=$4 --api-level=$5 --arch=$3
 
@@ -250,21 +273,25 @@ mknharu()
 			--prefix=$1 --syslib=$SYS_LIBRARY --disable-shared
 	fi
 
-	make -C src clean
-	make -C src
+	if [ "$6" == "debug" ]; then
+		export TYPE="_DEBUG_=1"
+	fi
+
+	make -C src clean $TYPE
+	make -C src $TYPE
 
 	if [ "$TARGET" = "linux" ]; then
 		cd jca
-		make -C ./native clean
+		make -C ./native clean $TYPE
 		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/ant-contrib.jar -DVERSION=$VERSION
-		make -C ./native
-		make -C ./native install
+		make -C ./native $TYPE
+		make -C ./native install $TYPE
 		cd ..
 
-		make -C test clean
+		make -C test clean 
 		make -C test
 	fi
-	make -C src install
+	make -C src install $TYPE
 	cd $mknharucurdir
 }
 
