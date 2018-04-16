@@ -346,7 +346,7 @@ INLINE NH_UTILITY(NH_RV, NHIX_parse_pubkey)(_IN_ NH_ASN1_PARSER_HANDLE hParser, 
 
 	if (!(node = hParser->sail(from, NH_PARSE_SOUTH | 2))) return NH_CANNOT_SAIL;
 	if (NH_FAIL(rv = hParser->parse_oid(hParser, node))) return rv;
-	if ((key = NH_oid_to_mechanism(node->value, node->valuelen)) == CK_UNAVAILABLE_INFORMATION) return NH_UNEXPECTED_ENCODING;
+	if ((key = NH_oid_to_mechanism(node->value, node->valuelen)) == CK_UNAVAILABLE_INFORMATION) return NH_UNSUPPORTED_MECH_ERROR;
 	if (!(node = hParser->sail(node, (NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST))) return NH_CANNOT_SAIL;
 	if (NH_FAIL(rv = hParser->parse_bitstring(hParser, node))) return rv;
 	if (NH_FAIL(rv = hParser->new_node(hParser->container, &keynode))) return rv;

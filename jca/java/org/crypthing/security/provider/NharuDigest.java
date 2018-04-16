@@ -32,7 +32,7 @@ public abstract class NharuDigest extends MessageDigest
 
 	@Override protected void engineUpdate(byte input) { buffer.write(input); }
 	@Override protected void engineUpdate(final byte[] input, final int offset, final int len) { buffer.write(input, offset, len); }
-	@Override protected byte[] engineDigest() { return nhcDigest(buffer.toByteArray(), hMech); }
+	@Override protected byte[] engineDigest() { final byte[] ret = nhcDigest(buffer.toByteArray(), hMech); buffer.reset(); return ret; }
 	@Override protected void engineReset() { buffer.reset(); }
 	private static native byte[] nhcDigest(byte[] buffer, int mechanism);
 

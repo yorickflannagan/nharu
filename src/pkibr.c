@@ -2,6 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+static NH_NODE_WAY pkibr_extension_value[] =
+{
+	{	/* Octet String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_OPTIONAL_BIT,
+		NULL,
+		0
+	},
+	{	/* Printable String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_PRINTABLE_STRING ,
+		NULL,
+		0
+	}
+};
+
+
 static NH_NODE_WAY pkibr_extension[] =
 {
 	{
@@ -18,17 +35,19 @@ static NH_NODE_WAY pkibr_extension[] =
 	},
 	{
 		NH_SAIL_SKIP_EAST,
-		NH_ASN1_OCTET_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_EXPLICIT_BIT,
+		NH_ASN1_ANY_TAG_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_EXPLICIT_BIT,
 		NULL,
 		0
 	},
-	{
-		NH_PARSE_ROOT,
-		NH_ASN1_PRINTABLE_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_EXPLICIT_BIT,
-		NULL,
-		0
+	{	/* Value */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_CHOICE_BIT,
+		pkibr_extension_value,
+		ASN_NODE_WAY_COUNT(pkibr_extension_value)
 	}
 };
+
+
 
 static unsigned int pkibr_subject_id_oid[]		= { 2, 16, 76, 1, 3, 1 }; /* subject_id: PF identidade civil                            */
 static unsigned int pkibr_company_sponsor_name_oid[]	= { 2, 16, 76, 1, 3, 2 }; /* sponsor_name: PJ/Equipamento nome empresarial              */
@@ -67,7 +86,13 @@ NH_FUNCTION(NH_RV, NH_parse_pkibr_extension)(_IN_ unsigned char *buffer, _IN_ si
 				if (NH_SUCCESS(rv)) rv = (cur = node->child) ? NH_OK : NH_UNEXPECTED_ENCODING;
 				if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, cur);
 				if (NH_SUCCESS(rv)) rv = (cur = cur->next) && (cur = cur->child) ? NH_OK : NH_UNEXPECTED_ENCODING;
-				if (NH_SUCCESS(rv)) rv = hParser->parse_octetstring(hParser, cur);
+				if (NH_SUCCESS(rv)){
+					if(ASN_FOUND(NH_ASN1_OCTET_STRING, *cur->identifier))
+						rv = hParser->parse_octetstring(hParser, cur);
+					else  if(ASN_FOUND(NH_ASN1_PRINTABLE_STRING, *cur->identifier))
+						rv = hParser->parse_string(cur);
+					else rv = NH_UNEXPECTED_ENCODING;
+				}
 			}
 			node = node->next;
 		}

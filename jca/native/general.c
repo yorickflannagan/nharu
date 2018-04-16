@@ -73,6 +73,36 @@ NH_UTILITY(void, throw_new)(JNIEnv *env, char *jc, char *msg, NH_RV nhc)
 	}
 }
 
+
+NH_UTILITY(void, throw_new_with_rv)(JNIEnv *env, char *jc, char *msg, NH_RV nhc)
+{
+      char buffer[2048];
+	  jclass e;
+	  jobject ex;
+	  jstring detail;
+	  jmethodID constructor;
+
+	(*env)->ExceptionClear(env);
+	if ((e = (*env)->FindClass(env, jc)))
+	{
+		if (nhc > 0) sprintf(buffer, "%s - error code: %lu", msg, nhc);
+		else sprintf(buffer, "%s", msg);
+
+		constructor = (*env)->GetMethodID(env, e, "<init>", "(Ljava/lang/String;I)V");
+		if(constructor)
+		{
+
+			ex = (*env)->NewObject(env, e, constructor, (*env)->NewStringUTF(env, buffer), nhc);
+			(*env)->Throw(env, ex);
+		}
+		else
+		{
+			(*env)->ThrowNew(env, e, buffer);
+		}
+	}
+}
+
+
 const static int elapsed_days[]	= { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333 };
 const static int elapsed_days_leap[]	= { -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 #if defined(_MSC_VER)

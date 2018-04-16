@@ -1,13 +1,16 @@
 package org.crypthing.security.x509;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.NoSuchProviderException;
 import java.security.cert.CRL;
 import java.security.cert.CRLException;
 import java.security.cert.CertPath;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateFactorySpi;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
@@ -44,6 +47,15 @@ public final class NharuX509Factory extends CertificateFactorySpi
 {
 	private static final String DBG_CACHE_PARAMS = "Certificate cache initialized with following parameters: ";
 	private static final LogDevice LOG = new LogDevice(NharuX509Factory.class.getName());
+	private static final CertificateFactory backup;
+	static
+	{
+			try {
+				backup = CertificateFactory.getInstance("X.509", "SUN");
+			} catch (CertificateException | NoSuchProviderException e) {
+				throw new RuntimeException(e);
+			}
+	}
 
 	/*
 	 * Certificate cache
@@ -153,8 +165,16 @@ public final class NharuX509Factory extends CertificateFactorySpi
 			}
 			throw new NullPointerException("Missing input stream");
 		}
-		NharuX509Certificate cert = null;
-		try { cert = generateCertificate(readAllStream(inStream)); }
+		Certificate cert = null;
+		byte[] buffer=null;
+		try { buffer = readAllStream(inStream); cert = generateCertificate(buffer); }
+		catch (NharuX509CertificateException e)
+		{
+			if(e.getReason() == NharuX509CertificateException.NH_UNSUPPORTED_MECH_ERROR)
+			{
+				cert = backup.generateCertificate(new ByteArrayInputStream(buffer));
+			}
+		}
 		catch (IOException e) { throw new CertificateException(e); }
 		return cert;
 	}

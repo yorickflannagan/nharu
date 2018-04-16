@@ -84,6 +84,7 @@
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
 #define J_OUTOFMEM_EX			"java/lang/OutOfMemoryError"
 #define J_CERTIFICATE_EX		"java/security/cert/CertificateException"
+#define J_NHARU_CERTIFICATE_EX	"org/crypthing/security/x509/NharuX509CertificateException"
 #define J_CERT_EXPIRE_EX		"java/security/cert/CertificateExpiredException"
 #define J_CERT_NOT_VALID_EX		"java/security/cert/CertificateNotYetValidException"
 #define J_SIGNATURE_EX			"java/security/SignatureException"
@@ -121,6 +122,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_nharuI
  *  ****************************/
 NH_UTILITY(jsize, pem_to_DER)(_IN_ jbyte*, _IN_ jsize, _OUT_ jbyte*);
 NH_UTILITY(void, throw_new)(JNIEnv*, char*, char*, NH_RV);
+NH_UTILITY(void, throw_new_with_rv)(JNIEnv*, char*, char*, NH_RV);
 NH_UTILITY(jlong, java_mktime)(_IN_ NH_PTIME);
 NH_UTILITY(jbyteArray, get_node_contents)(JNIEnv*, _IN_ NH_ASN1_PNODE);
 NH_UTILITY(jbyteArray, get_node_encoding)(JNIEnv*, _IN_ NH_ASN1_PNODE);

@@ -47,6 +47,7 @@ usage() {
 	printf "%s\n"     "--with-idn: GNU IDN installation directoy. If not supplied, it is sought from $HOME directory"
 	printf "%s\n"     "--with-iconv: GNU Iconv installation directory. If not supplied, it is presumed system wide available."
 	printf "%s\n"     "--syslib: location of system libraries libdl.so and libpthread.so"
+	printf "%s\n"     "--static-gclib - Enables static compilation with gclib."
 	printf "%s\n"     "--enable-FEATURE or --disable-FEATURE. Available features:"
 	printf "\t%s\n"   "java: if enabled, Java packages are built by Apache Ant;"
 	printf "\t%s\n"   "shared: if disabled JNI shared library is not built."
@@ -110,6 +111,8 @@ do
 		;;
 		(--with-openssl) OPENSSL="$value"
 		;;
+		(--static-gclib) STATICGCLIB="true"
+		;;
 		(--with-idn) IDN="$value"
 		;;
 		(--with-iconv) LIB_ICONV="$value"
@@ -162,7 +165,11 @@ else error "Could not find GNU Libidn instalation directory"; fi
 printf "GNU Libidn found at directory %s\n" "$IDN"
 
 if [ -z "$DLA_LIB" ]; then
-	DLIB=$(find /usr -name libdl.* 2>/dev/null)
+	DLIB=$(find /usr/lib -name libdl.* 2>/dev/null)
+	if [ -z "$DLIB" ]; then
+		printf "Libdl not helping broadening the search"
+		DLIB=$(find /usr/lib -name libdl.* 2>/dev/null)
+	fi
 	DLA_LIB=$(echo "$DLIB" | grep libdl.dylib | tail -1)
 	if [ -z $DLA_LIB ]; then DLA_LIB=$(echo "$DLIB" | grep libdl.so | tail -1); fi
 	DLA_LIB=$(dirname $DLA_LIB)
@@ -224,14 +231,18 @@ if [ -z "$AR" ]; then
 	AR="ar"
 fi
 if [ -z "$CFLAGS" ]; then
-	CFLAGS="-pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -O2"
+	CFLAGS="-pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter "
 	if [ -n "$ENABLE_PTHREAD" ]; then CFLAGS="$CFLAGS -pthread"; fi
 fi
 if [ -z "$ARFLAGS" ]; then
 	ARFLAGS="-r -s"
 fi
 if [ -z "$LDFLAGS" ]; then
-	LDFLAGS="-shared-libgcc -Xlinker -z -Xlinker defs"
+	if [ -z "$STATICGCLIB" ]; then
+		LDFLAGS="-shared-libgcc -Xlinker -z -Xlinker defs"
+	else
+		LDFLAGS="-static-libgcc -Xlinker -z -Xlinker defs"
+	fi
 fi
 CC="$CC"
 AR="$AR"

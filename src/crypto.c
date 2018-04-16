@@ -2409,6 +2409,7 @@ unsigned int rsaes_oaep_oid[]			= { 1, 2, 840, 113549, 1, 1,  7 };
 unsigned int rsa_x509_oid[]			= { 2, 5,   8,      1, 1        };
 
 unsigned int md5WithRSA_oid[]			= { 1, 3,  14,      3, 2, 3     };
+unsigned int md5WithRSA_oidHarald[]		= { 1, 2, 840, 113549, 1, 1,  4 };
 unsigned int sha1WithRSAEncryption[]	= { 1, 2, 840, 113549, 1, 1,  5 };
 unsigned int sha256WithRSAEncryption[]	= { 1, 2, 840, 113549, 1, 1, 11 };
 unsigned int sha384WithRSAEncryption[]	= { 1, 2, 840, 113549, 1, 1, 12 };
@@ -2438,6 +2439,7 @@ const static unsigned int* supported_mechanisms_oid[] =
 	sha384WithRSAEncryption,
 	rsaEncryption_oid,
 	md5WithRSA_oid,
+	md5WithRSA_oidHarald,
 	ecPublicKey_oid,
 	sha1_oid,
 	sha256_oid,
@@ -2459,6 +2461,7 @@ const static size_t sizeof_oid[] =
 	NHC_SHA384_WITH_RSA_OID_COUNT,
 	NHC_RSA_ENCRYPTION_OID_COUNT,
 	NHC_MD5_WITH_RSA_OID_COUNT,
+	NHC_OID_COUNT(md5WithRSA_oidHarald),
 	NHC_ECDSA_PUBKEY_OID_COUNT,
 	NHC_OID_COUNT(sha1_oid),
 	NHC_OID_COUNT(sha256_oid),
@@ -2479,6 +2482,7 @@ const static CK_MECHANISM_TYPE supported_mechanisms_const[] =
 	CKM_SHA512_RSA_PKCS,
 	CKM_SHA384_RSA_PKCS,
 	CKM_RSA_PKCS_KEY_PAIR_GEN,
+	CKM_MD5_RSA_PKCS,
 	CKM_MD5_RSA_PKCS,
 	CKM_ECDSA_KEY_PAIR_GEN,
 	CKM_SHA_1,

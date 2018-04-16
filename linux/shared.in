@@ -3,6 +3,13 @@ FILES          := $(shell find . -name '*.c')
 CC              = _CC_
 BUILD_TARGET    = _BUILD_TARGET_
 CFLAGS          = _CFLAGS_
+ifeq ($(_DEBUG_),)
+CFLAGS       += -O2
+else
+CFLAGS       += -ggdb3 -D_DEBUG -D_DEBUG_
+CFLAGS       += -O0
+endif
+
 LDFLAGS         = _LDFLAGS_ -shared
 OPENSSL_INCLUDE = _OPENSSL_INCLUDE_
 IDN_INCLUDE     = _IDN_INCLUDE_
