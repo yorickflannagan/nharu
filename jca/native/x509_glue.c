@@ -1062,7 +1062,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuPKIBRParser_nhixPK
 
 	if (NH_SUCCESS(rv = hHandler->hCert->subject_alt_names(hHandler->hCert, &node)))
 	{
-		ret = parse_pkibr_extension(env, node->identifier, node->size + node->contents - node->identifier);
+		if(node) ret = parse_pkibr_extension(env, node->identifier, node->size + node->contents - node->identifier);
 	}
 	else throw_new(env, J_RUNTIME_EX, J_CERT_PARSE_ERROR, rv);
 	return ret;
