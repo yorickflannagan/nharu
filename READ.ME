@@ -71,8 +71,12 @@ Libidn:
 
 
 OpenSSL:
+<<<<<<< HEAD
+	- checkout OpenSSL_1_0_2g or OpenSSL_1_1_0e (for iOS support)
+=======
 	- git clone https://github.com/openssl/openssl
 	- checkout OpenSSL_1_0_2g
+>>>>>>> 8292e00f098b23c61be1fef1cfe0035a11184564
 	- config options: threads no-shared -fPIC
 	./config threads no-shared -fPIC --prefix=$HOME/development/3rdParty/openssl/nharu_dist --openssldir=$HOME/development/3rdParty/openssl/nharu_dist
 	make depend
@@ -97,3 +101,4 @@ CHANGE HISTORY
 1.1.1.149: Indefinite length form of DER encoding bug correction
 1.1.2.151: Support to constructed OCTET STRING
 1.1.3.161: CMS Signed-data and Enveloped-data implementation
+1.1.4
