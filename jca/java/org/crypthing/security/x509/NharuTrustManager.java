@@ -91,7 +91,6 @@ public class NharuTrustManager extends X509ExtendedTrustManager
 			if (LOG_LEVEL < LOG_LEVEL_FATAL) LOG.error(ERROR_AUTH_TYPE);
 			throw new IllegalArgumentException(ERROR_AUTH_TYPE);
 		}
-		if (!"RSA".equalsIgnoreCase(authType)) throw new UnsupportedOperationException(authType + " algorithm is not supported");
 		checkTrusted(chain);
 	}
 
@@ -104,7 +103,6 @@ public class NharuTrustManager extends X509ExtendedTrustManager
 			if (LOG_LEVEL < LOG_LEVEL_FATAL) LOG.error(ERROR_AUTH_TYPE);
 			throw new IllegalArgumentException(ERROR_AUTH_TYPE);
 		}
-		if (!"RSA".equalsIgnoreCase(authType)) throw new UnsupportedOperationException(authType + " algorithm is not supported");
 		checkTrusted(chain);
 	}
 

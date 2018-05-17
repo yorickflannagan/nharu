@@ -38,3 +38,5 @@ mem-check
 *.sdf
 *suo
 *filters
+nharujca.jar
+dist/
