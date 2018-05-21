@@ -275,6 +275,10 @@ mknharu()
 
 	if [ "$6" == "debug" ]; then
 		export TYPE="_DEBUG_=1"
+	else
+		if [ "$6" == "fips" ]; then
+			export TYPE="_FIPS_=1"
+		fi
 	fi
 
 	make -C src clean $TYPE
@@ -314,7 +318,11 @@ if [ -n "$2" ]; then
 fi
 
 if [ -n "$3" ]; then
-	export ANDROID_API=$3
+	export BUILD_TYPE=$3
+fi
+
+if [ -n "$4" ]; then
+	export ANDROID_API=$4
 else
 	if [ "$TARGET" = "x86_64" ]; then
 		export ANDROID_API=21
@@ -323,15 +331,10 @@ else
 fi
 
 
-if [ -n "$4" ]; then
-	export BUILD_TYPE=$4
-fi
-
-
 usage()
 {
 
-	echo -e "\n usage: default_linux.sh <libopt>  [<target> [android-api] ]"
+	echo -e "\n usage: default_linux.sh <libopt> [<target> <debug|release(default)> <android-api(default:21)> ]"
 	echo -e "\n available libopt options:"
 	echo -e "\ticonv  - Configure and build libiconv, clone if necessary."
 	echo -e "\tidn    - Configure and build libidn, clone if necessary."

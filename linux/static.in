@@ -11,6 +11,10 @@ CFLAGS       += -ggdb3 -D_DEBUG -D_DEBUG_
 CFLAGS       += -O0
 endif
 
+ifneq ($(_FIPS_),)
+CFLAGS       += -D_FIPS_
+endif
+
 ARFLAGS         = _ARFLAGS_
 OPENSSL_INCLUDE = _OPENSSL_INCLUDE_
 IDN_INCLUDE     = _IDN_INCLUDE_

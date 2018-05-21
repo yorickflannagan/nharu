@@ -34,6 +34,7 @@
 #	if [ -d "$(BUILD_TARGET)/include/pkcs11" ]; then rm -f -R "$(BUILD_TARGET)/include/pkcs11"; fi;      \
 #	if [ -d "$(BUILD_TARGET)/lib" ]; then rm -f -R "$(BUILD_TARGET)/lib"; fi;                            \
 #	Warn: under debug must specify -D_DEBUG_
+#	Warn: under fips must specify -D_FIPS_
 
 isContained() { [ -z "${2##*$1*}" ]; }
 error() { printf "%s\n" "$1"; exit 1; }
@@ -168,7 +169,7 @@ if [ -z "$DLA_LIB" ]; then
 	DLIB=$(find /usr/lib -name libdl.* 2>/dev/null)
 	if [ -z "$DLIB" ]; then
 		printf "Libdl not helping broadening the search"
-		DLIB=$(find /usr/lib -name libdl.* 2>/dev/null)
+		DLIB=$(find /usr -name libdl.* 2>/dev/null)
 	fi
 	DLA_LIB=$(echo "$DLIB" | grep libdl.dylib | tail -1)
 	if [ -z $DLA_LIB ]; then DLA_LIB=$(echo "$DLIB" | grep libdl.so | tail -1); fi

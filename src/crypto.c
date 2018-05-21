@@ -6,10 +6,10 @@
 #ifdef UNIX_IMPL
 #include <stdio.h>
 #include <errno.h>
-#if defined(_DEBUG_)
-#define RND_SOURCE			"/dev/urandom"
-#else
+#if defined(_FIPS_)
 #define RND_SOURCE			"/dev/random"
+#else
+#define RND_SOURCE			"/dev/urandom"
 #endif
 #else
 #include <windows.h>
