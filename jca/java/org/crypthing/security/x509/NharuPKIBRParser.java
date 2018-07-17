@@ -57,12 +57,7 @@ public final class NharuPKIBRParser
 	public static NharuPKIBRParser parse(final X509Certificate cert) throws CertificateException
 	{
 		if (cert == null) throw new CertificateException(new NullPointerException());
-		if (!(cert instanceof NharuX509Certificate))
-		{
-			final byte[] encoding = cert.getExtensionValue("2.5.29.17");
-			if (encoding != null) return new NharuPKIBRParser(encoding);
-			return new NharuPKIBRParser();
-		}
+		if (!(cert instanceof NharuX509Certificate)) return new NharuPKIBRParser(NharuX509Factory.generateCertificate(cert.getEncoded()));
 		return new NharuPKIBRParser((NharuX509Certificate) cert);
 	}
 
