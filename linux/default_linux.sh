@@ -289,9 +289,9 @@ mknharu()
 		make -C ./native clean $TYPE
 		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/ant-contrib.jar -DVERSION=$VERSION
 		make -C ./native $TYPE
+		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/ant-contrib.jar -DBUILD_DEST=$1/nharu/$3/lib/ install
 		make -C ./native install $TYPE
 		cd ..
-
 		make -C test clean 
 		make -C test
 	fi

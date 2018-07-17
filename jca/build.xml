@@ -15,6 +15,7 @@
 			</classpath>
 		</taskdef>
 		<property name = "src.dir" value = "java" />
+		<property name = "build.dest" value = "${BUILD_DEST}" />
 		<property name = "bin.dir" value = "java-bin" />
 		<property name = "target.file" value = "nharujca.jar" />
 		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
@@ -142,4 +143,15 @@ import java.util.logging.Logger;
 			</manifest>
 		</jar>
 	</target>
+
+	<target name="bundle" depends="init">
+		<zip destfile="${target.file}" update="true">
+			<fileset file="native/libnharujca.so"/>
+		</zip>
+	</target>
+
+	<target name="install" depends="bundle">
+		<copy file="${target.file}"  todir="${build.dest}" />
+	</target>
+
 </project>
