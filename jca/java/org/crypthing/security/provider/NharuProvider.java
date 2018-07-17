@@ -22,6 +22,7 @@ import org.crypthing.util.NharuArrays;
 
 public final class NharuProvider extends Provider
 {
+	private static final String LIB_KEY = "org.crypthing.security.provider.nharulib";
 	private static final String ERROR_SO_NOT_FOUND = "Could not find native library in JAR file";
 	private static final String ERROR_LOAD_SO = "Could not load native library due to following error: ";
 	private static final LogDevice LOG = new LogDevice(NharuProvider.class.getName());
@@ -34,35 +35,37 @@ public final class NharuProvider extends Provider
 	private static native void leakageStop();
 	static
 	{
-		try { System.loadLibrary("nharujca"); }
-		catch (final UnsatisfiedLinkError e)
-		{
-			try
-			{
-				String lib = "libnharujca.so";
-				if (System.getProperty("os.name", "").toLowerCase().indexOf("win") >= 0) lib = "nharujca.dll";
-				final File workaround = new File(lib);
-				if (workaround.exists()) workaround.delete();
-				final File libFile = new File(lib);
-				libFile.deleteOnExit();
-				final OutputStream out = new FileOutputStream(libFile);
-				try
+		File libFile = null;
+		try {
+				if(System.getProperty(LIB_KEY) != null)
 				{
-					final InputStream in = NharuProvider.class.getResourceAsStream("/" + lib);
-					if (in == null)
-					{
-						if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_SO_NOT_FOUND);
-						throw new UnsatisfiedLinkError(ERROR_SO_NOT_FOUND);
-					}
+					libFile = new File(System.getProperty(LIB_KEY));
+				}
+				else{
+					String lib = "libnharujca.so";
+					if (System.getProperty("os.name", "").toLowerCase().indexOf("win") >= 0) lib = "nharujca.dll";
+					libFile = File.createTempFile("nharujca", ".lib");
+					libFile.deleteOnExit();
+					final OutputStream out = new FileOutputStream(libFile);
 					try
 					{
-						final byte[] buffer = new byte[4096];
-						int i;
-						while ((i = in.read(buffer)) != -1) out.write(buffer, 0, i);
+						final InputStream in = NharuProvider.class.getResourceAsStream("/" + lib);
+						if (in == null)
+						{
+							if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_SO_NOT_FOUND);
+							throw new UnsatisfiedLinkError(ERROR_SO_NOT_FOUND);
+						}
+						try
+						{
+							final byte[] buffer = new byte[4096];
+							int i;
+							while ((i = in.read(buffer)) != -1) out.write(buffer, 0, i);
+						}
+						finally { in.close(); }
 					}
-					finally { in.close(); }
+					finally { out.close(); }
+					if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Loading library from: [" + libFile.getAbsolutePath()+ "]");
 				}
-				finally { out.close(); }
 				System.load(libFile.getAbsolutePath());
 			}
 			catch (final Exception f)
@@ -77,7 +80,6 @@ public final class NharuProvider extends Provider
 				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_LOAD_SO, f);
 				throw f;
 			}
-		}
 		nharuInitPRNG();
 	}
 	public static boolean isLoaded() { return true; }

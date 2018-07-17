@@ -936,7 +936,7 @@ public final class NharuX509Certificate extends X509Certificate
 		{
 			boolean success = true;
 			int fail = 0;
-			final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+			final CertificateFactory cf = CertificateFactory.getInstance("X.509", "SUN");
 			final X509Certificate sunCert = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(PF_CERT));
 			final NharuX509Certificate endCert = new NharuX509Certificate(PF_CERT);
 			try
