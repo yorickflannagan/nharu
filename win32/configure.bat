@@ -21,6 +21,7 @@ SET _LFLAGS_=/LTCG /NOLOGO
 FOR %%a IN (%*) DO (
     CALL:GET_ARGS "--","%%a" 
 )
+VERIFY >NUL
 IF DEFINED --help (
 	GOTO USAGE
 )
@@ -40,7 +41,7 @@ IF DEFINED --lflags (
 	SET _LFLAGS_=%--lflags%
 )
 IF DEFINED --openssl (
-	IF NOT EXIST %--openssl%\lib\libeay32.lib (
+	IF NOT EXIST %--openssl%\lib\libcrypto.lib (
 		ECHO %ME%: --openssl argument does not point to OpenSSL install directory
 		EXIT /B 1
 	)
@@ -74,7 +75,8 @@ IF DEFINED --ant-contrib (
 	)
 	SET ANT_CONTRIB=%--ant-contrib%
 )
-REM Required by GNU mkdir
+
+:: Required by GNU mkdir
 SET _PREFIX_=%_PREFIX_:\=\/%
 CALL:CLEANUP nharu.mak "%PARENT%\src"
 IF %ERRORLEVEL% NEQ 0 (
@@ -89,7 +91,7 @@ IF %ERRORLEVEL% NEQ 0 (
 :DEPENDECY_SEARCH
 IF NOT DEFINED OPENSSL (
 	ECHO %ME%: Searching for OpenSSL...
-	CALL:INSTALL_FOLDER libeay32.lib,%PARENT%,OPENSSL
+	CALL:INSTALL_FOLDER libcrypto.lib,%PARENT%,OPENSSL
 	IF NOT DEFINED OPENSSL (
 		ECHO %ME%: OpenSSL search failure
 		EXIT /B 1
@@ -152,7 +154,7 @@ SET ANT_CONTRIB=%ANT_CONTRIB:/=\%
 ECHO %ME%: Ant-contrib library found at %ANT_CONTRIB%
 
 ECHO %ME%: Searching for JEE crl-service library dependency...
-CALL:FIND_JAR javaee-api-*.jar,%CUR%,JEE_LIB
+CALL:FIND_JAR javaee-api-*.jar,%PARENT%\crl-service,JEE_LIB
 IF NOT DEFINED JEE_LIB (
 	ECHO %ME%: JEE crl-service library search failure
 	EXIT /B 1
@@ -161,7 +163,7 @@ SET JEE_LIB=%JEE_LIB:/=\%
 ECHO %ME%: JEE crl-service library found at %JEE_LIB%
 
 ECHO %ME%: Searching for JBoss crl-service library dependency...
-CALL:FIND_JAR picketbox-*.jar,%CUR%,PICKETBOX
+CALL:FIND_JAR picketbox-*.jar,%PARENT%\crl-service,PICKETBOX
 IF NOT DEFINED PICKETBOX (
 	ECHO %ME%: JBoss crl-service library search failure
 	EXIT /B 1
@@ -186,7 +188,7 @@ IF NOT DEFINED SOURCE_LIST (
 	EXIT /B 1
 )
 SET _SOURCE_FILES_=%SOURCE_LIST:,= \,%
-SET GREP_LIST=%PARENT%\include,%PARENT%\pkcs11,%PARENT%\src
+SET GREP_LIST=%PARENT%\include,%PARENT%,%PARENT%\src
 SET INCLUDE_LIST=%GREP_LIST%,%OPENSSL%\include,%LIBIDN%\include
 FOR %%i IN (%INCLUDE_LIST%) DO (
 	SET _APP_INCLUDE_=!_APP_INCLUDE_! /I"%%i"
@@ -316,9 +318,9 @@ GOTO DONE
 
 
 :GET_ARGS
-REM PROCESS COMAND LINE ARGUMENT OF TYPE --arg=value
-REM %~1: ARGUMENT MARKER (USUALY --)
-REM %~2: OUT
+:: PROCESS COMAND LINE ARGUMENT OF TYPE --arg=value
+:: %~1: ARGUMENT MARKER (USUALY --)
+:: %~2: OUT
 ECHO.%~2 | FINDSTR /C:"%~1" 1>nul
 IF NOT errorlevel 1 (
 	SET __KEY=%~2
@@ -338,9 +340,9 @@ IF DEFINED __VALUE (
 GOTO:EOF
 
 :CLEANUP
-REM CLEAN-UP SPECIFIED MAKE
-REM %~1: NMAKE FILE NAME
-REM %~2: TARGET NMAKE FILE DIRECTORY
+:: CLEAN-UP SPECIFIED MAKE
+:: %~1: NMAKE FILE NAME
+:: %~2: TARGET NMAKE FILE DIRECTORY
 SET __NMAKE=%~1
 SET __TARGET=%~2
 IF NOT EXIST %~dp0%__NMAKE%.in (
@@ -366,9 +368,9 @@ GOTO:EOF
 
 
 :LISTSOURCES
-REM LIST C FILES UNDER SPECIFIED DIRECTORY
-REM %~1: DIRECTORY TO LIST
-REM %~2: OUT
+:: LIST C FILES UNDER SPECIFIED DIRECTORY
+:: %~1: DIRECTORY TO LIST
+:: %~2: OUT
 SET __LIST=---***---
 FOR /F %%a IN ('FORFILES /P %~1 /S /M *.c') DO (
 	SET __LIST=!__LIST!,%~1\%%a
@@ -383,10 +385,10 @@ SET __LIST=
 GOTO:EOF
 
 :INSTALL_FOLDER
-REM SEARCH FOR DEPENDENCY LIBRARY INSTALL DIRECTORY
-REM %~1: FILE TO SEARCH
-REM %~2: FOLDER WHERE THE SEARCH SHOULD START
-REM %~3: OUT
+:: SEARCH FOR DEPENDENCY LIBRARY INSTALL DIRECTORY
+:: %~1: FILE TO SEARCH
+:: %~2: FOLDER WHERE THE SEARCH SHOULD START
+:: %~3: OUT
 FOR /F %%i IN ('find %~2 -name %~1 -printf ^"%%T@ %%p\n^" ^| sort -n ^| tail -1 ^| cut -f2- -d^" ^"') DO SET __TARGET=%%i
 IF "%__TARGET%" EQU "" (
 	GOTO:EOF
@@ -399,8 +401,8 @@ GOTO:EOF
 
 
 :GET_JAVA_HOME
-REM SEARCH FOR JAVA_HOME FOLDER
-REM %~1: OUT
+:: SEARCH FOR JAVA_HOME FOLDER
+:: %~1: OUT
 FOR /F %%i IN ('which java ^| perl -pe ^"s/\n//g^"') DO SET __HOME=%%i
 IF %ERRORLEVEL% NEQ 0 (
 	GOTO:EOF
@@ -418,9 +420,9 @@ SET __HOME=
 GOTO:EOF
 
 :GET_ANT_HOME
-REM SEARCH FOR APACHE ANT INSTALL DIRECTORY
-REM %~1: FOLDER WHERE THE SEARCH SHOULD START
-REM %~2: OUT
+:: SEARCH FOR APACHE ANT INSTALL DIRECTORY
+:: %~1: FOLDER WHERE THE SEARCH SHOULD START
+:: %~2: OUT
 FOR /F %%i IN ('dirname %~1') DO SET __FROM=%%i
 IF "%__FROM%" EQU ""  (
 	GOTO:EOF
@@ -432,10 +434,10 @@ SET __FROM=
 GOTO:EOF
 
 :FIND_JAR
-REM SEARCH FOR ANT-CONTRIB INSTALL DIRECTORY
-REM %~1: JAR TO FIND
-REM %~2: FOLDER WHERE THE SEARCH SHOULD START
-REM %~3: OUT
+:: SEARCH FOR ANT-CONTRIB INSTALL DIRECTORY
+:: %~1: JAR TO FIND
+:: %~2: FOLDER WHERE THE SEARCH SHOULD START
+:: %~3: OUT
 FOR /F %%i IN ('dirname %~2') DO SET __FROM=%%i
 IF "%__FROM%" EQU ""  (
 	GOTO:EOF
@@ -451,6 +453,6 @@ GOTO:EOF
 
 
 :USAGE
-REM TODO
+:: TODO
 :DONE
 ENDLOCAL

@@ -9,7 +9,7 @@ include = $(LIB_INCLUDE) $(SDK_INCLUDE)
 cvars = $(cvars) _CVARS_
 cdebug = $(cdebug) _CDEBUG_
 cflags = $(cflags) _CFLAGS_
-lflags = _LFLAGS_ "libidn.lib" "libeay32.lib"
+lflags = _LFLAGS_ "libidn.lib" "libcrypto.lib"
 
 $(OUTPUT)\nharu.lib: $(SRCS:.c=.obj)
 	$(implib) $(lflags) /OUT:$(OUTPUT)\nharu.lib $(SRCS:.c=.obj)

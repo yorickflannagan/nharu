@@ -174,7 +174,7 @@ public final class NharuX509Certificate extends X509Certificate
 	}
 
 	@Override
-	public void verify(final PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException { verify(key, null); }
+	public void verify(final PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException { verify(key, (String) null); }
 
 
 	@Override

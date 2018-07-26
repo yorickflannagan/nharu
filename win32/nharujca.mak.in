@@ -9,7 +9,7 @@ include = $(LIB_INCLUDE) $(SDK_INCLUDE)
 cvars = $(cvars) _CVARS_
 cdebug = $(cdebug) _CDEBUG_
 cflags = $(cflags) $(ccommon) _CFLAGS_
-dlllflags = $(dlllflags) _LFLAGS_ "nharu.lib" "libidn.lib" "libeay32.lib" "ws2_32.lib" "advapi32.lib" "gdi32.lib" "user32.lib"
+dlllflags = $(dlllflags) _LFLAGS_ "nharu.lib" "libidn.lib" "libcrypto.lib" "ws2_32.lib" "advapi32.lib" "gdi32.lib" "user32.lib"
 
 
 $(OUTPUT)\nharujca.dll: $(SRCS:.c=.obj)

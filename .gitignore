@@ -40,3 +40,4 @@ mem-check
 *filters
 nharujca.jar
 dist/
+/win32.mak

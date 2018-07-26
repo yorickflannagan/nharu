@@ -49,7 +49,11 @@ public class NharuPublicKey implements PublicKey
 			break;
 		// TODO: Must support ECDSA
 		case NHIX_EC_ALGORITHM:
-			try { ret = new sun.security.ec.ECPublicKeyImpl(nhixGetPublicKeyInfo(parent.getCertificateHandle())); }
+			try
+			{
+				// TODO: Must reimplement for Java 10
+				ret = new sun.security.ec.ECPublicKeyImpl(nhixGetPublicKeyInfo(parent.getCertificateHandle()));
+			}
 			catch(java.security.InvalidKeyException e) { throw new RuntimeException(e.getMessage(),e); }
 			break;
 		default: throw new RuntimeException("Unsupported key type " + type);

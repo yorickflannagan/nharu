@@ -211,7 +211,7 @@ public class NharuX509CRL extends X509CRL
 	@Override
 	public void verify(final PublicKey key) throws CRLException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException
 	{
-		verify(key, null);
+		verify(key, (String) null);
 	}
 
 	@Override

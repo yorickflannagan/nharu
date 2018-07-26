@@ -23,6 +23,7 @@ SET ME=%~n0
 SET CUR=%~dp0
 FOR /F %%i IN ('dirname %CUR%') DO SET PARENT=%%i
 SET _PREFIX_=%PARENT%\3rdparty\idn
+SET _SOURCE_=%USERPROFILE%\dev\libidn
 SET _CVARS_=-DWIN32 -D_WIN32 -DIDNA_EXPORTS -DHAVE_CONFIG_H -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -D_MBCS -D_LIB
 SET _CDEBUG_=/GL /analyze-
 SET _CFLAGS_=/TC /Gy /O2 /Zc:wchar_t /Gm- /WX- /Gd /Ot /c
@@ -32,11 +33,15 @@ SET _IMPLIBS_="kernel32.lib" "user32.lib" "gdi32.lib" "winspool.lib" "comdlg32.l
 FOR %%a IN (%*) DO (
     CALL:GET_ARGS "--","%%a" 
 )
+VERIFY >NUL
 IF DEFINED --help (
 	GOTO USAGE
 )
 IF DEFINED --prefix (
 	SET _PREFIX_=%--prefix%
+)
+IF DEFINED --source  (
+	SET _SOURCE_=%--source%
 )
 IF DEFINED --cvars (
 	SET _CVARS_=%--cvars%
@@ -62,18 +67,19 @@ IF NOT EXIST %CUR%libidn.mak.in (
 	ECHO %ME%: Makefile for GNU IDN Library not found
 	EXIT /B 1
 )
+IF NOT EXIST %CUR%win32.mak (
+	ECHO %ME%: Makefile for Win32 not found
+	EXIT /B 1
+)
 IF NOT EXIST %CUR%ac-stdint.h.in (
 	ECHO %ME%:  ac-stdint.h replace file not found
 	EXIT /B 1
 )
-FOR /F %%a IN ('find %PARENT% -name libidn.sln -printf ^"%%T@ %%p\n^" ^| sort -n ^| tail -1 ^| cut -f2- -d^" ^"') DO SET _PACKAGE_=%%a
-IF "%_PACKAGE_%" EQU "" (
-	ECHO %ME%: GNU IDN Library not found
+IF NOT EXIST %_SOURCE_%\windows\libidn.sln (
+	ECHO %ME%:  GNU Libidn source code not found
 	EXIT /B 1
 )
-FOR /F %%a IN ('dirname %_PACKAGE_%') DO SET _PACKAGE_=%%a
-SET _WINPACK_=%_PACKAGE_%
-FOR /F %%a IN ('dirname %_PACKAGE_%') DO SET _PACKAGE_=%%a
+SET _WINPACK_=%_SOURCE_%\windows
 SET _SDK_INCLUDE_=/I"%INCLUDE:;=" /I"%"
 SET _SDK_INCLUDE_=%_SDK_INCLUDE_:/I""=%
 
@@ -90,12 +96,13 @@ IF EXIST %PARENT%\libidn.mak (
 		ECHO %ME%: Could not cleanup existing configuration
 		EXIT /B %ERRORLEVEL%
 	)
+	rm %PARENT%/win32.mak
 )
 
 :GENRFC
-IF NOT EXIST "%_PACKAGE_%/lib/rfc3454.c" (
+IF NOT EXIST "%_SOURCE_%/lib/rfc3454.c" (
 	ECHO %ME%: Generating rfc3454 data...
-	CD %_PACKAGE_%/lib
+	CD %_SOURCE_%/lib
 	perl gen-stringprep-tables.pl ../doc/specifications/rfc3454.txt
 	IF %ERRORLEVEL% NEQ 0 (
 		ECHO %ME%: Could not generate rfc3454.c file
@@ -106,16 +113,16 @@ IF NOT EXIST "%_PACKAGE_%/lib/rfc3454.c" (
 )
 
 :GENTLD
-FOR /F %%i IN ('ls %_PACKAGE_%/doc/tld/*.tld') DO (
+FOR /F %%i IN ('ls %_SOURCE_%/doc/tld/*.tld') DO (
 	SET __CMD_ARGS=!__CMD_ARGS! %%i
 )
-IF NOT EXIST "%_PACKAGE_%/lib/tlds.c" (
+IF NOT EXIST "%_SOURCE_%/lib/tlds.c" (
 	ECHO %ME%: Generating TLD data...
 	IF "%__CMD_ARGS%" EQU "" (
 		ECHO %ME%: Could not find input files
 		EXIT /B 1
 	)
-	perl %_PACKAGE_%/lib/gen-tld-tables.pl %__CMD_ARGS%>%_PACKAGE_%/lib/tlds.c
+	perl %_SOURCE_%/lib/gen-tld-tables.pl %__CMD_ARGS%>%_SOURCE_%/lib/tlds.c
 	IF %ERRORLEVEL% NEQ 0 (
 		ECHO %ME%: Could not generate tlds.c file
 		EXIT /B %ERRORLEVEL%
@@ -123,16 +130,17 @@ IF NOT EXIST "%_PACKAGE_%/lib/tlds.c" (
 )
 
 :ADJUST
-IF NOT EXIST "%_PACKAGE_%/lib/gl/unistr.h" (
-	cp %_PACKAGE_%/lib/gl/unistr.in.h %_PACKAGE_%/lib/gl/unistr.h
+IF NOT EXIST "%_SOURCE_%/lib/gl/unistr.h" (
+	cp %_SOURCE_%/lib/gl/unistr.in.h %_SOURCE_%/lib/gl/unistr.h
 )
-IF NOT EXIST "%_PACKAGE_%/lib/gl/unitypes.h" (
-	cp %_PACKAGE_%/lib/gl/unitypes.in.h %_PACKAGE_%/lib/gl/unitypes.h
+IF NOT EXIST "%_SOURCE_%/lib/gl/unitypes.h" (
+	cp %_SOURCE_%/lib/gl/unitypes.in.h %_SOURCE_%/lib/gl/unitypes.h
 )
-IF NOT EXIST "%_PACKAGE_%/lib/gl/unused-parameter.h" (
-	cp %_PACKAGE_%/build-aux/snippet/unused-parameter.h %_PACKAGE_%/lib/gl/unused-parameter.h
+IF NOT EXIST "%_SOURCE_%/lib/gl/unused-parameter.h" (
+	cp %_SOURCE_%/build-aux/snippet/unused-parameter.h %_SOURCE_%/lib/gl/unused-parameter.h
 )
 cp %CUR%ac-stdint.h.in %_WINPACK_%/include/ac-stdint.h
+cp %CUR%win32.mak %PARENT%/win32.mak
 
 :GENMAK
 ECHO # * * * * * * * * * * * * * * * * * * * * * * * * * *>%PARENT%\libidn.mak
@@ -143,7 +151,7 @@ ECHO # * * * * * * * * * * * * * * * * * * * * * * * * * *>>%PARENT%\libidn.mak
 FOR /F "tokens=* delims=," %%i IN (%CUR%libidn.mak.in) DO (
 	SET LINE=%%i
 	SET LINE=!LINE:_PREFIX_=%_PREFIX_%!
-	SET LINE=!LINE:_PACKAGE_=%_PACKAGE_%!
+	SET LINE=!LINE:_PACKAGE_=%_SOURCE_%!
 	SET LINE=!LINE:_WINPACK_=%_WINPACK_%!
 	SET LINE=!LINE:_SDK_INCLUDE_=%_SDK_INCLUDE_%!
 	SET LINE=!LINE:_CVARS_=%_CVARS_%!
@@ -178,12 +186,14 @@ GOTO:EOF
 
 :USAGE
 ECHO.
-ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ECHO Usage: %ME% [options]
-ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ECHO --prefix: install base directory. Default value: 3rdparty\idn.  Two directories
 ECHO    are created under this one: include, to use with /I compiler option and lib, 
 ECHO    to use with /LIBPATH linker option.
+ECHO --source: GNU Libidn source code directory. Default value:
+ECHO    %USERPROFILE%\dev\libidn.
 ECHO --cvars: compiler variables definitions by -D.
 ECHO --cdebug: compiler debug options.
 ECHO --cflags: other compiler flags.
