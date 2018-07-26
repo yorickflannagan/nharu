@@ -1,10 +1,12 @@
 package org.crypthing.security;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.security.PublicKey;
+import java.security.cert.CertificateFactory;
 
 import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuArrays;
@@ -27,6 +29,8 @@ public class NharuPublicKey implements PublicKey
 	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
+
+
 
 	/**
 	 * Creates a new java.security.PublicKey instance from this certificate PublicKeyInfo
@@ -51,10 +55,12 @@ public class NharuPublicKey implements PublicKey
 		case NHIX_EC_ALGORITHM:
 			try
 			{
-				// TODO: Must reimplement for Java 10
-				ret = new sun.security.ec.ECPublicKeyImpl(nhixGetPublicKeyInfo(parent.getCertificateHandle()));
+				ret = CertificateFactory
+						.getInstance("X509", "SUN")
+						.generateCertificate(new ByteArrayInputStream(parent.getEncoded()))
+						.getPublicKey();
 			}
-			catch(java.security.InvalidKeyException e) { throw new RuntimeException(e.getMessage(),e); }
+			catch(Exception e) { throw new RuntimeException(e.getMessage(),e); }
 			break;
 		default: throw new RuntimeException("Unsupported key type " + type);
 		}
