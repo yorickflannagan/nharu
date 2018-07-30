@@ -79,7 +79,6 @@ NH_UTILITY(void, throw_new_with_rv)(JNIEnv *env, char *jc, char *msg, NH_RV nhc)
       char buffer[2048];
 	  jclass e;
 	  jobject ex;
-	  jstring detail;
 	  jmethodID constructor;
 
 	(*env)->ExceptionClear(env);

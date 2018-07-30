@@ -33,7 +33,9 @@ NH_UTILITY(NH_RV, NH_mutex_lock)(_IN_ NH_MUTEX_HANDLE_STR* self)
 NH_UTILITY(NH_RV, NH_mutex_unlock)(_IN_ NH_MUTEX_HANDLE_STR* self)
 {
 	NH_RV rv = NH_OK;
+#ifdef UNIX_IMPL
 	NH_SYSRV ret = 0;
+#endif
 
 	if (!self || !self->mutex) return NH_INVALID_ARG;
 
@@ -60,7 +62,9 @@ NH_FUNCTION(NH_RV, NH_create_mutex)(_OUT_ NH_MUTEX_HANDLE *hHandle)
 {
 	NH_MUTEX_HANDLE handle;
 	NH_RV rv = NH_OK;
+#ifdef UNIX_IMPL
 	NH_SYSRV ret = 0;
+#endif
 
 	if (!(handle = (NH_MUTEX_HANDLE) malloc(sizeof(NH_MUTEX_HANDLE_STR)))) return NH_OUT_OF_MEMORY_ERROR;
 	memcpy(handle, &defMutexHandler, sizeof(NH_MUTEX_HANDLE_STR));
@@ -90,7 +94,9 @@ NH_FUNCTION(NH_RV, NH_create_mutex)(_OUT_ NH_MUTEX_HANDLE *hHandle)
 NH_FUNCTION(NH_RV, NH_release_mutex)(_IN_ NH_MUTEX_HANDLE hHandle)
 {
 	NH_RV rv = NH_OK;
+#ifdef UNIX_IMPL
 	NH_SYSRV ret;
+#endif
 	if (!hHandle) return NH_INVALID_ARG;
 
 #ifdef UNIX_IMPL

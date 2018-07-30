@@ -79,7 +79,7 @@ NH_UTILITY(NH_RV, NH_noise)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 				CryptAcquireContext(&hProv, NULL, pszName, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)
 			)
 			{
-				if (!CryptGenRandom(hProv, buffer, len)) rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
+				if (!CryptGenRandom(hProv, len, buffer)) rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
 				CryptReleaseContext(hProv, 0);
 			}
 			else rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);

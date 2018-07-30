@@ -179,7 +179,7 @@ IF NOT DEFINED INCLUDE (
 SET _SDK_INCLUDE_=/I"%INCLUDE:;=" /I"%"
 SET _SDK_INCLUDE_=%_SDK_INCLUDE_:/I""=%
 
-:GEN_NHARU_MAK
+:GEN_NHARU_MAK	
 ECHO %ME%: Capturing nharu.lib source files...
 SET _CVARS_=%_CVARS_% -D_LIB
 CALL:LISTSOURCES "%PARENT%\src" SOURCE_LIST
@@ -190,9 +190,9 @@ IF NOT DEFINED SOURCE_LIST (
 SET _SOURCE_FILES_=%SOURCE_LIST:,= \,%
 SET GREP_LIST=%PARENT%\include,%PARENT%,%PARENT%\src
 SET INCLUDE_LIST=%GREP_LIST%,%OPENSSL%\include,%LIBIDN%\include
-FOR %%i IN (%INCLUDE_LIST%) DO (
-	SET _APP_INCLUDE_=!_APP_INCLUDE_! /I"%%i"
-)
+SET _APP_INCLUDE_=/I"%INCLUDE_LIST:,=" /I"%"
+SET _APP_INCLUDE_=%_APP_INCLUDE_:/I""=%
+
 ECHO # * * * * * * * * * * * * * * * * * * * * * * * * * *>MAKEFILE.W
 ECHO # Windows makefile for nharu static library>>MAKEFILE.W
 ECHO # Copyleft 2016 by The Crypthing Initiative>>MAKEFILE.W
@@ -242,11 +242,11 @@ IF NOT DEFINED SOURCE_LIST (
 SET _VERSION_C_=%PARENT%\jca\native\version.c
 SET SOURCE_LIST=%_VERSION_C_%,%SOURCE_LIST%
 SET _SOURCE_FILES_=%SOURCE_LIST:,= \,%
-SET GREP_LIST=%PARENT%\include,%PARENT%\pkcs11,%PARENT%\jca\native
+SET GREP_LIST=%PARENT%\include,%PARENT%,%PARENT%\jca\native
 SET INCLUDE_LIST=%GREP_LIST%,%OPENSSL%\include,%LIBIDN%\include,%JAVA_HOME%\include,%JAVA_HOME%\include\win32
-FOR %%i IN (%INCLUDE_LIST%) DO (
-	SET _APP_INCLUDE_=!_APP_INCLUDE_! /I"%%i"
-)
+SET _APP_INCLUDE_=/I"%INCLUDE_LIST:,=" /I"%"
+SET _APP_INCLUDE_=%_APP_INCLUDE_:/I""=%
+
 ECHO # * * * * * * * * * * * * * * * * * * * * * * * * * *>MAKEFILE.W
 ECHO # Windows makefile for nharu JCA shared library>>MAKEFILE.W
 ECHO # Copyleft 2016 by The Crypthing Initiative>>MAKEFILE.W
