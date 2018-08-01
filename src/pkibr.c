@@ -91,7 +91,7 @@ NH_FUNCTION(NH_RV, NH_parse_pkibr_extension)(_IN_ unsigned char *buffer, _IN_ si
 						rv = hParser->parse_octetstring(hParser, cur);
 					else  if(ASN_FOUND(NH_ASN1_PRINTABLE_STRING, *cur->identifier))
 						rv = hParser->parse_string(cur);
-					else rv = NH_UNEXPECTED_ENCODING;
+					/*else rv = NH_UNEXPECTED_ENCODING;*/
 				}
 			}
 			node = node->next;
@@ -107,15 +107,18 @@ NH_FUNCTION(NH_RV, NH_parse_pkibr_extension)(_IN_ unsigned char *buffer, _IN_ si
 			if (NODE_IS_OTHER_NAME(node))
 			{
 				cur = node->child;
-				if (NH_match_oid(cur->value, cur->valuelen, pkibr_subject_id_oid, NHC_OID_COUNT(pkibr_subject_id_oid))) out->subject_id = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_sponsor_name_oid, NHC_OID_COUNT(pkibr_company_sponsor_name_oid))) out->sponsor_name = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_subject_id_oid, NHC_OID_COUNT(pkibr_company_subject_id_oid))) out->company_id = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_sponsor_id_oid, NHC_OID_COUNT(pkibr_company_sponsor_id_oid))) out->sponsor_id = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_subject_te_id_oid, NHC_OID_COUNT(pkibr_subject_te_id_oid))) out->subject_te = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_subject_cei_id_oid, NHC_OID_COUNT(pkibr_subject_cei_id_oid))) out->subject_cei = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_subject_cei_oid, NHC_OID_COUNT(pkibr_company_subject_cei_oid))) out->company_cei = cur->next->child;
-				else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_name_oid, NHC_OID_COUNT(pkibr_company_name_oid))) out->company_name = cur->next->child;
-				else rv = NH_UNEXPECTED_ENCODING;
+				if(cur->value && cur->next && cur->next->child && cur->next->child->value)
+				{
+					if (NH_match_oid(cur->value, cur->valuelen, pkibr_subject_id_oid, NHC_OID_COUNT(pkibr_subject_id_oid))) out->subject_id = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_sponsor_name_oid, NHC_OID_COUNT(pkibr_company_sponsor_name_oid))) out->sponsor_name = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_subject_id_oid, NHC_OID_COUNT(pkibr_company_subject_id_oid))) out->company_id = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_sponsor_id_oid, NHC_OID_COUNT(pkibr_company_sponsor_id_oid))) out->sponsor_id = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_subject_te_id_oid, NHC_OID_COUNT(pkibr_subject_te_id_oid))) out->subject_te = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_subject_cei_id_oid, NHC_OID_COUNT(pkibr_subject_cei_id_oid))) out->subject_cei = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_subject_cei_oid, NHC_OID_COUNT(pkibr_company_subject_cei_oid))) out->company_cei = cur->next->child;
+					else if (NH_match_oid(cur->value, cur->valuelen, pkibr_company_name_oid, NHC_OID_COUNT(pkibr_company_name_oid))) out->company_name = cur->next->child;
+				} /* Obtain the maximum amount of information.*/
+				/*else rv = NH_UNEXPECTED_ENCODING;*/
 			}
 			node = node->next;
 		}
