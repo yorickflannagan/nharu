@@ -1,33 +1,45 @@
-ANT_CONTRIB=_ANT_CONTRIB_
-PACKAGE=_PACKAGE_
-OUTPUT=_PREFIX_
-LIBIDN=_LIBIDN_
-ANT_HOME=_ANT_HOME_
+# configure.bat replacements
+ANT_CONTRIB = _ANT_CONTRIB_
+PACKAGE     = _PACKAGE_
+OUTPUT      = _PREFIX_
+ANT_HOME    = _ANT_HOME_
+JEE_LIB     = _JEE_LIB_
+PICKETBOX   = _PICKETBOX_
+JRE_7       = _JRE_7_
 
-^!IFNDEF VERSION
-^!ERROR Required a macro VERSION definition
-^!ENDIF
-^!IFNDEF NODEBUG
-ANT_CMDLINE = -DJAVA_LOG_PATH=org.crypthing.security -DANT_CONTRIB_LIB=$(ANT_CONTRIB) -DOUTPUT=$(OUTPUT) -DDEBUG=1
-^!ELSE
-ANT_CMDLINE = -DJAVA_LOG_PATH=org.crypthing.security -DANT_CONTRIB_LIB=$(ANT_CONTRIB) -DOUTPUT=$(OUTPUT)
-^!ENDIF
+# Local definitions
+ANT_CMDLINE = -DJAVA_LOG_PATH=org.crypthing.security -DANT_CONTRIB_LIB=$(ANT_CONTRIB) -DBUILD_DEST=$(OUTPUT) -DJRE_7=$(JRE_7)
+CRL_CMDLINE = $(ANT_CMDLINE) -DNHARU_DIR=$(PACKAGE)\jca -DJEE_LIB=$(JEE_LIB) -DPICKETBOX=$(PICKETBOX)
 
-all:
+# Compile target
+build:
 	$(MAKE) /F $(PACKAGE)\src\nharu.mak
-	$(MAKE) /F $(PACKAGE)\src\nharu.mak install
-	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\jca\build.xml $(ANT_CMDLINE)
-	^!$(PACKAGE)\jca\make_version $(VERSION) $(PACKAGE)\jca\native
+	^!$(PACKAGE)\jca\make_version $(PACKAGE)\jca\native $(VERSION)
 	$(MAKE) /F $(PACKAGE)\jca\native\nharujca.mak
-	$(MAKE) /F $(PACKAGE)\jca\native\nharujca.mak install
-	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\crl-service\build.xml $(ANT_CMDLINE) -DJEE_LIB=_JEE_LIB_ -DPICKETBOX=_PICKETBOX_
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\jca\build.xml $(ANT_CMDLINE) -DVERSION=$(VERSION)
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\crl-service\build.xml $(CRL_CMDLINE)
 
+# Installation target
+install:
+	$(MAKE) /F $(PACKAGE)\src\nharu.mak install
+	$(MAKE) /F $(PACKAGE)\jca\native\nharujca.mak install
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\jca\build.xml $(ANT_CMDLINE) install
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\crl-service\build.xml $(CRL_CMDLINE) install
+
+# Clean-up
 clean:
 	$(MAKE) /F $(PACKAGE)\src\nharu.mak clean
-	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\jca\build.xml clean $(ANT_CMDLINE)
 	$(MAKE) /F $(PACKAGE)\jca\native\nharujca.mak clean
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\jca\build.xml $(ANT_CMDLINE) clean
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\crl-service\build.xml $(CRL_CMDLINE) clean
 
+# Installation clean-up
+distclean:
+	$(MAKE) /F $(PACKAGE)\src\nharu.mak distclean
+	$(MAKE) /F $(PACKAGE)\jca\native\nharujca.mak distclean
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\jca\build.xml $(ANT_CMDLINE) clean
+	^!$(ANT_HOME)\bin\ant -buildfile $(PACKAGE)\crl-service\build.xml $(CRL_CMDLINE) clean
+
+# Provider test
 test-provider:
-	^!SET PATH=$(LIBIDN)\lib;$(PATH)
-	^!java -cp $(OUTPUT);$(OUTPUT)\nharujca.jar org.crypthing.security.provider.NharuProvider $(PACKAGE)\test\signer.p12
-	^!rm -f nharujca.dll
+	^!java -cp $(PACKAGE)\jca\nharujca.jar org.crypthing.security.provider.NharuProvider $(PACKAGE)\test\signer.p12

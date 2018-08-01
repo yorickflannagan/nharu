@@ -23,7 +23,7 @@
 		<property name = "jar.version" value = "${VERSION}" />
 		<property name = "src.dir" value = "java" />
 		<property name = "bin.dir" value = "java-bin" />
-		<property name = "dist.dir" value = "${OUTPUT}" />
+		<property name = "dist.dir" value = "${BUILD_DEST}" />
 		<property name = "target.file" value = "crl-service.jar" />
 		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
 			<and>
@@ -33,6 +33,7 @@
 		</condition>
 		<property name = "target" value = "1.7"/>
 		<property name = "source" value = "1.7"/>
+		<property name = "jre.7" value = "${JRE_7}"/>
 		<condition property = "log.package" value = "${JAVA_LOG_PATH}" else = "org.crypthing">
 			<isset property = "JAVA_LOG_PATH" />
 		</condition>
@@ -40,7 +41,7 @@
 
 		<path id="project.class.path">
 			<pathelement location="${JEE_LIB}"/>
-			<pathelement location="${OUTPUT}/nharujca.jar" />
+			<pathelement location="${NHARU_DIR}/nharujca.jar" />
 			<pathelement location="${PICKETBOX}" />
 		</path>
 
@@ -55,6 +56,7 @@
 		<echo message="log.level"> ${log.level} </echo>
 		<echo message="target"> ${target} </echo>
 		<echo message="source"> ${source} </echo>
+		<echo message="jre.7"> ${jre.7} </echo>
 		<echo message="log.package"> ${log.package} </echo>
 		<echo message="log.dir"> ${log.dir} </echo>
 
@@ -117,22 +119,23 @@ import java.util.logging.Logger;
 
 	<target name = "clean" depends = "init">
 		<delete dir = "${bin.dir}" />
-		<delete file = "${dist.dir}/${target.file}" />
+		<delete file = "${target.file}" />
 	</target>
 
 	<target name = "compile" depends = "check">
-		<javac	debug = "true"
-				debuglevel = "source,lines,vars"
-				srcdir = "${src.dir}"
-				destdir = "${bin.dir}"
-				classpathref = "project.class.path"
-				source = "${source}"
-				target = "${target}"
-				includeantruntime = "false" />
+		<javac	debug				= "true"
+				debuglevel			= "source,lines,vars"
+				srcdir				= "${src.dir}"
+				destdir				= "${bin.dir}"
+				classpathref		= "project.class.path"
+				source				= "${source}"
+				target 				= "${target}"
+				bootclasspath   	= "${jre.7}"
+				includeantruntime	= "false" />
 	</target>
 
 	<target name = "build" depends = "compile">
-		<jar destfile = "${dist.dir}/${target.file}" level = "9" strict = "fail" >
+		<jar destfile = "${target.file}" level = "9" strict = "fail" >
 			<fileset dir = "${bin.dir}" />
 			<manifest>
 				<attribute name = "Implementation-Title" value = "Nharu CRL Checker" />
@@ -141,4 +144,9 @@ import java.util.logging.Logger;
 			</manifest>
 		</jar>
 	</target>
+
+	<target name="install" depends="init">
+		<copy file="${target.file}"  todir="${dist.dir}" />
+	</target>
+
 </project>

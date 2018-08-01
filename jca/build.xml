@@ -26,6 +26,7 @@
 		</condition>
 		<property name = "target" value = "1.7"/>
 		<property name = "source" value = "1.7"/>
+		<property name = "jre.7" value = "${JRE_7}"/>
 		<condition property = "log.package" value = "${JAVA_LOG_PATH}" else = "org.crypthing.security">
 			<isset property = "JAVA_LOG_PATH" />
 		</condition>
@@ -50,6 +51,7 @@
 		<echo message="log.level"> ${log.level} </echo>
 		<echo message="target"> ${target} </echo>
 		<echo message="source"> ${source} </echo>
+		<echo message="jre.7"> ${jre.7} </echo>
 		<echo message="log.package"> ${log.package} </echo>
 		<echo message="log.dir"> ${log.dir} </echo>
 	</target>
@@ -119,16 +121,18 @@ import java.util.logging.Logger;
 
 	<target name = "clean" depends = "init">
 		<delete dir = "${bin.dir}" />
+		<delete file = "${target.file}" />
 	</target>
 
 	<target name = "compile" depends   = "prepare">
 		<javac	debug              = "true"
-			debuglevel         = "source,lines,vars"
-			srcdir             = "${src.dir}"
-			destdir            = "${bin.dir}"
-			source             = "${source}"
-			target             = "${target}"
-			includeantruntime  = "false">
+				debuglevel         = "source,lines,vars"
+				srcdir             = "${src.dir}"
+				destdir            = "${bin.dir}"
+				source             = "${source}"
+				target             = "${target}"
+				bootclasspath      = "${jre.7}"
+				includeantruntime  = "false">
 			<compilerarg value = "-XDignore.symbol.file" />
 		</javac>
 	</target>
@@ -136,6 +140,7 @@ import java.util.logging.Logger;
 	<target name = "build" depends = "compile">
 		<jar destfile = "${target.file}" level = "9" strict = "fail" >
 			<fileset dir = "${bin.dir}" />
+			<fileset dir = "native" includes="*.so,*.dll"/>
 			<manifest>
 				<attribute name = "Implementation-Title"   value = "Nharu Provider" />
 				<attribute name = "Implementation-Vendor"  value = "The Crypthing Initiative" />
@@ -144,13 +149,7 @@ import java.util.logging.Logger;
 		</jar>
 	</target>
 
-	<target name="bundle" depends="init">
-		<zip destfile="${target.file}" update="true">
-			<fileset file="native/libnharujca.so"/>
-		</zip>
-	</target>
-
-	<target name="install" depends="bundle">
+	<target name="install" depends="build">
 		<copy file="${target.file}"  todir="${build.dest}" />
 	</target>
 
