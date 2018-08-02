@@ -136,21 +136,25 @@ IF NOT DEFINED JAVA_HOME (
 		EXIT /B 2
 	)
 )
-ECHO %ME%: JDK found at %JAVA_HOME%
+ECHO %ME%: JDK found at "%JAVA_HOME%"
 
 IF NOT DEFINED _JRE_7_ (
 	ECHO %ME%: Searching for JRE 7 runtime...
 	CALL:FIND_TARGET rt.jar,%ROOT%,__ARG
 )
-IF DEFINED __ARG ( SET _JRE_7_=%__ARG% )
+IF DEFINED __ARG (
+	ECHO DEFINED %__ARG% 
+	SET _JRE_7_=%__ARG%
+)
 IF NOT DEFINED _JRE_7_ (
 	IF NOT DEFINED JAVA_HOME (
 		ECHO %ME%: Java 7 runtime search failure
 		EXIT /B 2
 	)
-	SET _JRE_7_=%JAVA_HOME%\jre\lib\rt.jar
+	SET _JRE_7_="%JAVA_HOME%\jre\lib\rt.jar"
 )
 ECHO %ME%: Java 7 runtime found at %_JRE_7_%
+
 
 IF NOT DEFINED ANT_HOME (
 	ECHO %ME%: Searching for Apache Ant...
@@ -173,24 +177,6 @@ IF NOT DEFINED ANT_CONTRIB (
 )
 SET ANT_CONTRIB=%ANT_CONTRIB:/=\%
 ECHO %ME%: Ant-contrib library found at %ANT_CONTRIB%
-
-ECHO %ME%: Searching for JEE crl-service library dependency...
-CALL:FIND_JAR javaee-api-*.jar,%PARENT%\crl-service,JEE_LIB
-IF NOT DEFINED JEE_LIB (
-	ECHO %ME%: JEE crl-service library search failure
-	EXIT /B 2
-)
-SET JEE_LIB=%JEE_LIB:/=\%
-ECHO %ME%: JEE crl-service library found at %JEE_LIB%
-
-ECHO %ME%: Searching for JBoss crl-service library dependency...
-CALL:FIND_JAR picketbox-*.jar,%PARENT%\crl-service,PICKETBOX
-IF NOT DEFINED PICKETBOX (
-	ECHO %ME%: JBoss crl-service library search failure
-	EXIT /B 2
-)
-SET PICKETBOX=%PICKETBOX:/=\%
-ECHO %ME%: JBoss crl-service library found at %PICKETBOX%
 
 IF NOT DEFINED INCLUDE (
 	ECHO %ME%: Windows SDK environment not found
@@ -295,8 +281,6 @@ FOR /F "tokens=* delims=;" %%i IN (%CUR%nharulib.mak.in) DO (
 	SET LINE=!LINE:_PACKAGE_=%PARENT%!
 	SET LINE=!LINE:_PREFIX_=%_PREFIX_%!
 	SET LINE=!LINE:_ANT_HOME_=%ANT_HOME%!
-	SET LINE=!LINE:_JEE_LIB_=%JEE_LIB%!
-	SET LINE=!LINE:_PICKETBOX_=%PICKETBOX%!
 	SET LINE=!LINE:_JRE_7_=%_JRE_7_%!
 	ECHO !LINE!>>MAKEFILE.W
 )
@@ -391,6 +375,22 @@ GOTO:EOF
 
 
 :USAGE
-:: TODO
+ECHO.
+ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ECHO Usage: %ME% [options]
+ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ECHO --prefix: install base directory. Default value: %_PREFIX_%.
+ECHO --cvars: compiler variables definitions by -D. Default value: %_CVARS_%.
+ECHO --cflags: compiler flags. Default value: %_CFLAGS_%.
+ECHO --lflags: librarian flags. Default value: %_LFLAGS_%.
+ECHO --jcaflags: linker flagas. Default value: %_JCAFLAGS_%
+ECHO --openssl: OpenSSL install directory. By default it is searched from %ROOT%.
+ECHO --libidn: GNU Libidn install directory. By default it is searched from %ROOT%.
+ECHO --java: JDK install directory. Default value: "%JAVA_HOME%".
+ECHO --jre: Java 7 runtime directory. By default it is searched from %ROOT%.
+ECHO --ant: Apache Ant install directory. By default it is searched from %ROOT%.
+ECHO --ant-contrib: Ant Contrib Tasks install directory. By default it is searched from %ROOT%.
+ECHO.
+
 :DONE
 ENDLOCAL
