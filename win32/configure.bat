@@ -8,6 +8,12 @@ SETLOCAL EnableDelayedExpansion
 :: 3 = INCORRECT ENVIRONMENT
 :: 4 = MAKEFILE GENERATION FAILURE
 
+:: * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+:: WARNING
+:: On OpenSSL static library build, must replace /MT /ZI
+:: 	compiler options by /MD
+:: * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 ECHO.
 ECHO * * * * * * * * * * * * * * * * * * * * *
 ECHO * Nharu static libraries configuration  *
@@ -22,9 +28,6 @@ SET _PREFIX_=%ROOT%\3rdparty\nharu
 SET _CVARS_=/D "WIN32" /D "NDEBUG" /D "_UNICODE" /D "UNICODE"
 SET _CFLAGS_=/GS /sdl- /GL /Gm- /Gy /Gd /fp:precise /permissive- /Zc:wchar_t /Zc:inline /Zc:forScope /MD /W4 /WX- /O2 /Oy-
 SET _LFLAGS_=/LTCG
-::SET _CFLAGS_=/c /FC /permissive- /GS /TC /analyze- /Gm- /Zc:wchar_t /Zc:inline /Zc:forScope /sdl- /fp:precise /WX- /Gd /Oy- /EHsc /nologo /diagnostics:classic /Fd"C:\Users\developer\dev\3rdparty\vc141.pdb" /ZI /Od /errorReport:prompt /RTC1 /MDd /Fa"C:\Users\developer\dev\3rdparty\nharu.asm"
-::SET _CVARS_=/D "WIN32" /D "_WIN32" /D "_UNICODE" /D "UNICODE" /D "_CRT_SECURE_NO_WARNINGS" /D "_DEBUG" /D "_DEBUG_"
-::SET _LFLAGS_=/MACHINE:X86 /NOLOGO
 
 SET _JCAFLAGS_=/MANIFEST:NO /LTCG /NXCOMPAT /DYNAMICBASE /MACHINE:X86 /SAFESEH /INCREMENTAL:NO /OPT:ICF /OPT:REF
 FOR %%a IN (%*) DO (
