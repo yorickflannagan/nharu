@@ -126,7 +126,7 @@ static NH_NOISE_HANDLER_STR hDevice =
 	NH_safe_zeroize
 };
 
-#if defined(_DEBUG_)
+#if defined(_DEBUG_) && defined(NH_LINUX_IMPL)
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
         NH_FUNCTION(void*, debug_malloc)(size_t num, const char * file, int line)
         {
@@ -148,7 +148,7 @@ INLINE NH_UTILITY(NH_RV, seed)()
 {
 	NH_RV rv = NH_OK;
 	unsigned char seedb[NH_DEFAULT_SEED];
-#if defined(_DEBUG_)
+#if defined(_DEBUG_) && defined(NH_LINUX_IMPL)
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
          void *(*r)(void *, size_t, const char *, int) = NULL;
          void (*f)(void *, const char *, int) = NULL;
@@ -159,7 +159,7 @@ INLINE NH_UTILITY(NH_RV, seed)()
 #endif
 	if (!hDevice.seeded)
 	{
-#if defined(_DEBUG_)
+#if defined(_DEBUG_) && defined(NH_LINUX_IMPL)
 		CRYPTO_get_mem_functions(NULL, &r, &f);
 		if (!(CRYPTO_set_mem_functions(debug_malloc, r, f))) return NH_OPENSSL_INIT_ERROR;
 #endif
