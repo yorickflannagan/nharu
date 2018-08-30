@@ -1122,12 +1122,14 @@ NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 	NH_BLOB hash = { NULL, 0 };
 	NH_ASN1_PNODE node;
 	unsigned int *attOID = (unsigned int *) signing_certificatev2_oid, *hashOID = (unsigned int *) sha512_oid;
+	size_t attOID_t = NHC_OID_COUNT(signing_certificatev2_oid), hashOID_t = NHC_SHA512_OID_COUNT;
 
 	switch (mechanism)
 	{
 	case CKM_SHA1_RSA_PKCS:
 		hashAlg = CKM_SHA_1;
 		attOID = (unsigned int *) signing_certificate_oid;
+		attOID_t = NHC_OID_COUNT(signing_certificate_oid);
 		break;
 	case CKM_SHA256_RSA_PKCS:
 		hashAlg = CKM_SHA256;
@@ -1135,6 +1137,7 @@ NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 	case CKM_SHA384_RSA_PKCS:
 		hashAlg = CKM_SHA384;
 		hashOID = (unsigned int *) sha384_oid;
+		hashOID_t = NHC_SHA384_OID_COUNT;
 		break;
 	case CKM_SHA512_RSA_PKCS:
 		hashAlg = CKM_SHA512;
@@ -1155,7 +1158,7 @@ NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 				NH_SUCCESS(rv = (node = hEncoder->add_to_set(hEncoder->container, set)) ? NH_OK : NH_CANNOT_SAIL) &&
 				NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, cms_attributes_map, ASN_NODE_WAY_COUNT(cms_attributes_map))) &&
 				NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
-				NH_SUCCESS(rv = hEncoder->put_objectid(hEncoder, node, attOID, NHC_OID_COUNT(attOID), CK_FALSE)) &&
+				NH_SUCCESS(rv = hEncoder->put_objectid(hEncoder, node, attOID, attOID_t, CK_FALSE)) &&
 				NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
 				NH_SUCCESS(rv = (node = hEncoder->add_to_set(hEncoder->container, node)) ? NH_OK : NH_CANNOT_SAIL)
 			)
@@ -1180,7 +1183,7 @@ NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 							(
 								NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, pkix_algid_map, PKIX_ALGID_COUNT)) &&
 								NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
-							)	rv = hEncoder->put_objectid(hEncoder, node, hashOID, NHC_OID_COUNT(hashOID), 0);
+							)	rv = hEncoder->put_objectid(hEncoder, node, hashOID, hashOID_t, 0);
 						}
 						if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL;
 					}
