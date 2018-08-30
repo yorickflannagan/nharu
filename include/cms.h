@@ -358,6 +358,93 @@ typedef NH_CALLBACK(NH_RV, NH_CMS_SIGN_FUNCTION)(_IN_ NH_BLOB*, _IN_ CK_MECHANIS
 typedef NH_METHOD(NH_RV, NH_CMSSD_SIG_FUNCTION)(_INOUT_ NH_CMS_SD_ENCODER_STR*, _IN_ NH_CMS_ISSUER_SERIAL, _IN_ CK_MECHANISM_TYPE, _IN_ NH_CMS_SIGN_FUNCTION, _IN_ void*);
 
 /*
+ ****f* NH_CMS_SD_ENCODER/sign_init
+ *
+ * NAME
+ *	sign_init
+ *
+ * PURPOSE
+ *	Initializes CMS signed attributes
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_SD_ENCODER_STR *self: the handler
+ *	_IN_ NH_CMS_ISSUER_SERIAL sid: SignerIdentifier returned by get_sid()
+ *	_IN_ CK_MECHANISM_TYPE mechanism: signing cryptographic mechanism as a PKCS #11 constant
+ *	_OUT_ NH_ASN1_PNODE *signedAttrsNode: signed attributes node (for further usage)
+ *
+ * RESULT
+ *	NH_INVALID_ARG
+ *	NH_UNSUPPORTED_MECH_ERROR
+ *	NH_CANNOT_SAIL
+ *	NH_ASN1_ENCODER_HANDLE return codes
+ *	NH_HASH_HANDLER return codes
+ *	NH_OUT_OF_MEMORY_ERROR
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSSD_INITSIG_FUNCTION)(_INOUT_ NH_CMS_SD_ENCODER_STR*, _IN_ NH_CMS_ISSUER_SERIAL, _IN_ CK_MECHANISM_TYPE, _OUT_ NH_ASN1_PNODE*);
+
+/*
+ ****f* NH_CMS_SD_ENCODER/sign_finish
+ *
+ * NAME
+ *	sign_finish
+ *
+ * PURPOSE
+ *	Finalizes CMS signed attributes
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_SD_ENCODER_STR *self: the handler
+ *	_IN_ NH_CMS_ISSUER_SERIAL sid: SignerIdentifier returned by get_sid()
+ *	_IN_ CK_MECHANISM_TYPE mechanism: signing mechanism
+ *	_IN_ CK_MECHANISM_TYPE mechanism: signing cryptographic mechanism as a PKCS #11 constant
+ *	_OUT_ NH_ASN1_PNODE *signedAttrsNode: signed attributes node (for further usage)
+ *
+ * RESULT
+ *	NH_INVALID_ARG
+ *	NH_CANNOT_SAIL
+ *	NH_ASN1_ENCODER_HANDLE return codes
+ *	NH_HASH_HANDLER return codes
+ *	NH_OUT_OF_MEMORY_ERROR
+  *	any callback() return code
+*
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSSD_FINISHSIG_FUNCTION)(_INOUT_ NH_CMS_SD_ENCODER_STR*, _IN_ CK_MECHANISM_TYPE, _IN_ NH_ASN1_PNODE, _IN_ NH_CMS_SIGN_FUNCTION, _IN_ void*);
+
+/*
+ ****f* NH_CMS_SD_ENCODER/sign_cades_bes
+ *
+ * NAME
+ *	sign_cades_bes
+ *
+ * PURPOSE
+ *	Sign under CADES-BES policy
+ *
+ * ARGUMENTS
+ *	_INOUT_ NH_CMS_SD_ENCODER_STR *self: the handler
+ *	_IN_ NH_CERTIFICATE_HANDLER signingCert: signing certificate
+ *	_IN_ CK_MECHANISM_TYPE mechanism: signing cryptographic mechanism as a PKCS #11 constant
+ *	_IN_ NH_CMS_SIGN_FUNCTION callback; function that really signs the data
+ *	_IN_ void *params: any parameter needed by callback() or NULL, if none.
+ *
+ * RESULT
+ *	NH_INVALID_ARG
+ *	NH_UNSUPPORTED_MECH_ERROR
+ *	NH_CANNOT_SAIL
+ *	NH_ASN1_ENCODER_HANDLE return codes
+ *	NH_HASH_HANDLER return codes
+ *	NH_OUT_OF_MEMORY_ERROR
+ *	any callback() return code
+ *
+ ******
+ *
+ */
+typedef NH_METHOD(NH_RV, NH_CMSSD_SIGNBES_FUNCTION)(_INOUT_ NH_CMS_SD_ENCODER_STR*, _IN_ NH_CERTIFICATE_HANDLER, _IN_ CK_MECHANISM_TYPE, _IN_ NH_CMS_SIGN_FUNCTION, _IN_ void*);
+
+/*
  ****s* CMS/NH_CMS_SD_ENCODER
  *
  * NAME
@@ -372,12 +459,15 @@ struct NH_CMS_SD_ENCODER_STR
 {
 	NH_ASN1_ENCODER_HANDLE		hEncoder;
 
-	NH_ASN1_PNODE			content;	/* Shortcut to CMSSignedData root node */
-	NH_BLOB				eContent;	/* Buffer for EncapsulatedContentInfo (if any) */
+	NH_ASN1_PNODE				content;		/* Shortcut to CMSSignedData root node */
+	NH_BLOB						eContent;		/* Buffer for EncapsulatedContentInfo (if any) */
 
-	NH_CMSSD_SDCT_FUNCTION		data_ctype;	/* Declares that this CMS SignedData refers to a data content type */
-	NH_CMSSD_ADDCER_FUNCTION	add_cert;	/* Adds a certficate to this CMS SignedData */
-	NH_CMSSD_SIG_FUNCTION		sign;		/* Signs CMS signed attributes */
+	NH_CMSSD_SDCT_FUNCTION		data_ctype;		/* Declares that this CMS SignedData refers to a data content type */
+	NH_CMSSD_ADDCER_FUNCTION	add_cert;		/* Adds a certficate to this CMS SignedData */
+	NH_CMSSD_SIG_FUNCTION		sign;			/* Signs CMS signed attributes */
+	NH_CMSSD_INITSIG_FUNCTION	sign_init;		/* Inlitializes signing */
+	NH_CMSSD_FINISHSIG_FUNCTION	sign_finish;	/* finalizes signing */
+	NH_CMSSD_SIGNBES_FUNCTION	sign_cades_bes;	
 };
 /* ****** */
 typedef struct NH_CMS_SD_ENCODER_STR*	NH_CMS_SD_ENCODER;
@@ -957,12 +1047,12 @@ NH_FUNCTION(void, NH_cms_release_env_encoder)(_INOUT_ NH_CMS_ENV_ENCODER);
 EXTERN NH_NODE_WAY cms_issuer_serial[];
 #define CMS_ISSUERSERIAL_MAP_COUNT		3
 EXTERN NH_NODE_WAY issuer_serial_map[];
-#define ISSUER_SERIAL_MAP_COUNT		1
+#define ISSUER_SERIAL_MAP_COUNT			1
 EXTERN NH_NODE_WAY subkeyid_map[];
-#define SUBJECT_KEYID_MAP_COUNT		1
+#define SUBJECT_KEYID_MAP_COUNT			1
 
 EXTERN NH_NODE_WAY cms_map[];
-#define CMS_MAP					3
+#define CMS_MAP							3
 
 EXTERN unsigned int cms_enveloped_data_ct_oid[];
 #define CMS_ENVELOPED_DATA_OID_COUNT	7

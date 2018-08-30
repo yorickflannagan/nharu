@@ -835,26 +835,24 @@ NH_UTILITY(NH_RV, add_message_digest)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _
 	if (NH_FAIL(rv = hEncoder->chart_from(hEncoder, node, message_digest_map, ASN_NODE_WAY_COUNT(message_digest_map)))) return rv;
 	return hEncoder->put_octet_string(hEncoder, node, hash->data, hash->length);
 }
-NH_UTILITY(NH_RV, cms_sd_sign)
+NH_UTILITY(NH_RV, cms_sd_sign_init)
 (
 	_INOUT_ NH_CMS_SD_ENCODER_STR *self,
 	_IN_ NH_CMS_ISSUER_SERIAL sid,
 	_IN_ CK_MECHANISM_TYPE mechanism,
-	_IN_ NH_CMS_SIGN_FUNCTION callback,
-	_IN_ void *params
+	_OUT_ NH_ASN1_PNODE *signedAttrsNode
 )
 {
 	NH_RV rv;
-	NH_ASN1_PNODE set, node, bro;
+	NH_ASN1_PNODE set, node;
 	const unsigned int *hashOID, *sigOID;
-	size_t hashOIDCount, sigOIDCount, sigsize, encodingsize;
+	size_t hashOIDCount, sigOIDCount;
 	CK_MECHANISM_TYPE hashAlg;
 	CK_BBOOL found = CK_FALSE;
 	NH_HASH_HANDLER hHash;
 	NH_BLOB hash = { NULL, 0 };
-	unsigned char *signature = NULL, save, *encoding;
 
-	if (!sid || (!sid->keyIdentifier && (!sid->name || !sid->serial)) || !callback || !self->eContent.data) return NH_INVALID_ARG;
+	if (!sid || (!sid->keyIdentifier && (!sid->name || !sid->serial)) || !self->eContent.data) return NH_INVALID_ARG;
 	switch (mechanism)
 	{
 	case CKM_SHA1_RSA_PKCS:
@@ -947,8 +945,57 @@ NH_UTILITY(NH_RV, cms_sd_sign)
 	NH_release_hash(hHash);
 	if (NH_SUCCESS(rv)) rv = add_message_digest(self->hEncoder, set, &hash);
 	if (hash.data) free(hash.data);
-	hash.data = NULL;
-	if (NH_FAIL(rv)) return rv;
+	if (NH_SUCCESS(rv)) *signedAttrsNode = set;
+	return rv;
+}
+NH_UTILITY(NH_RV, cms_sd_sign_finish)
+(
+	_INOUT_ NH_CMS_SD_ENCODER_STR *self,
+	_IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ NH_ASN1_PNODE signedAttrsNode,
+	_IN_ NH_CMS_SIGN_FUNCTION callback,
+	_IN_ void *params
+)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE set = signedAttrsNode, node, bro;
+	const unsigned int *sigOID;
+	size_t sigOIDCount, sigsize, encodingsize;
+	CK_MECHANISM_TYPE hashAlg;
+	NH_HASH_HANDLER hHash;
+	NH_BLOB hash = { NULL, 0 };
+	unsigned char *signature = NULL, save, *encoding;
+
+	if (!signedAttrsNode || !callback || !self->eContent.data) return NH_INVALID_ARG;
+	switch (mechanism)
+	{
+	case CKM_SHA1_RSA_PKCS:
+		hashAlg = CKM_SHA_1;
+		sigOID = rsaEncryption_oid;
+		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	case CKM_SHA256_RSA_PKCS:
+		hashAlg = CKM_SHA256;
+		sigOID = rsaEncryption_oid;
+		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	case CKM_SHA384_RSA_PKCS:
+		hashAlg = CKM_SHA384;
+		sigOID = rsaEncryption_oid;
+		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	case CKM_SHA512_RSA_PKCS:
+		hashAlg = CKM_SHA512;
+		sigOID = rsaEncryption_oid;
+		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	case CKM_MD5_RSA_PKCS:
+		hashAlg = CKM_MD5;
+		sigOID = rsaEncryption_oid;
+		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		break;
+	default: return NH_UNSUPPORTED_MECH_ERROR;
+	}
 
 	save = *set->identifier;
 	bro = set->next;
@@ -962,7 +1009,7 @@ NH_UTILITY(NH_RV, cms_sd_sign)
 	if (NH_SUCCESS(rv))
 	{
 		rv = NH_new_hash(&hHash);
-		rv = hHash->init(hHash, hashAlg);
+		if (NH_SUCCESS(rv)) rv = hHash->init(hHash, hashAlg);
 		if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, encoding, encodingsize, NULL, &hash.length);
 		if (NH_SUCCESS(rv)) rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
 		if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, encoding, encodingsize, hash.data, &hash.length);
@@ -987,16 +1034,204 @@ NH_UTILITY(NH_RV, cms_sd_sign)
 	if (signature) free(signature);
 	return rv;
 }
+NH_UTILITY(NH_RV, cms_sd_sign)
+(
+	_INOUT_ NH_CMS_SD_ENCODER_STR *self,
+	_IN_ NH_CMS_ISSUER_SERIAL sid,
+	_IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ NH_CMS_SIGN_FUNCTION callback,
+	_IN_ void *params
+)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE set;
+
+	if (NH_SUCCESS(rv = self->sign_init(self, sid, mechanism, &set))) rv = self->sign_finish(self, mechanism, set, callback, params);
+	return rv;
+}
+/**
+ * id-aa-signingCertificate OBJECT IDENTIFIER ::= { iso(1)
+ *    member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+ *    smime(16) id-aa(2) 12 }
+ * SigningCertificate ::=  SEQUENCE {
+ *    certs        SEQUENCE OF ESSCertID,
+ *    policies     SEQUENCE OF PolicyInformation OPTIONAL
+ * }
+ * ESSCertID ::=  SEQUENCE {
+ * 	certHash                 Hash,
+ * 	issuerSerial             IssuerSerial OPTIONAL
+ * }
+ * Hash ::= OCTET STRING -- SHA1 hash of entire certificate
+ * IssuerSerial ::= SEQUENCE {
+ * 	issuer                   GeneralNames,
+ * 	serialNumber             CertificateSerialNumber
+ * }
+ */
+static const unsigned int signing_certificate_oid[]	  = { 1, 2, 840, 113549, 1, 9, 16, 2, 12 };
+static const NH_NODE_WAY ess_certID_map[] =
+{
+	{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT, NULL, 0 },
+	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT, NULL, 0 },	/* Hash */
+	{ NH_SAIL_SKIP_EAST, NH_ASN1_SEQUENCE | NH_ASN1_OPTIONAL_BIT, NULL, 0 }			/* issuerSerial */
+};
+static const NH_NODE_WAY signing_certificate_map[] =
+{
+	{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 },
+	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT, (NH_NODE_WAY*) ess_certID_map, ASN_NODE_WAY_COUNT(ess_certID_map) },	/* ESSCertID */
+	{ NH_SAIL_SKIP_EAST, NH_ASN1_SEQUENCE | NH_ASN1_OPTIONAL_BIT, NULL, 0 }													/* PolicyInformation */
+};
+
+/**
+ * id-aa-signingCertificateV2 OBJECT IDENTIFIER ::= { iso(1)
+ *    member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs9(9)
+ *    smime(16) id-aa(2) 47 }
+ * SigningCertificateV2 ::=  SEQUENCE {
+ *    certs        SEQUENCE OF ESSCertIDv2,
+ *    policies     SEQUENCE OF PolicyInformation OPTIONAL
+ * }
+ * ESSCertIDv2 ::=  SEQUENCE {
+ * 	hashAlgorithm           AlgorithmIdentifier DEFAULT {algorithm id-sha256},
+ * 	certHash                Hash,
+ * 	issuerSerial            IssuerSerial OPTIONAL
+ * }
+ * Hash ::= OCTET STRING
+ * IssuerSerial ::= SEQUENCE {
+ * 	issuer                  GeneralNames,
+ * 	serialNumber            CertificateSerialNumber
+ * }
+ */
+static const unsigned int signing_certificatev2_oid[] = { 1, 2, 840, 113549, 1, 9, 16, 2, 47 };
+static const NH_NODE_WAY ess_certIDv2_map[] =
+{
+	{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 },
+	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_DEFAULT_BIT, NULL, 0 },	/* AlgorithmIdentifier */
+	{ NH_SAIL_SKIP_EAST, NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT, NULL, 0 },					/* certHash */
+	{ NH_SAIL_SKIP_EAST, NH_ASN1_SEQUENCE | NH_ASN1_OPTIONAL_BIT, NULL, 0 }							/* issuerSerial */
+};
+static const NH_NODE_WAY signing_certificatev2_map[] =
+{
+	{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 },
+	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT, (NH_NODE_WAY*) ess_certIDv2_map, ASN_NODE_WAY_COUNT(ess_certIDv2_map) },	/* ESSCertIDv2 */
+	{ NH_SAIL_SKIP_EAST, NH_ASN1_SEQUENCE | NH_ASN1_OPTIONAL_BIT, NULL, 0 }																	/* PolicyInformation */
+};
+NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_CERTIFICATE_HANDLER signingCert, _IN_ CK_MECHANISM_TYPE mechanism, _INOUT_ NH_ASN1_PNODE set)
+{
+	NH_RV rv;
+	CK_MECHANISM_TYPE hashAlg;
+	NH_HASH_HANDLER hHash = NULL;
+	NH_BLOB hash = { NULL, 0 };
+	NH_ASN1_PNODE node;
+	unsigned int *attOID = (unsigned int *) signing_certificatev2_oid, *hashOID = (unsigned int *) sha512_oid;
+
+	switch (mechanism)
+	{
+	case CKM_SHA1_RSA_PKCS:
+		hashAlg = CKM_SHA_1;
+		attOID = (unsigned int *) signing_certificate_oid;
+		break;
+	case CKM_SHA256_RSA_PKCS:
+		hashAlg = CKM_SHA256;
+		break;
+	case CKM_SHA384_RSA_PKCS:
+		hashAlg = CKM_SHA384;
+		hashOID = (unsigned int *) sha384_oid;
+		break;
+	case CKM_SHA512_RSA_PKCS:
+		hashAlg = CKM_SHA512;
+		break;
+	default: return NH_UNSUPPORTED_MECH_ERROR;
+	}
+	if (NH_SUCCESS(rv = NH_new_hash(&hHash)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
+			NH_SUCCESS(rv = hHash->digest(hHash, signingCert->hParser->encoding, signingCert->hParser->length, NULL, &hash.length)) &&
+			NH_SUCCESS(rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if
+			(
+				NH_SUCCESS(rv = (node = hEncoder->add_to_set(hEncoder->container, set)) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, cms_attributes_map, ASN_NODE_WAY_COUNT(cms_attributes_map))) &&
+				NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->put_objectid(hEncoder, node, attOID, NHC_OID_COUNT(attOID), CK_FALSE)) &&
+				NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = (node = hEncoder->add_to_set(hEncoder->container, node)) ? NH_OK : NH_CANNOT_SAIL)
+			)
+			{
+				if (hashAlg == CKM_SHA_1)
+				{
+					if (NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, signing_certificate_map, ASN_NODE_WAY_COUNT(signing_certificate_map))))
+						rv = (node = node->child) && (node = node->child) ? NH_OK : NH_CANNOT_SAIL;
+				}
+				else
+				{
+					if
+					(
+						NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, signing_certificatev2_map, ASN_NODE_WAY_COUNT(signing_certificatev2_map))) &&
+						NH_SUCCESS(rv = (node = node->child) && (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
+					)
+					{
+						if (hashAlg != CKM_SHA256)
+						{
+							hEncoder->register_optional(node);
+							if
+							(
+								NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, pkix_algid_map, PKIX_ALGID_COUNT)) &&
+								NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
+							)	rv = hEncoder->put_objectid(hEncoder, node, hashOID, NHC_OID_COUNT(hashOID), 0);
+						}
+						if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL;
+					}
+				}
+				if (NH_SUCCESS(rv)) rv = hEncoder->put_octet_string(hEncoder, node, hash.data, hash.length);
+			}
+			free(hash.data);
+		}
+		NH_release_hash(hHash);
+	}
+	return rv;
+}
+NH_UTILITY(NH_RV, cms_sd_sign_cades_bes)
+(
+	_INOUT_ NH_CMS_SD_ENCODER_STR *self,
+	_IN_ NH_CERTIFICATE_HANDLER signingCert,
+	_IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ NH_CMS_SIGN_FUNCTION callback,
+	_IN_ void *params
+)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE set;
+	NH_CMS_ISSUER_SERIAL_STR sid = { NULL, NULL, NULL };
+
+	if (NH_SUCCESS(rv = (signingCert && callback) ? NH_OK : NH_INVALID_ARG))
+	{
+		sid.name = signingCert->issuer;
+		sid.serial = signingCert->serialNumber;
+		if
+		(
+			NH_SUCCESS(rv = self->sign_init(self, &sid, mechanism, &set)) &&
+			NH_SUCCESS(rv = add_signing_cert(self->hEncoder, signingCert, mechanism, set))
+		)	rv = self->sign_finish(self, mechanism, set, callback, params);
+	}
+	return rv;
+}
+
 
 const static NH_CMS_SD_ENCODER_STR defCMS_SD_encoder =
 {
-	NULL,			/* hEncoder */
-	NULL,			/* content */
-	{ NULL, 0 },	/* eContent */
+	NULL,				/* hEncoder */
+	NULL,				/* content */
+	{ NULL, 0 },		/* eContent */
 
-	cms_sd_data_ctype,/* data_ctype */
+	cms_sd_data_ctype,	/* data_ctype */
 	cms_sd_add_cert,	/* add_cert */
-	cms_sd_sign		/* sign */
+	cms_sd_sign,		/* sign */
+	cms_sd_sign_init,	/* sign_init */
+	cms_sd_sign_finish,	/* sign_finish */
+	cms_sd_sign_cades_bes
 };
 
 NH_FUNCTION(NH_RV, NH_cms_encode_signed_data)(_IN_ NH_BLOB *eContent, _OUT_ NH_CMS_SD_ENCODER *hHandler)
