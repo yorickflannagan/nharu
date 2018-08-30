@@ -1,5 +1,8 @@
 #include "cms.h"
+#include <stdio.h>
 #include <string.h>
+#include "test.h"
+
 static unsigned char sign_cert[] =
 {
 	0x30, 0x82, 0x04, 0xE6, 0x30, 0x82, 0x03, 0xCE, 0xA0, 0x03, 0x02, 0x01, 0x02, 0x02, 0x01, 0x00,
@@ -188,7 +191,7 @@ static unsigned char qmp_value[] =
 	0x82, 0x09, 0x4D, 0xC6, 0xB0, 0xA1, 0xA0, 0x2D, 0x5B, 0x66, 0x08, 0xFF, 0x96, 0x63, 0x2D, 0x79
 };
 const static NH_BLOB qmp = { qmp_value, sizeof(qmp_value) };
-NH_RV sign(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_ _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
+NH_RV cadest_sign(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_ _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
 {
 	NH_RV rv;
 	NH_RSA_PRIVKEY_HANDLER hHandler;
@@ -198,20 +201,24 @@ NH_RV sign(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_ _IN_ v
 	NH_release_RSA_privkey_handler(hHandler);
 	return rv;
 }
-int main(_UNUSED_ int argv, _UNUSED_ char **argc)
+int test_cadest()
 {
     NH_RV rv;
     NH_BLOB blob = { NULL, 0 };
     NH_CMS_SD_ENCODER hCMS = NULL;
     NH_CERTIFICATE_HANDLER hCert = NULL;
-    blob.data = SIGN_DATA;
+    blob.data = (unsigned char*)SIGN_DATA;
     blob.length = strlen(SIGN_DATA);
     
+	printf("Testing CMS BES... ");
     rv = NH_cms_encode_signed_data(&blob, &hCMS);
     if (NH_SUCCESS(rv)) rv = hCMS->data_ctype(hCMS, CK_TRUE);
     if (NH_SUCCESS(rv)) rv = NH_parse_certificate(sign_cert, sizeof(sign_cert), &hCert);
     if (NH_SUCCESS(rv)) rv = hCMS->add_cert(hCMS, hCert);
-    if (NH_SUCCESS(rv)) rv = hCMS->sign_cades_bes(hCMS, hCert, CKM_SHA256_RSA_PKCS, NULL, NULL);
+    if (NH_SUCCESS(rv)) rv = hCMS->sign_cades_bes(hCMS, hCert, CKM_SHA256_RSA_PKCS, cadest_sign, NULL);
     if (hCMS) NH_cms_release_sd_encoder(hCMS);
     if (hCert) NH_release_certificate(hCert);
+	if (NH_SUCCESS(rv)) printf("Done!\n");
+	else printf("Failed\n");
+    return (int)rv;
 }

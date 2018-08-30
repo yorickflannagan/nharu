@@ -7,6 +7,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	NH_NOISE_HANDLER hNoise; if (NH_SUCCESS(NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
 	printf("Testing Nharu Library...\n");
 	rv = test_encoder();
+	if (NH_SUCCESS(rv)) rv = test_cadest();
 	if (NH_SUCCESS(rv)) rv = test_secret_sharing();
 	if (NH_SUCCESS(rv)) rv = test_encrypt();
 	if (NH_SUCCESS(rv)) rv = test_rsa();

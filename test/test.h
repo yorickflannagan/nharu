@@ -3,6 +3,7 @@
 
 #include "cms.h"
 
+int test_cadest();
 int test_encoder();
 int test_secret_sharing();
 int test_encrypt();
