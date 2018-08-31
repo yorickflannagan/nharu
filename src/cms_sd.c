@@ -971,28 +971,28 @@ NH_UTILITY(NH_RV, cms_sd_sign_finish)
 	{
 	case CKM_SHA1_RSA_PKCS:
 		hashAlg = CKM_SHA_1;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		sigOID = sha1WithRSAEncryption;
+		sigOIDCount = NHC_SHA1_WITH_RSA_OID_COUNT;
 		break;
 	case CKM_SHA256_RSA_PKCS:
 		hashAlg = CKM_SHA256;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		sigOID = sha256WithRSAEncryption;
+		sigOIDCount = NHC_SHA256_WITH_RSA_OID_COUNT;
 		break;
 	case CKM_SHA384_RSA_PKCS:
 		hashAlg = CKM_SHA384;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		sigOID = sha384WithRSAEncryption;
+		sigOIDCount = NHC_SHA384_WITH_RSA_OID_COUNT;
 		break;
 	case CKM_SHA512_RSA_PKCS:
 		hashAlg = CKM_SHA512;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		sigOID = sha512WithRSAEncryption;
+		sigOIDCount = NHC_SHA512_WITH_RSA_OID_COUNT;
 		break;
 	case CKM_MD5_RSA_PKCS:
 		hashAlg = CKM_MD5;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
+		sigOID = md5WithRSA_oid;
+		sigOIDCount = NHC_MD5_WITH_RSA_OID_COUNT;
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
@@ -1150,7 +1150,8 @@ NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 		(
 			NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
 			NH_SUCCESS(rv = hHash->digest(hHash, signingCert->hParser->encoding, signingCert->hParser->length, NULL, &hash.length)) &&
-			NH_SUCCESS(rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			NH_SUCCESS(rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
+			NH_SUCCESS(rv = hHash->digest(hHash, signingCert->hParser->encoding, signingCert->hParser->length, hash.data, &hash.length))
 		)
 		{
 			if
