@@ -226,7 +226,12 @@ mkopenssl()
 
 	if [ "$TARGET" = "linux" ]; then
 		# The env must be clean or else...
-		./config threads no-shared -fPIC --prefix=$1/ssl/$3 --openssldir=$1/ssl/$3
+		if [ "$6" == "debug" ]; then
+			./config threads no-shared -fPIC --prefix=$1/ssl/$3 --openssldir=$1/ssl/$3 -d no-asm -g3 -ggdb -fno-inline -fno-inline-functions -O0 -fno-omit-frame-pointer 
+		else
+			./config threads no-shared -fPIC --prefix=$1/ssl/$3 --openssldir=$1/ssl/$3
+		fi
+
 	else
 		source $TITI_DIR/droid-ssl.sh --prefix=$1/ssl --ndk=$4 --api-level=$5 --arch=$3 --with-openssl=$OPENSSL_HOME
 
