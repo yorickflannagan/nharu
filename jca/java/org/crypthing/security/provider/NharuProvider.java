@@ -29,12 +29,14 @@ public final class NharuProvider extends Provider
 
 	private static final long serialVersionUID = 8247503976486321933L;
 	public static final String NHARU_PROVIDER_NAME = "Nharu";
-	public static final double NHARU_VERSION = 2.0;
+	public static final double NHARU_VERSION = Version.getVersion();
 
 	private static native void nharuInitPRNG();
 	private static native void leakageStop();
+
 	static
 	{
+		if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Nharu JAR version : " + Version.getVersion() +  " started loading.");
 		File libFile = null;
 		try {
 				if(System.getProperty(LIB_KEY) != null)
@@ -67,6 +69,11 @@ public final class NharuProvider extends Provider
 					if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Loading library from: [" + libFile.getAbsolutePath()+ "]");
 				}
 				System.load(libFile.getAbsolutePath());
+				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Nharu library version : " + Version.getNativeVersion() +  " loaded with sucess.");
+				if (LOG_LEVEL < LOG_LEVEL_NONE && (!Version.getNativeVersion().equals(Version.getVersion())))
+				{
+					LOG.fatal("WARN: Nharu library version diferent from JAR version.");
+				}
 			}
 			catch (final Exception f)
 			{

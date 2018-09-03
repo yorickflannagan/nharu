@@ -20,7 +20,7 @@ export OPENSSL_HOME="${OPENSSL_HOME:=$HOME/development/3rdParty/libssl/}"
 export IDN_HOME="${IDN_HOME:=$HOME/development/3rdParty/libidn/}"
 export LIB_ICONV="${LIB_ICONV:=$HOME/development/3rdParty/libiconv/}"
 
-export VERSION=1.1.7
+export VERSION=1.1.9
 
 clean()
 {

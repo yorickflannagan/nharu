@@ -41,3 +41,5 @@ mem-check
 nharujca.jar
 dist/
 /win32.mak
+Version.java
+
