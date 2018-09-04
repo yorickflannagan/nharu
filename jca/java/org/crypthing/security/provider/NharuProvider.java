@@ -29,7 +29,7 @@ public final class NharuProvider extends Provider
 
 	private static final long serialVersionUID = 8247503976486321933L;
 	public static final String NHARU_PROVIDER_NAME = "Nharu";
-	public static final double NHARU_VERSION = Version.getVersion();
+	public static final String NHARU_VERSION;
 
 	private static native void nharuInitPRNG();
 	private static native void leakageStop();
@@ -69,6 +69,7 @@ public final class NharuProvider extends Provider
 					if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Loading library from: [" + libFile.getAbsolutePath()+ "]");
 				}
 				System.load(libFile.getAbsolutePath());
+				NHARU_VERSION = Version.getVersion();
 				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Nharu library version : " + Version.getNativeVersion() +  " loaded with sucess.");
 				if (LOG_LEVEL < LOG_LEVEL_NONE && (!Version.getNativeVersion().equals(Version.getVersion())))
 				{
@@ -93,7 +94,7 @@ public final class NharuProvider extends Provider
 
 	public NharuProvider()
 	{
-		super(NHARU_PROVIDER_NAME, NHARU_VERSION, "X.509 certificates Provider");
+		super(NHARU_PROVIDER_NAME, NHARU_VERSION.hashCode(), "X.509 certificates Provider");
 		if (LOG_LEVEL < LOG_LEVEL_DEBUG)
 		{
 			final StringBuilder builder = new StringBuilder();
@@ -290,6 +291,7 @@ public final class NharuProvider extends Provider
 		catch (final InterruptedException e) { /* */ }
 		leakageStop();
 	}
+
 }
 
 

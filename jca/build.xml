@@ -6,7 +6,7 @@
 	DEBUG
 	JAVA_LOG_PATH: logging class package
   -->
-<project basedir = "." default = "build" name = "nharu-provider">
+<project basedir = "." default = "install" name = "nharu-provider">
 	<target name = "init">
 		<property environment = "env"/>
 		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -33,15 +33,20 @@
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
 	</target>
 
-	<target name = "ver" depends = "init">
+	<target name="number" depends="ver" >
 		<tstamp />
 		<buildnumber/>
+		<property name = "full.version" value = "${provider.version}.${build.number}" />
+		<propertyregex property="c.version" input="${full.version}"  regexp="\." replace="_" global="true" />
+	</target>
+
+	<target name = "ver" depends = "init">
 		<condition property = "provider.version" value = "${VERSION}" else = "0.0.0">
 			<isset property="VERSION" />
 		</condition>
-		<property name = "full.version" value = "${provider.version}.${build.number}" />
-		<propertyregex property="c.version" input="${full.version}"  regexp="\." replace="_" global="true" />
+	</target>
 
+	<target name= "display" depends="ver">
 		<echo message="provider.version"> ${provider.version} </echo>
 		<echo message="full.version"> ${full.version} </echo>
 		<echo message="c.version"> ${c.version} </echo>
@@ -56,7 +61,14 @@
 		<echo message="log.dir"> ${log.dir} </echo>
 	</target>
 
-	<target name = "prepare" depends = "ver">
+	<target name = "prepare" depends = "number, display">
+		<mkdir  dir  = "META-INF" />
+		<delete file="META-INF/MANIFEST.MF" />
+		<manifest file="META-INF/MANIFEST.MF" >
+			<attribute name = "Implementation-Title"   value = "Nharu Provider" />
+			<attribute name = "Implementation-Vendor"  value = "The Crypthing Initiative" />
+			<attribute name = "Implementation-Version" value = "${full.version} ${TODAY}" />
+		</manifest>
 		<delete file = "native/version.c" />
 		<echo   file = "native/version.c" >
 #include "version.h"		
@@ -137,7 +149,7 @@ import java.util.logging.Logger;
 		<delete file = "${target.file}" />
 	</target>
 
-	<target name = "compile" depends   = "prepare">
+	<target name = "compile" depends = "ver, display">
 		<javac	debug              = "true"
 				debuglevel         = "source,lines,vars"
 				srcdir             = "${src.dir}"
@@ -151,14 +163,9 @@ import java.util.logging.Logger;
 	</target>
 
 	<target name = "build" depends = "compile">
-		<jar destfile = "${target.file}" level = "9" strict = "fail" >
+		<jar destfile = "${target.file}" level = "9" manifest="META-INF/MANIFEST.MF" >
 			<fileset dir = "${bin.dir}" />
 			<fileset dir = "native" includes="*.so,*.dll"/>
-			<manifest>
-				<attribute name = "Implementation-Title"   value = "Nharu Provider" />
-				<attribute name = "Implementation-Vendor"  value = "The Crypthing Initiative" />
-				<attribute name = "Implementation-Version" value = "${full.version} ${TODAY}" />
-			</manifest>
 		</jar>
 	</target>
 
