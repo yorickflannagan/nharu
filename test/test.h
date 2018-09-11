@@ -3,8 +3,10 @@
 
 #include "cms.h"
 
-int test_cadest();
+int save_buffer(unsigned char*, size_t, char*);
 int test_encoder();
+
+int test_cadest();
 int test_secret_sharing();
 int test_encrypt();
 int test_rsa();

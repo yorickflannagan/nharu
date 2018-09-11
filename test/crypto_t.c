@@ -1,3 +1,4 @@
+#include "test.h"
 #include "crypto.h"
 #include <string.h>
 #include <stdio.h>
@@ -7,17 +8,15 @@
 
 NH_RV split(unsigned char k, unsigned char n, NH_SHARE **shares)
 {
-	NH_SHARE_HANDLER hHandler;
+	NH_SHARE_HANDLER hHandler = NULL;
 	NH_SHARE *out = NULL;
 	unsigned char i = 0;
 	NH_RV rv;
 
-	if (NH_FAIL(rv = NH_new_secret_share(n, strlen(SECRET), &hHandler))) return rv;
-	if
-	(
-		NH_SUCCESS(rv = hHandler->split(hHandler, (unsigned char*) SECRET, strlen(SECRET), k, n)) &&
-		NH_SUCCESS(rv = (out = (NH_SHARE*) malloc(n * sizeof(NH_SHARE))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
-	)
+	rv = NH_new_secret_share(n, strlen(SECRET), &hHandler);
+	if (NH_SUCCESS(rv)) rv = hHandler->split(hHandler, (unsigned char*)SECRET, strlen(SECRET), k, n);
+	if (NH_SUCCESS(rv)) rv = (out = (NH_SHARE*)malloc(n * sizeof(NH_SHARE))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
+	if (NH_SUCCESS(rv))
 	{
 		memset(out, 0, n * sizeof(NH_SHARE));
 		while (NH_SUCCESS(rv) && i < n)
@@ -25,26 +24,27 @@ NH_RV split(unsigned char k, unsigned char n, NH_SHARE **shares)
 			if (NH_SUCCESS(rv = NH_new_share(strlen(SECRET), &out[i]))) rv = hHandler->get(hHandler, i, out[i]);
 			i++;
 		}
+		if (NH_SUCCESS(rv)) *shares = out;
+		else
+		{
+			for (i = 0; i < n; i++) NH_release_share(out[i++]);
+			free(out);
+		}
 	}
-	if (NH_FAIL(rv && !out))
-	{
-		for (i = 0; i < n; i++) NH_release_share(out[i++]);
-		free(out);
-	}
-	else *shares = out;
-	NH_release_secret_share(hHandler);
+	if (hHandler) NH_release_secret_share(hHandler);
 	return rv;
 }
 
 NH_RV join(unsigned char k, NH_SHARE *shares)
 {
-	NH_SHARE_HANDLER hHandler;
+	NH_SHARE_HANDLER hHandler = NULL;
 	NH_RV rv;
-	char *secret;
+	char *secret = NULL;
 	unsigned char i = 0;
 
-	if (NH_FAIL(rv = NH_new_secret_share(k, strlen(SECRET), &hHandler))) return rv;
-	if (NH_SUCCESS(rv = (secret = (char*) malloc(strlen(SECRET) + 1)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	rv = NH_new_secret_share(k, strlen(SECRET), &hHandler);
+	if (NH_SUCCESS(rv)) rv = (secret = (char*)malloc(strlen(SECRET) + 1)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
+	if (NH_SUCCESS(rv))
 	{
 		memset(secret, 0, strlen(SECRET) + 1);
 		while (NH_SUCCESS(rv) && i < k)
@@ -52,11 +52,11 @@ NH_RV join(unsigned char k, NH_SHARE *shares)
 			rv = hHandler->set(hHandler, i, shares[i]);
 			i++;
 		}
-		if (NH_SUCCESS(rv = hHandler->join(hHandler, (unsigned char*) secret)))
-			rv = (strcmp(secret, SECRET) == 0) ? NH_OK : NH_INVALID_ARG;
+		if (NH_SUCCESS(rv)) rv = hHandler->join(hHandler, (unsigned char*)secret);
+		if (NH_SUCCESS(rv)) rv = (strcmp(secret, SECRET) == 0) ? NH_OK : NH_INVALID_ARG;
 		free(secret);
 	}
-	NH_release_secret_share(hHandler);
+	if (hHandler) NH_release_secret_share(hHandler);
 	return rv;
 }
 
@@ -66,18 +66,20 @@ int test_secret_sharing()
 	NH_SHARE *shares;
 	unsigned char i;
 
+	printf("%s", "Testing Shamir secret sharing scheme... ");
 	if (NH_SUCCESS(rv = split(3, 6, &shares)))
 	{
 		rv = join(3, shares + 1);
 		for (i = 0; i < 6; i++) NH_release_share(shares[i]);
 		free(shares);
 	}
-	printf("Secret sharing test run with NH_RV %lu and NH_SYSRV %lu\n", G_ERROR(rv), G_SYSERROR(rv));
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
 
-static char *SENSITIVE_DATA = "This data is sensitive and must be encrypted";
 
+static char *SENSITIVE_DATA = "This data is sensitive and must be encrypted";
 NH_RV encrypt_this(NH_SYMKEY_HANDLER hHandler, CK_MECHANISM_TYPE mechanism, NH_IV *iv)
 {
 	NH_RV rv;
@@ -106,49 +108,36 @@ NH_RV encrypt_this(NH_SYMKEY_HANDLER hHandler, CK_MECHANISM_TYPE mechanism, NH_I
 NH_RV test_encoding()
 {
 	NH_RV rv;
-	NH_SYMKEY_HANDLER hHandler, hCrypt, hLoaded;
+	NH_SYMKEY_HANDLER hHandler, hLoaded;
 	NH_ASN1_ENCODER_HANDLE hEncoder;
 	NH_ASN1_PARSER_HANDLE hParser;
 	NH_ASN1_PNODE node;
 	size_t eSize;
 	unsigned char *eBuffer;
 
-	if (NH_FAIL(rv = NH_new_symkey_handler(CKM_AES_KEY_GEN, &hCrypt))) return rv;
-	rv = hCrypt->generate(hCrypt, 32);
-	if (NH_SUCCESS(rv)) rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hHandler);
-	if (NH_SUCCESS(rv))
+	if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hHandler)))
 	{
 		rv = hHandler->generate(hHandler, 24);
-		if (NH_SUCCESS(rv)) rv = NH_new_encoder(SYMKEY_MAP_COUNT, 2048, &hEncoder);
-		if (NH_SUCCESS(rv))
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_encoder(SYMKEY_MAP_COUNT, 2048, &hEncoder)))
 		{
 			rv = hEncoder->chart(hEncoder, symkey_map, SYMKEY_MAP_COUNT, &node);
-			if (NH_SUCCESS(rv)) rv = hHandler->encode(hHandler, CKM_AES_CBC, /* hCrypt */ NULL, hEncoder, NH_PARSE_ROOT);
+			if (NH_SUCCESS(rv)) rv = hHandler->encode(hHandler, CKM_AES_CBC, NULL, hEncoder, NH_PARSE_ROOT);
 			if (NH_SUCCESS(rv))
 			{
 				eSize = hEncoder->encoded_size(hEncoder, node);
-				if NH_SUCCESS(rv = (eBuffer = (unsigned char*) malloc(eSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				if (NH_SUCCESS(rv = (eBuffer = (unsigned char*)malloc(eSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 				{
-					if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, node, eBuffer)))
+					rv = hEncoder->encode(hEncoder, node, eBuffer);
+					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, SYMKEY_MAP_COUNT, 2048, &hParser)))
 					{
-						if (NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, SYMKEY_MAP_COUNT, 2048, &hParser)))
+						rv = hParser->map(hParser, symkey_map, SYMKEY_MAP_COUNT);
+						if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hLoaded)))
 						{
-							if (NH_SUCCESS(rv)) rv = hParser->map(hParser, symkey_map, SYMKEY_MAP_COUNT);
-							if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hLoaded)))
-							{
-								rv = hLoaded->decode(hLoaded, /* hCrypt */ NULL, hParser, NH_PARSE_ROOT);
-								if (NH_SUCCESS(rv))
-								{
-									if
-									(
-										hHandler->key->length != hLoaded->key->length ||
-										memcmp(hHandler->key->data, hLoaded->key->data, hHandler->key->length) != 0
-									) 	rv = NH_CRYPTO_ERROR;
-								}
-								NH_release_symkey_handler(hLoaded);
-							}
-							NH_release_parser(hParser);
+							rv = hLoaded->decode(hLoaded, NULL, hParser, NH_PARSE_ROOT);
+							if (NH_SUCCESS(rv)) rv = hHandler->key->length == hLoaded->key->length && memcmp(hHandler->key->data, hLoaded->key->data, hHandler->key->length) == 0 ? NH_OK : NH_CRYPTO_ERROR;
+							NH_release_symkey_handler(hLoaded);
 						}
+						NH_release_parser(hParser);
 					}
 					free(eBuffer);
 				}
@@ -157,7 +146,6 @@ NH_RV test_encoding()
 		}
 		NH_release_symkey_handler(hHandler);
 	}
-	NH_release_symkey_handler(hCrypt);
 	return rv;
 }
 
@@ -167,61 +155,63 @@ int test_encrypt()
 	NH_SYMKEY_HANDLER hHandler;
 	NH_IV *iv;
 
-	printf("Testing CKM_DES3_CBC encryption... ");
-	if (NH_FAIL(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hHandler))) return rv;
-	if (NH_SUCCESS(rv = hHandler->generate(hHandler, 24)))
+	printf("%s", "Testing CKM_DES3_CBC encryption... ");
+	if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hHandler)))
 	{
+		rv = hHandler->generate(hHandler, 24);
 		if (NH_SUCCESS(rv = hHandler->new_iv(CKM_DES3_CBC, &iv)))
 		{
 			rv = encrypt_this(hHandler, CKM_DES3_CBC, iv);
 			hHandler->release_iv(iv);
 		}
+		NH_release_symkey_handler(hHandler);
 	}
-	NH_release_symkey_handler(hHandler);
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed!\n");
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+
 	if (NH_SUCCESS(rv))
 	{
-		printf("Testing CKM_RC2_CBC encryption... ");
-		if (NH_FAIL(rv = NH_new_symkey_handler(CKM_RC2_KEY_GEN, &hHandler))) return rv;
-		if (NH_SUCCESS(rv = hHandler->generate(hHandler, 128)))
+		printf("%s", "Testing CKM_RC2_CBC encryption... ");
+		if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_RC2_KEY_GEN, &hHandler)))
 		{
+			rv = hHandler->generate(hHandler, 128);
 			if (NH_SUCCESS(rv = hHandler->new_iv(CKM_RC2_CBC, &iv)))
 			{
 				rv = encrypt_this(hHandler, CKM_RC2_CBC, iv);
 				hHandler->release_iv(iv);
 			}
+			NH_release_symkey_handler(hHandler);
 		}
-		NH_release_symkey_handler(hHandler);
+		if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+		else printf("failed with error code %lu\n", rv);
 	}
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed!\n");
+
 	if (NH_SUCCESS(rv))
 	{
-		printf("Testing CKM_AES_CBC encryption... ");
-		if (NH_FAIL(rv = NH_new_symkey_handler(CKM_AES_KEY_GEN, &hHandler))) return rv;
-		if (NH_SUCCESS(rv = hHandler->generate(hHandler, 32)))
+		printf("%s", "Testing CKM_AES_CBC encryption... ");
+		if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_AES_KEY_GEN, &hHandler)))
 		{
+			rv = hHandler->generate(hHandler, 32);
 			if (NH_SUCCESS(rv = hHandler->new_iv(CKM_AES_CBC, &iv)))
 			{
 				rv = encrypt_this(hHandler, CKM_AES_CBC, iv);
 				hHandler->release_iv(iv);
 			}
+			NH_release_symkey_handler(hHandler);
 		}
-		NH_release_symkey_handler(hHandler);
+		if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+		else printf("failed with error code %lu\n", rv);
 	}
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed!\n");
+
 	if (NH_SUCCESS(rv))
 	{
-		printf("Testing key encoding... ");
-		rv = test_encoding();
-		if (NH_SUCCESS(rv)) printf("Done!\n");
-		else printf("Failed!\n");
+		printf("%s", "Testing key encoding... ");
+		if (NH_SUCCESS(rv = test_encoding())) printf("%s\n", "succeeded!");
+		else printf("failed with error code %lu\n", rv);
 	}
-	printf("Encryption test run with NH_RV %lu and NH_SYSRV %lu\n", G_ERROR(rv), G_SYSERROR(rv));
 	return rv;
 }
+
 
 static char *CHALLENGE = "A data to be signed";
 NH_RV test_signature(NH_RSA_PRIVKEY_HANDLER hPrivKey, NH_RSA_PUBKEY_HANDLER hPubKey)
@@ -231,28 +221,27 @@ NH_RV test_signature(NH_RSA_PRIVKEY_HANDLER hPrivKey, NH_RSA_PUBKEY_HANDLER hPub
 	unsigned char *hash, *signature;
 	size_t hashsize, sigSize;
 
-	printf("Testing RSA signature... ");
-	if (NH_FAIL(rv = NH_new_hash(&hHash))) return rv;
-	rv = hHash->init(hHash, CKM_SHA512);
-	if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, (unsigned char*) CHALLENGE, strlen(CHALLENGE), NULL, &hashsize);
-	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (hash = (unsigned char*) malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	printf("%s", "Testing RSA signature... ");
+	if (NH_SUCCESS(rv = NH_new_hash(&hHash)))
 	{
-		rv = hHash->digest(hHash, (unsigned char*) CHALLENGE, strlen(CHALLENGE), hash, &hashsize);
-		if (NH_SUCCESS(rv))
+		rv = hHash->init(hHash, CKM_SHA512);
+		if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, (unsigned char*)CHALLENGE, strlen(CHALLENGE), NULL, &hashsize);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (hash = (unsigned char*)malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 		{
-			rv = hPrivKey->sign(hPrivKey, CKM_SHA512_RSA_PKCS, hash, hashsize, NULL, &sigSize);
-			if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (signature = (unsigned char*) malloc(sigSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+			rv = hHash->digest(hHash, (unsigned char*)CHALLENGE, strlen(CHALLENGE), hash, &hashsize);
+			if (NH_SUCCESS(rv)) rv = hPrivKey->sign(hPrivKey, CKM_SHA512_RSA_PKCS, hash, hashsize, NULL, &sigSize);
+			if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (signature = (unsigned char*)malloc(sigSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 			{
 				rv = hPrivKey->sign(hPrivKey, CKM_SHA512_RSA_PKCS, hash, hashsize, signature, &sigSize);
 				if (NH_SUCCESS(rv)) rv = hPubKey->verify(hPubKey, CKM_SHA512_RSA_PKCS, hash, hashsize, signature, sigSize);
 				free(signature);
 			}
+			free(hash);
 		}
-		free(hash);
+		NH_release_hash(hHash);
 	}
-	NH_release_hash(hHash);
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed\n");
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
 
@@ -263,30 +252,27 @@ NH_RV test_wrap_key( NH_RSA_PUBKEY_HANDLER hPubKey, NH_RSA_PRIVKEY_HANDLER hPriv
 	size_t size, recsize;
 	unsigned char *wrap, *recovered;
 
-	printf("Testing key wrapping with RSA... ");
-	if (NH_FAIL(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hKey))) return rv;
-	if (NH_SUCCESS(rv = hKey->generate(hKey, 24)))
+	printf("%s", "Testing key wrapping with RSA... ");
+	if (NH_SUCCESS(rv = NH_new_symkey_handler(CKM_DES3_KEY_GEN, &hKey)))
 	{
-		rv = hPubKey->encrypt(hPubKey, CKM_RSA_PKCS_OAEP, hKey->key->data, hKey->key->length, NULL, &size);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (wrap = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+		rv = hKey->generate(hKey, 24);
+		if (NH_SUCCESS(rv)) rv = hPubKey->encrypt(hPubKey, CKM_RSA_PKCS_OAEP, hKey->key->data, hKey->key->length, NULL, &size);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (wrap = (unsigned char*)malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 		{
 			rv = hPubKey->encrypt(hPubKey, CKM_RSA_PKCS_OAEP, hKey->key->data, hKey->key->length, wrap, &size);
-			if (NH_SUCCESS(rv))
+			if (NH_SUCCESS(rv)) rv = hPrivKey->decrypt(hPrivKey, CKM_RSA_PKCS_OAEP, wrap, size, NULL, &recsize);
+			if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (recovered = (unsigned char*)malloc(recsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 			{
-				rv = hPrivKey->decrypt(hPrivKey, CKM_RSA_PKCS_OAEP, wrap, size, NULL, &recsize);
-				if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (recovered = (unsigned char*) malloc(recsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
-				{
-					rv = hPrivKey->decrypt(hPrivKey, CKM_RSA_PKCS_OAEP, wrap, size, recovered, &recsize);
-					if (NH_SUCCESS(rv)) rv = (hKey->key->length == recsize && memcmp(hKey->key->data, recovered, recsize) == 0) ? NH_OK : NH_BASE_ERROR;
-					free(recovered);
-				}
+				rv = hPrivKey->decrypt(hPrivKey, CKM_RSA_PKCS_OAEP, wrap, size, recovered, &recsize);
+				if (NH_SUCCESS(rv)) rv = (hKey->key->length == recsize && memcmp(hKey->key->data, recovered, recsize) == 0) ? NH_OK : NH_BASE_ERROR;
+				free(recovered);
 			}
 			free(wrap);
 		}
+		NH_release_symkey_handler(hKey);
 	}
-	NH_release_symkey_handler(hKey);
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed\n");
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
 
@@ -304,9 +290,7 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 	BIGNUM *_e;
 	BIGNUM *_n;
 
-
-
-	printf("Testing RSA public key encode... ");
+	printf("%s", "Testing RSA public key encode... ");
 	if (NH_SUCCESS(rv = NH_new_encoder(PUBKEY_MAP_COUNT, 2048, &hEncoder)))
 	{
 		rv = hEncoder->chart(hEncoder, pubkey_map, PUBKEY_MAP_COUNT, &node);
@@ -317,22 +301,28 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 			if NH_SUCCESS(rv = (eBuffer = (unsigned char*) malloc(eSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 			{
 				rv = hEncoder->encode(hEncoder, node, eBuffer);
+				
+				save_buffer(eBuffer, eSize, "pubkey.der");
+
+
 				if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_parser(eBuffer, eSize, PUBKEY_MAP_COUNT, 2048, &hParser)))
 				{
 					rv = hParser->map(hParser, pubkey_map, PUBKEY_MAP_COUNT);
 					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&hLoaded)))
 					{
-						rv = hLoaded->decode(hLoaded, hParser, NH_PARSE_ROOT);
-                        #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-                        RSA_get0_key((const RSA *)hPubKey->key, (const BIGNUM **)&n, (const BIGNUM **)&e, NULL);
-                        RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, (const BIGNUM **)&_e, NULL);
-                        #else
-                        n=hPubKey->key->n;
-                        e=hPubKey->key->e;
-                        _n=hLoaded->key->n;
-                        _e=hLoaded->key->e;
-                        #endif
-						if (NH_SUCCESS(rv)) rv = (BN_cmp(n, _n) == 0 &&  BN_cmp(e, _e) == 0) ? NH_OK : NH_BASE_ERROR;
+						if (NH_SUCCESS(rv = hLoaded->decode(hLoaded, hParser, NH_PARSE_ROOT)))
+						{
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+							RSA_get0_key((const RSA *)hPubKey->key, (const BIGNUM **)&n, (const BIGNUM **)&e, NULL);
+							RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, (const BIGNUM **)&_e, NULL);
+#else
+							n = hPubKey->key->n;
+							e = hPubKey->key->e;
+							_n = hLoaded->key->n;
+							_e = hLoaded->key->e;
+#endif
+							rv = (BN_cmp(n, _n) == 0 && BN_cmp(e, _e) == 0) ? NH_OK : NH_BASE_ERROR;
+						}
 						NH_release_RSA_pubkey_handler(hLoaded);
 					}
 					NH_release_parser(hParser);
@@ -342,8 +332,8 @@ NH_RV test_encode_pubkey(NH_RSA_PUBKEY_HANDLER hPubKey)
 		}
 		NH_release_encoder(hEncoder);
 	}
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed\n");
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
 
@@ -361,7 +351,7 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	BIGNUM *_d;
 	BIGNUM *_n;
 
-	printf("Testing RSA private key encoding... ");
+	printf("%s", "Testing RSA private key encoding... ");
 	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 2048, &hEncoder)))
 	{
 		rv = hEncoder->chart(hEncoder, privatekey_map, PRIVKEY_MAP_COUNT, &node);
@@ -377,17 +367,19 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 					rv = hParser->map(hParser, privatekey_map, PRIVKEY_MAP_COUNT);
 					if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hLoaded)))
 					{
-						rv = hLoaded->decode(hLoaded, NULL, hParser, NH_PARSE_ROOT);
-                        #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-                        RSA_get0_key((const RSA *)hPrivKey->key, (const BIGNUM **)&n, NULL, (const BIGNUM **)&d);
-                        RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, NULL, (const BIGNUM **)&_d);
-                        #else
-                        n=hPrivKey->key->n;
-                        d=hPrivKey->key->d;
-                        _n=hLoaded->key->n;
-                        _d=hLoaded->key->d;
-                        #endif
-						if (NH_SUCCESS(rv)) rv = (BN_cmp(n, _n) == 0 &&  BN_cmp(d, _d) == 0) ? NH_OK : NH_BASE_ERROR;
+						if (NH_SUCCESS(rv = hLoaded->decode(hLoaded, NULL, hParser, NH_PARSE_ROOT)))
+						{
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+							RSA_get0_key((const RSA *)hPrivKey->key, (const BIGNUM **)&n, NULL, (const BIGNUM **)&d);
+							RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, NULL, (const BIGNUM **)&_d);
+#else
+							n = hPrivKey->key->n;
+							d = hPrivKey->key->d;
+							_n = hLoaded->key->n;
+							_d = hLoaded->key->d;
+#endif
+							rv = (BN_cmp(n, _n) == 0 && BN_cmp(d, _d) == 0) ? NH_OK : NH_BASE_ERROR;
+						}
 						NH_release_RSA_privkey_handler(hLoaded);
 					}
 					NH_release_parser(hParser);
@@ -397,8 +389,8 @@ NH_RV test_encode_plainprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 		}
 		NH_release_encoder(hEncoder);
 	}
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed\n");
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
 
@@ -412,12 +404,12 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	unsigned char *eBuffer;
 	NH_RSA_PRIVKEY_HANDLER hLoaded;
 	NH_SYMKEY_HANDLER hKey;
-	BIGNUM *d;
-	BIGNUM *n;
-	BIGNUM *_d;
-	BIGNUM *_n;
+	BIGNUM *d = NULL;
+	BIGNUM *n = NULL;
+	BIGNUM *_d = NULL;
+	BIGNUM *_n = NULL;
 
-	printf("Testing RSA private key encrypted encoding... ");
+	printf("%s", "Testing RSA private key encrypted encoding... ");
 	if (NH_SUCCESS(rv = NH_new_encoder(PRIVKEY_MAP_COUNT, 2048, &hEncoder)))
 	{
 		rv = hEncoder->chart(hEncoder, privatekey_map, PRIVKEY_MAP_COUNT, &node);
@@ -435,16 +427,19 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 						if (NH_SUCCESS(rv) && NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hLoaded)))
 						{
 							rv = hLoaded->decode(hLoaded, hKey, hParser, NH_PARSE_ROOT);
-                            #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-                            RSA_get0_key((const RSA *)hPrivKey->key, (const BIGNUM **)&n, NULL, (const BIGNUM **)&d);
-                            RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, NULL, (const BIGNUM **)&_d);
-                            #else
-                            n=hPrivKey->key->n;
-                            d=hPrivKey->key->d;
-                            _n=hLoaded->key->n;
-                            _d=hLoaded->key->d;
-                            #endif
-							if (NH_SUCCESS(rv)) rv = (BN_cmp(n, _n) == 0 &&  BN_cmp(d, _d) == 0) ? NH_OK : NH_BASE_ERROR;
+							if (NH_SUCCESS(rv))
+							{
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+								RSA_get0_key((const RSA *)hPrivKey->key, (const BIGNUM **)&n, NULL, (const BIGNUM **)&d);
+								RSA_get0_key((const RSA *)hLoaded->key, (const BIGNUM **)&_n, NULL, (const BIGNUM **)&_d);
+#else
+								n = hPrivKey->key->n;
+								d = hPrivKey->key->d;
+								_n = hLoaded->key->n;
+								_d = hLoaded->key->d;
+#endif
+								rv = (BN_cmp(n, _n) == 0 && BN_cmp(d, _d) == 0) ? NH_OK : NH_BASE_ERROR;
+							}
 							NH_release_RSA_privkey_handler(hLoaded);
 						}
 						NH_release_parser(hParser);
@@ -456,10 +451,35 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 		}
 		NH_release_encoder(hEncoder);
 	}
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed\n");
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
+static int exponent = 65537;
+int test_rsa()
+{
+	NH_RV rv;
+	int bits = 2048;
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+
+	if (NH_SUCCESS(rv = NH_generate_RSA_keys(bits, exponent, &hPubKey, &hPrivKey)))
+	{
+		rv = test_signature(hPrivKey, hPubKey);
+		if (NH_SUCCESS(rv)) rv = test_wrap_key(hPubKey, hPrivKey);
+		/*
+		if (NH_SUCCESS(rv)) rv = test_encode_pubkey(hPubKey);
+		if (NH_SUCCESS(rv)) rv = test_encode_plainprivkey(hPrivKey);
+		if (NH_SUCCESS(rv)) rv = test_encode_encryptedprivkey(hPrivKey);
+*/		NH_release_RSA_pubkey_handler(hPubKey);
+		NH_release_RSA_privkey_handler(hPrivKey);
+	}
+	if (NH_SUCCESS(rv)) rv = test_pkcs8();
+	return rv;
+}
+
+
+
 
 
 static unsigned char pkcs8_key[] =
@@ -551,27 +571,5 @@ int test_pkcs8()
 		rv = hPrivKey->from_privkey_info(hPrivKey, pkcs8_key, sizeof(pkcs8_key));
 		NH_release_RSA_privkey_handler(hPrivKey);
 	}
-	return rv;
-}
-
-static int exponent = 65537;
-int test_rsa()
-{
-	NH_RV rv;
-	int bits = 2048;
-	NH_RSA_PUBKEY_HANDLER hPubKey;
-	NH_RSA_PRIVKEY_HANDLER hPrivKey;
-
-	if (NH_SUCCESS(rv = NH_generate_RSA_keys(bits, exponent, &hPubKey, &hPrivKey)))
-	{
-		rv = test_signature(hPrivKey, hPubKey);
-		if (NH_SUCCESS(rv)) rv = test_wrap_key(hPubKey, hPrivKey);
-		if (NH_SUCCESS(rv)) rv = test_encode_pubkey(hPubKey);
-		if (NH_SUCCESS(rv)) rv = test_encode_plainprivkey(hPrivKey);
-		if (NH_SUCCESS(rv)) rv = test_encode_encryptedprivkey(hPrivKey);
-		NH_release_RSA_pubkey_handler(hPubKey);
-		NH_release_RSA_privkey_handler(hPrivKey);
-	}
-	if (NH_SUCCESS(rv)) rv = test_pkcs8();
 	return rv;
 }

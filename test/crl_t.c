@@ -191,17 +191,26 @@ static unsigned char revoked_serial[] = { 0x7C, 0x97, 0x95, 0x21, 0xF5, 0x1E, 0x
 static unsigned char valid_serial[]   = { 0x7C, 0x97, 0x95, 0x21, 0xF5, 0x1E, 0x4E, 0x9A };
 static NH_BIG_INTEGER revoked = { revoked_serial, sizeof(revoked_serial) };
 static NH_BIG_INTEGER valid = { valid_serial, sizeof(valid_serial) };
+#ifdef  _MSC_VER
+static NH_TIME revocationDate = { 7, 9, 14, 3, 5, 114, 0, 0, 0};
+#else
 static NH_TIME revocationDate = { 7, 9, 14, 3, 5, 114, 0, 0, 0, 0, NULL };
+#endif //  _MSC_VER
+
 static unsigned int reason_OID[] = { 2, 5, 29, 21 };
 static unsigned char reason[] = { 0x0A, 0x01, 0x01 };
 
 int test_crl()
 {
 	NH_RV rv;
-	NH_CRL_HANDLER hCRL;
-	NH_CERTIFICATE_HANDLER hCA;
-	NH_ASN1_PNODE node;
+	NH_CRL_HANDLER hCRL = NULL;
+	NH_CERTIFICATE_HANDLER hCA = NULL;
+	NH_ASN1_PNODE node = NULL;
+#ifdef _MSC_VER
+	NH_TIME tmp = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+#else
 	NH_TIME tmp = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL };
+#endif
 
 	printf("Testing CRL parsing... ");
 	if (NH_SUCCESS(rv  = NH_parse_crl(pf_ca_cl, sizeof(pf_ca_cl), &hCRL)))

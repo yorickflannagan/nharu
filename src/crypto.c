@@ -412,7 +412,7 @@ NH_UTILITY(NH_RV, NH_hash_finish)(_INOUT_ NH_HASH_HANDLER_STR *hHash, _OUT_ unsi
 		*size = len;
 		return NH_OK;
 	}
-	if (*size < len) return NH_BUF_TOO_SMALL;
+	if (*size < (size_t) len) return NH_BUF_TOO_SMALL;
 	rv = EVP_DigestFinal_ex(hHash->ctx, buffer, (unsigned int*)size) ? NH_OK : NH_HASH_ERROR;
 	hHash->md = NULL;
 	hHash->mechanism = UINT_MAX;
@@ -438,7 +438,7 @@ NH_UTILITY(NH_RV, NH_digest)
 		*bufsize = len;
 		return NH_OK;
 	}
-	if (*bufsize < len) return NH_BUF_TOO_SMALL;
+	if (*bufsize < (size_t) len) return NH_BUF_TOO_SMALL;
 	if (NH_FAIL(rv = hHash->update(hHash, data, size))) return rv;
 	return hHash->finish(hHash, buffer, bufsize);
 }
@@ -739,7 +739,7 @@ NH_UTILITY(NH_RV, NH_decrypt_update)
 	_INOUT_ size_t *outlen
 )
 {
-	if (inlen < EVP_CIPHER_CTX_block_size(self->ctx)) return NH_INVALID_ARG;
+	if (inlen < (size_t) EVP_CIPHER_CTX_block_size(self->ctx)) return NH_INVALID_ARG;
 	if (!out)
 	{
 		*outlen = inlen;
@@ -1163,7 +1163,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encrypt)
 		*cipherSize = RSA_size(hHandler->key);
 		return NH_OK;
 	}
-	if (*cipherSize < RSA_size(hHandler->key)) return NH_BUF_TOO_SMALL;
+	if (*cipherSize < (size_t) RSA_size(hHandler->key)) return NH_BUF_TOO_SMALL;
 	switch (mechanism)
 	{
 	case CKM_RSA_PKCS:
@@ -1180,7 +1180,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encrypt)
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	if (size > flen) return NH_INVALID_ARG;
+	if (size > (size_t) flen) return NH_INVALID_ARG;
 	return RSA_public_encrypt(size, data, ciphertext, hHandler->key, padding) != -1 ? NH_OK :  S_SYSERROR(ERR_get_error()) | NH_RSA_ENCRYPT_ERROR;
 }
 
@@ -1480,7 +1480,7 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_sign)
 		*sigSize = rsa_size;
 		return NH_OK;
 	}
-	if (*sigSize < rsa_size) return NH_BUF_TOO_SMALL;
+	if (*sigSize < (size_t) rsa_size) return NH_BUF_TOO_SMALL;
 	switch (mechanism)
 	{
 	case CKM_SHA1_RSA_PKCS:
@@ -1524,7 +1524,7 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_decrypt)
 		*plainSize = rsa_size;
 		return NH_OK;
 	}
-	if (*plainSize < rsa_size) return NH_BUF_TOO_SMALL;
+	if (*plainSize < (size_t) rsa_size) return NH_BUF_TOO_SMALL;
 	switch (mechanism)
 	{
 	case CKM_RSA_PKCS:
@@ -1677,31 +1677,31 @@ NH_NODE_WAY rsa_encryptedmaterial_map[] =
 	},
 	{	/* prime1 */
 		NH_SAIL_SKIP_EAST,
-		NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0,
+		NH_ASN1_OCTET_STRING | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0,
 		NULL,
 		0
 	},
 	{	/* prime2 */
 		NH_SAIL_SKIP_EAST,
-		NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_1,
+		NH_ASN1_OCTET_STRING | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_1,
 		NULL,
 		0
 	},
 	{	/* exponent1 */
 		NH_SAIL_SKIP_EAST,
-		NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_2,
+		NH_ASN1_OCTET_STRING | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_2,
 		NULL,
 		0
 	},
 	{	/* exponent2 */
 		NH_SAIL_SKIP_EAST,
-		NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_3,
+		NH_ASN1_OCTET_STRING | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_3,
 		NULL,
 		0
 	},
 	{	/* coefficient */
 		NH_SAIL_SKIP_EAST,
-		NH_ASN1_OCTET_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_4,
+		NH_ASN1_OCTET_STRING | NH_ASN1_OPTIONAL_BIT | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_4,
 		NULL,
 		0
 	},
@@ -1848,11 +1848,31 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_encode)
 		rv = hEncoder->put_octet_string(hEncoder, node, iv->data, iv->length);
 		if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
 		if (NH_SUCCESS(rv)) rv = encode_encrypted_bignum(hEncoder, node, d, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && p)  rv = encode_encrypted_bignum(hEncoder, node, p, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && q)  rv = encode_encrypted_bignum(hEncoder, node, q, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && dmp1)  rv = encode_encrypted_bignum(hEncoder, node, dmp1, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && dmq1)  rv = encode_encrypted_bignum(hEncoder, node, dmq1, hEncryption, mechanism, iv);
-		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && iqmp)  rv = encode_encrypted_bignum(hEncoder, node, iqmp, hEncryption, mechanism, iv);
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && p)
+		{
+			hEncoder->register_optional(node);
+			rv = encode_encrypted_bignum(hEncoder, node, p, hEncryption, mechanism, iv);
+		}
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && q)
+		{
+			hEncoder->register_optional(node);
+			rv = encode_encrypted_bignum(hEncoder, node, q, hEncryption, mechanism, iv);
+		}
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && dmp1)
+		{
+			hEncoder->register_optional(node);
+			rv = encode_encrypted_bignum(hEncoder, node, dmp1, hEncryption, mechanism, iv);
+		}
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && dmq1)
+		{
+			hEncoder->register_optional(node);
+			rv = encode_encrypted_bignum(hEncoder, node, dmq1, hEncryption, mechanism, iv);
+		}
+		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) && iqmp)
+		{
+			hEncoder->register_optional(node);
+			rv = encode_encrypted_bignum(hEncoder, node, iqmp, hEncryption, mechanism, iv);
+		}
 		hEncryption->release_iv(iv);
 	}
 	return rv;

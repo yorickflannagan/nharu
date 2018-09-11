@@ -14,7 +14,7 @@ L_FLAGS     = _LFLAGS_
 # Local definitions
 SRC     = $(PACKAGE)\lib
 INC     = /I$(SRC)\gl /I$(SRC) /I$(WINPACK)\include
-_CFLAGS = /c /TC /errorReport:none /FC /nologo /analyze- /diagnostics:classic
+_CFLAGS = /c /TC /errorReport:none /FC /nologo /analyze- /diagnostics:classic /D "LIBIDN_STATIC"
 _LFLAGS = /NOLOGO
 SRCS    = $(SRC)\gl\c-ctype.c $(SRC)\gl\c-strcasecmp.c $(SRC)\gl\c-strncasecmp.c $(SRC)\gl\striconv.c $(SRC)\gl\strverscmp.c \
 		$(SRC)\gl\unistr\u8-check.c $(SRC)\idn-free.c $(SRC)\idna.c $(SRC)\nfkc.c $(SRC)\pr29.c $(SRC)\profiles.c            \

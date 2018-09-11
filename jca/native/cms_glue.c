@@ -460,7 +460,7 @@ NH_RV sign_callback
 	{
 		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "signatureLength", "(Ljava/lang/String;)I")))
 		{
-			size = (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
+			size = (jint) (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
 			*sigSize = size;
 		}
 		else rv = JCLASS_ACCESS_ERROR;
@@ -474,7 +474,7 @@ NH_RV sign_callback
 				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
 				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
 				size = (*callback->env)->GetArrayLength(callback->env, ret);
-				if (*sigSize < size) rv = NH_BUF_TOO_SMALL;
+				if (*sigSize < (size_t) size) rv = NH_BUF_TOO_SMALL;
 				else
 				{
 					if ((jBuffer = (*callback->env)->GetByteArrayElements(callback->env, ret, NULL)))
@@ -683,7 +683,7 @@ NH_RV decrypt_callback
 	{
 		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "plainTextLength", "(Ljava/lang/String;)I")))
 		{
-			size = (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
+			size = (jint) (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
 			*plainSize = size;
 		}
 		else rv = JCLASS_ACCESS_ERROR;
@@ -697,7 +697,7 @@ NH_RV decrypt_callback
 				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
 				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
 				size = (*callback->env)->GetArrayLength(callback->env, ret);
-				if (*plainSize < size) rv = NH_BUF_TOO_SMALL;
+				if (*plainSize < (size_t) size) rv = NH_BUF_TOO_SMALL;
 				else
 				{
 					if ((jBuffer = (*callback->env)->GetByteArrayElements(callback->env, ret, NULL)))

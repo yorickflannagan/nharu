@@ -94,7 +94,7 @@
 	#pragma GCC diagnostic ignored "-Wlong-long"
 #endif
 
-#ifndef __int8_t_defined /* guarda encontrada no stdint.h  */
+#if !defined(__int8_t_defined) && !defined(_STDINT)  /* guarda encontrada no stdint.h  */
     typedef char				int8_t;
     typedef short				int16_t;
     typedef long				int32_t;

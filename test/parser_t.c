@@ -4,22 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-static unsigned char token[] =
-{
-	0x30, 0x81, 0xBA, 0x13, 0x10, 0x31, 0x32, 0x32, 0x31, 0x39, 0x33, 0x31, 0x36, 0x39, 0x31, 0x34,
-	0x32, 0x20, 0x20, 0x20, 0x20, 0x30, 0x81, 0xA5, 0x01, 0x01, 0xFF, 0x01, 0x01, 0x00, 0x31, 0x81,
-	0x9C, 0x30, 0x0E, 0x02, 0x02, 0x01, 0x31, 0x02, 0x02, 0x80, 0x01, 0x80, 0x01, 0x18, 0x81, 0x01,
-	0x18, 0x30, 0x0E, 0x02, 0x02, 0x01, 0x00, 0x02, 0x02, 0x80, 0x01, 0x80, 0x01, 0x28, 0x81, 0x01,
-	0x80, 0x30, 0x0E, 0x02, 0x02, 0x10, 0x80, 0x02, 0x02, 0x80, 0x01, 0x80, 0x01, 0x10, 0x81, 0x01,
-	0x20, 0x30, 0x08, 0x02, 0x02, 0x02, 0x10, 0x02, 0x02, 0x04, 0x00, 0x30, 0x08, 0x02, 0x02, 0x02,
-	0x20, 0x02, 0x02, 0x04, 0x00, 0x30, 0x08, 0x02, 0x02, 0x02, 0x50, 0x02, 0x02, 0x04, 0x00, 0x30,
-	0x07, 0x02, 0x01, 0x05, 0x02, 0x02, 0x28, 0x01, 0x30, 0x07, 0x02, 0x01, 0x06, 0x02, 0x02, 0x28,
-	0x01, 0x30, 0x07, 0x02, 0x01, 0x40, 0x02, 0x02, 0x28, 0x01, 0x30, 0x09, 0x02, 0x02, 0x01, 0x33,
-	0x02, 0x03, 0x06, 0x03, 0x01, 0x30, 0x09, 0x02, 0x02, 0x01, 0x02, 0x02, 0x03, 0x06, 0x03, 0x01,
-	0x30, 0x09, 0x02, 0x02, 0x10, 0x82, 0x02, 0x03, 0x06, 0x03, 0x01, 0x30, 0x10, 0x02, 0x01, 0x00,
-	0x02, 0x03, 0x01, 0x00, 0x01, 0x80, 0x02, 0x02, 0x00, 0x81, 0x02, 0x08, 0x00
-};
-
 static NH_NODE_WAY supported_mechanisms_map[] =
 {
 	{	/* SupportedMechanisms */
@@ -98,36 +82,7 @@ static NH_NODE_WAY token_obj_map[] =
 		ASN_NODE_WAY_COUNT(supported_mechanisms_map)
 	}
 };
-
 #define SERIAL_NUMBER		"122193169142    "
-
-int test_parser()
-{
-	NH_ASN1_PARSER_HANDLE hHandle;
-	NH_ASN1_PNODE node;
-	NH_RV rv, frv;
-	char serial[17];
-
-	if (NH_SUCCESS(rv = NH_new_parser(token, sizeof(token), 72, 512, &hHandle)))
-	{
-		if (NH_SUCCESS(rv = hHandle->map(hHandle, token_obj_map, ASN_NODE_WAY_COUNT(token_obj_map))))
-		{
-			if ((node = hHandle->sail(hHandle->root, NH_SAIL_SKIP_SOUTH)))
-			{
-				if (NH_SUCCESS(rv = hHandle->parse_string(node)))
-				{
-                              memset(serial, 0, 17);
-                              memcpy(serial, node->value, node->valuelen);
-                              rv = strcmp(serial, SERIAL_NUMBER);
-				}
-			}
-			else rv = NH_UNEXPECTED_ENCODING;
-		}
-		frv = NH_release_parser(hHandle);
-	}
-	printf("\nParsing test run with NH_RV %lu and NH_SYSRV %lu and %lu for NH_release_parser", G_ERROR(rv), G_SYSERROR(rv), frv);
-	return (int) rv;
-}
 
 
 NH_RV encode_feature(NH_ASN1_ENCODER_HANDLE hHandle, NH_ASN1_PNODE set, unsigned int *feature)
@@ -183,55 +138,40 @@ NH_RV encode_all_features(NH_ASN1_ENCODER_HANDLE hHandle, NH_ASN1_PNODE set)
 }
 int test_encoder()
 {
-	NH_RV rv, frv;
-	NH_ASN1_ENCODER_HANDLE hHandle;
-	NH_ASN1_PNODE node;
+	NH_RV rv;
+	NH_ASN1_ENCODER_HANDLE hHandle = NULL;
+	NH_ASN1_PARSER_HANDLE hParser = NULL;
+	NH_ASN1_PNODE node = NULL;
 	size_t len;
 	char *serial = SERIAL_NUMBER;
-	unsigned char *buffer;
+	unsigned char *buffer = NULL;
 
-	if (NH_SUCCESS(rv = NH_new_encoder(72, 512, &hHandle)))
+	printf("%s", "Testing ASN.1 encoding of a PKCS #11 token... ");
+	rv = NH_new_encoder(72, 512, &hHandle);
+	if (NH_SUCCESS(rv)) rv = hHandle->chart(hHandle, token_obj_map, ASN_NODE_WAY_COUNT(token_obj_map), &node);
+	if (NH_SUCCESS(rv)) rv = (node = hHandle->sail(node, NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = hHandle->put_printable_string(hHandle, node, (void*)serial, strlen(serial));
+	if (NH_SUCCESS(rv)) rv = (node = hHandle->sail(node, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = hHandle->put_boolean(hHandle, node, TRUE);
+	if (NH_SUCCESS(rv)) rv = (node = hHandle->sail(node, NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = hHandle->put_boolean(hHandle, node, FALSE);
+	if (NH_SUCCESS(rv)) rv = encode_all_features(hHandle, node->next);
+	if (NH_SUCCESS(rv))
 	{
-		if (NH_SUCCESS(rv = hHandle->chart(hHandle, token_obj_map, ASN_NODE_WAY_COUNT(token_obj_map), &node)))
-		{
-			if ((node = hHandle->sail(node, NH_SAIL_SKIP_SOUTH)))
-			{
-				if (NH_SUCCESS(rv = hHandle->put_printable_string(hHandle, node, (void*) serial, strlen(serial))))
-				{
-					if ((node = hHandle->sail(node, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)))
-					{
-						if (NH_SUCCESS(rv = hHandle->put_boolean(hHandle, node, TRUE)))
-						{
-							if ((node = hHandle->sail(node, NH_SAIL_SKIP_EAST)))
-							{
-								if (NH_SUCCESS(rv = hHandle->put_boolean(hHandle, node, FALSE)))
-								{
-									if (NH_SUCCESS(rv = encode_all_features(hHandle, node->next)))
-									{
-										len = hHandle->encoded_size(hHandle, hHandle->root);
-										if (!(buffer = (unsigned char*) malloc(len))) rv = NH_OUT_OF_MEMORY_ERROR;
-										else
-										{
-											if (NH_SUCCESS(rv = hHandle->encode(hHandle, hHandle->root, buffer)))
-											{
-												if (NH_SUCCESS(rv = len == sizeof(token) ? 0 : 1)) rv = memcmp(buffer, token, len);
-											}
-											free(buffer);
-										}
-									}
-								}
-							}
-							else rv = NH_CANNOT_SAIL;
-						}
-					}
-					else rv = NH_CANNOT_SAIL;
-				}
-			}
-			else rv = NH_CANNOT_SAIL;
-		}
-		frv = NH_release_encoder(hHandle);
+		len = hHandle->encoded_size(hHandle, hHandle->root);
+		rv = (buffer = (unsigned char*) malloc(len)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
+		if (NH_SUCCESS(rv)) rv = hHandle->encode(hHandle, hHandle->root, buffer);
 	}
-	printf("Encoding test run with NH_RV %lu and NH_SYSRV %lu and %lu for NH_release_parser\n", G_ERROR(rv), G_SYSERROR(rv), frv);
+	if (hHandle) NH_release_encoder(hHandle);
+
+	if (NH_SUCCESS(rv)) rv = NH_new_parser(buffer, len, 72, 512, &hParser);
+	if (NH_SUCCESS(rv)) rv = hParser->map(hParser, token_obj_map, ASN_NODE_WAY_COUNT(token_obj_map));
+	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(hParser->root, NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING;
+	if (NH_SUCCESS(rv)) rv = hParser->parse_string(node);
+	if (NH_SUCCESS(rv)) rv = node->valuelen == strlen(serial) && memcmp(node->value, serial, node->valuelen) == 0 ? NH_OK : 1;
+	if (buffer) free(buffer);
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return (int) rv;
 }
 

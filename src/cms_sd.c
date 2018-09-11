@@ -845,8 +845,8 @@ NH_UTILITY(NH_RV, cms_sd_sign_init)
 {
 	NH_RV rv;
 	NH_ASN1_PNODE set, node;
-	const unsigned int *hashOID, *sigOID;
-	size_t hashOIDCount, sigOIDCount;
+	const unsigned int *hashOID;
+	size_t hashOIDCount;
 	CK_MECHANISM_TYPE hashAlg;
 	CK_BBOOL found = CK_FALSE;
 	NH_HASH_HANDLER hHash;
@@ -859,36 +859,26 @@ NH_UTILITY(NH_RV, cms_sd_sign_init)
 		hashOID = sha1_oid;
 		hashOIDCount = NHC_SHA1_OID_COUNT;
 		hashAlg = CKM_SHA_1;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
 		break;
 	case CKM_SHA256_RSA_PKCS:
 		hashOID = sha256_oid;
 		hashOIDCount = NHC_SHA256_OID_COUNT;
 		hashAlg = CKM_SHA256;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
 		break;
 	case CKM_SHA384_RSA_PKCS:
 		hashOID = sha384_oid;
 		hashOIDCount = NHC_SHA384_OID_COUNT;
 		hashAlg = CKM_SHA384;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
 		break;
 	case CKM_SHA512_RSA_PKCS:
 		hashOID = sha512_oid;
 		hashOIDCount = NHC_SHA512_OID_COUNT;
 		hashAlg = CKM_SHA512;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
 		break;
 	case CKM_MD5_RSA_PKCS:
 		hashOID = md5_oid;
 		hashOIDCount = NHC_MD5_OID_COUNT;
 		hashAlg = CKM_MD5;
-		sigOID = rsaEncryption_oid;
-		sigOIDCount = NHC_RSA_ENCRYPTION_OID_COUNT;
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
