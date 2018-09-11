@@ -1,0 +1,95 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+				"${workspaceFolder}/**",
+				"${workspaceFolder}/src",
+				"${workspaceFolder}/include",
+				"${workspaceFolder}/test",
+				"${workspaceFolder}/jca/native",
+                "${MSVC}/include",
+                "${NET_INCLUDE}",
+                "${WINSDK_INCLUDE}/ucrt",
+                "${WINSDK_INCLUDE}/shared",
+                "${WINSDK_INCLUDE}/um",
+                "${WINSDK_INCLUDE}/winrt",
+                "${WINSDK_INCLUDE}/cppwinrt",
+                "${OPENSSL}/include",
+                "${LIBIDN}/include"
+            ],
+            "defines": [
+				"_DEBUG",
+				"_DEBUG_",
+				"WIN32",
+				"_WIN32",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.17134.0",
+			"compilerPath": "${MSVC}/bin/Hostx64/x86/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+			"intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+					"${workspaceFolder}/**",
+					"${workspaceFolder}/src",
+					"${workspaceFolder}/include",
+					"${workspaceFolder}/test",
+					"${workspaceFolder}/jca/native",
+					"${MSVC}/include",
+					"${NET_INCLUDE}",
+					"${WINSDK_INCLUDE}/ucrt",
+					"${WINSDK_INCLUDE}/shared",
+					"${WINSDK_INCLUDE}/um",
+					"${WINSDK_INCLUDE}/winrt",
+					"${WINSDK_INCLUDE}/cppwinrt",
+					"${OPENSSL}/include",
+					"${LIBIDN}/include"
+				],
+      			"limitSymbolsToIncludedHeaders": true,
+        		"databaseFilename": "${workspaceFolder}/.vscode/win.vc.db"
+		    }
+		},
+		{
+			"name": "linux",
+            "includePath": [
+				"${workspaceFolder}/**",
+				"${workspaceFolder}/src",
+				"${workspaceFolder}/include",
+				"${workspaceFolder}/test",
+				"${workspaceFolder}/jca/native",
+                "${OPENSSL}/include",
+                "${LIBIDN}/include"
+            ],
+            "defines": [
+				"_DEBUG",
+				"_DEBUG_"
+			],
+			"compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+			"intelliSenseMode": "gcc-x64",
+            "browse": {
+                "path": [
+					"${workspaceFolder}/**",
+					"${workspaceFolder}/src",
+					"${workspaceFolder}/include",
+					"${workspaceFolder}/test",
+					"${workspaceFolder}/jca/native",
+					"${OPENSSL}/include",
+					"${LIBIDN}/include",
+                    "/usr/lib/gcc/x86_64-linux-gnu/5/include",
+                    "/usr/local/include",
+                    "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
+                    "/usr/include/x86_64-linux-gnu",
+                    "/usr/include"
+				],
+      			"limitSymbolsToIncludedHeaders": true,
+        		"databaseFilename": "${workspaceFolder}/.vscode/linux.vc.db"
+		    }
+		}
+    ],
+    "version": 4
+}
