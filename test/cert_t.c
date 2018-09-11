@@ -158,11 +158,17 @@ static unsigned char endca_cert[] =
 	0xAB, 0x95, 0xC9, 0x1F, 0x97, 0x73, 0x1C, 0x7F, 0x5C, 0x64, 0x15, 0x6C, 0xD0, 0x93, 0xBD, 0xD5,
 	0x92, 0xA9, 0x0E, 0x20, 0xC1, 0x0E, 0x67, 0xA9, 0xFD, 0xE7, 0x6C, 0x33, 0x62, 0x0C, 0xDC, 0x11
 };
+#ifdef _MSC_VER
+static NH_TIME instant = { 44, 54, 16, 23, 11, 115, 0, 0, 0 };
+static NH_TIME notBefore = { 44, 54, 17, 21, 11, 115, 1, 354, 1 };
+static NH_TIME notAfter = { 44, 54, 17, 20, 11, 116, 2, 354, 1 };
+#else
 static NH_TIME instant = { 44, 54, 16, 23, 11, 115, 0, 0, 0, 0, NULL };
-static int version = 3;
-static unsigned int signature[] = { 1, 2, 840, 113549, 1, 1, 11 };
 static NH_TIME notBefore = { 44, 54, 17, 21, 11, 115, 1, 354, 1, -7200, NULL };
 static NH_TIME notAfter = { 44, 54, 17, 20, 11, 116, 2, 354, 1, -7200, NULL };
+#endif
+static int version = 3;
+static unsigned int signature[] = { 1, 2, 840, 113549, 1, 1, 11 };
 static unsigned int clientAuth[] = { 1, 3, 6, 1, 5, 5, 7, 3, 2 };
 static unsigned int emailProctection[] = { 1, 3, 6, 1, 5, 5, 7, 3, 4 };
 static unsigned int msLogon[] = { 1, 3, 6, 1, 4, 1, 311, 20, 2, 2 };
@@ -174,8 +180,8 @@ static unsigned char oName_1[] = { 0xA0, 0x38, 0x06, 0x05, 0x60, 0x4C, 0x01, 0x0
 int test_cert()
 {
 	NH_RV rv;
-	NH_CERTIFICATE_HANDLER hCert, hCA;
-	NH_ASN1_PNODE node;
+	NH_CERTIFICATE_HANDLER hCert = NULL, hCA = NULL;
+	NH_ASN1_PNODE node = NULL;
 
 	printf("Testing certificate parsing... ");
 	if (NH_SUCCESS(rv = NH_parse_certificate(enduser_cert, sizeof(enduser_cert), &hCert)))

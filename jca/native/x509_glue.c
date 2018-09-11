@@ -1019,7 +1019,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuPKIBRParser_nhixPK
 	jsize len;
 	NH_RV rv;
 	NH_ASN1_PARSER_HANDLE hParser;
-	NH_ASN1_PNODE node;
+	NH_ASN1_PNODE node = NULL;
 	jlong ret = 0L;
 
 	len = (*env)->GetArrayLength(env, encoding);

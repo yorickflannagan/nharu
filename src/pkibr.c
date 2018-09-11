@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* 
+	Microsoft user principal name (UPN, OID 1.3.6.1.4.1.311.20.2.3) is defined as an UTF8String
+	(see https://msdn.microsoft.com/en-us/library/ff842518.aspx), but other string types were
+	seen, depending on issuer. So, we will accept (almost) any string type
+*/
 static NH_NODE_WAY pkibr_extension_value[] =
 {
 	{	/* Octet String */
@@ -12,7 +17,55 @@ static NH_NODE_WAY pkibr_extension_value[] =
 	},
 	{	/* Printable String */
 		NH_PARSE_ROOT,
-		NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_PRINTABLE_STRING ,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_PRINTABLE_STRING ,
+		NULL,
+		0
+	},
+	{	/* UTF8String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_UTF8_STRING ,
+		NULL,
+		0
+	},
+	{	/* T61 String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_T61_STRING ,
+		NULL,
+		0
+	},
+	{	/* Videotex String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_VIDEOTEX_STRING ,
+		NULL,
+		0
+	},
+	{	/* IA5String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_IA5_STRING ,
+		NULL,
+		0
+	},
+	{	/* Visible String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_VISIBLE_STRING ,
+		NULL,
+		0
+	},
+	{	/* GeneralString */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_GENERAL_STRING ,
+		NULL,
+		0
+	},
+	{	/* Universal String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_UNIVERSAL_STRING ,
+		NULL,
+		0
+	},
+	{	/* Teletex String */
+		NH_PARSE_ROOT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_TELETEX_STRING,
 		NULL,
 		0
 	}

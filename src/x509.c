@@ -1104,7 +1104,7 @@ NH_UTILITY(NH_RV, get_revoked)(_IN_ NH_CRL_HANDLER_STR *self, _IN_ NH_BIG_INTEGE
 	if (idx >= 0) return NH_OK;
 	idx *= -1;
 	interval = self->revoked[idx];
-	for (i = 0; i < interval->rcount; i++)
+	for (i = 0; (size_t) i < interval->rcount; i++)
 	{
 		revoked = interval->revoked[i];
 		if (comp_integer(serial->data, serial->length, (unsigned char*) revoked->child->value, revoked->child->valuelen) == 0)
