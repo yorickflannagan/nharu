@@ -42,4 +42,7 @@ nharujca.jar
 dist/
 /win32.mak
 Version.java
-
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/test-launch.json
