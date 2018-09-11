@@ -195,7 +195,7 @@ static NH_BIG_INTEGER valid = { valid_serial, sizeof(valid_serial) };
 static NH_TIME revocationDate = { 7, 9, 14, 3, 5, 114, 0, 0, 0};
 #else
 static NH_TIME revocationDate = { 7, 9, 14, 3, 5, 114, 0, 0, 0, 0, NULL };
-#endif //  _MSC_VER
+#endif
 
 static unsigned int reason_OID[] = { 2, 5, 29, 21 };
 static unsigned char reason[] = { 0x0A, 0x01, 0x01 };
