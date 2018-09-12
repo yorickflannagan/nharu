@@ -455,6 +455,7 @@ NH_RV test_encode_encryptedprivkey(NH_RSA_PRIVKEY_HANDLER hPrivKey)
 	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
+int test_pkcs8();
 static int exponent = 65537;
 int test_rsa()
 {
