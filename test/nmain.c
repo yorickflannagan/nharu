@@ -1,16 +1,43 @@
 #include "test.h"
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 
-#define ARGC1		"C:\\Users\\developer\\dev\\nharu\\test\\repo\\pkibr-pf.cer"
-#define ARGC2		"C:\\Users\\developer\\dev\\nharu\\test\\repo\\end-ca.cer"
-#define ARGC3		"C:\\Users\\developer\\dev\\nharu\\test\\repo\\pkibr-ac.crl"
-#define ARGC4		"C:\\Users\\developer\\dev\\nharu\\test\\repo\\pkibr-ac.cer"
+#ifdef _WIN32
+#define PATH_SEPARATOR		"\\"
+#else
+#define PATH_SEPARATOR		"/"
+#endif 
+
+#define ARGC1		"C:\\Users\\developer\\dev\\nharu\\test\\repo"
+
+#define PKIBRPF		PATH_SEPARATOR"pkibr-pf.cer"
+#define ENDCA		PATH_SEPARATOR"end-ca.cer"
+#define PKIBRACRL		PATH_SEPARATOR"pkibr-ac.crl"
+#define PKIBRAC		PATH_SEPARATOR"pkibr-ac.cer"
+#define SIGNERCERT	PATH_SEPARATOR"signer.cer"
 int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
 	int rv;
 	NH_NOISE_HANDLER hNoise;
+	char pkibrpf[MAX_PATH], endca[MAX_PATH], pkibrcrl[MAX_PATH], pkibrac[MAX_PATH], signer[MAX_PATH];
+	
+	memset(pkibrpf, 0, MAX_PATH);
+	strcpy(pkibrpf, ARGC1);
+	strcat(pkibrpf, PKIBRPF);
+	memset(endca, 0, MAX_PATH);
+	strcpy(endca, ARGC1);
+	strcat(endca, ENDCA);
+	memset(pkibrcrl, 0, MAX_PATH);
+	strcpy(pkibrcrl, ARGC1);
+	strcat(pkibrcrl, PKIBRACRL);
+	memset(pkibrac, 0, MAX_PATH);
+	strcpy(pkibrac, ARGC1);
+	strcat(pkibrac, PKIBRAC);
+	memset(signer, 0, MAX_PATH);
+	strcpy(signer, ARGC1);
+	strcat(signer, SIGNERCERT);
 
 	printf("%s\n", "Nharu library regression test");
 	if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
@@ -19,25 +46,21 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_secret_sharing();
 	if (NH_SUCCESS(rv)) rv = test_encrypt();
 	if (NH_SUCCESS(rv)) rv = test_rsa();
-	if (NH_SUCCESS(rv)) rv = test_certificate(ARGC1, ARGC2);
-	if (NH_SUCCESS(rv)) rv = test_crl(ARGC3, ARGC4);
-
-	/*
-	 * TODO: Encoding RSA public and private key must be corrected
-	 */
-	printf("%s\n", "Test done");
-
-/*	
-	
-	if (NH_SUCCESS(rv)) rv = parse_openssl_cms_signed_data();
-	if (NH_SUCCESS(rv)) rv = test_cms_signed_data();
-	if (NH_SUCCESS(rv)) rv = test_cms_signed_data_with_pubkey();
-	if (NH_SUCCESS(rv)) rv = test_openssl_cms_enveloped_data();
-	if (NH_SUCCESS(rv)) rv = test_enveloped_data();
+	if (NH_SUCCESS(rv)) rv = test_certificate(pkibrpf, endca);
+	if (NH_SUCCESS(rv)) rv = test_crl(pkibrcrl, pkibrac);
+	if (NH_SUCCESS(rv)) rv = test_cms_signed_data(signer, endca);
+	if (NH_SUCCESS(rv)) rv = test_cms_signed_data_with_pubkey(signer);
+	if (NH_SUCCESS(rv)) rv = test_enveloped_data(signer);
 	if (NH_SUCCESS(rv)) rv = test_fake_enveloped_data();
 	if (NH_SUCCESS(rv)) rv = test_cadest();
 
-*/	return rv;
+	/*
+	 * TODO: Encoding RSA public and private key must be corrected
+	 * TODO: Test signature using NH_RSA_from_privkey_info
+	 */
+	printf("%s\n", "Test done");
+
+	return rv;
 }
 
 
