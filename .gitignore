@@ -46,3 +46,7 @@ Version.java
 .vscode/settings.json
 .vscode/tasks.json
 .vscode/test-launch.json
+.vscode/WIN.VC.2.DB
+.vscode/WIN.VC.DB
+.vscode/WIN.VC.DB-shm
+.vscode/WIN.VC.DB-wal

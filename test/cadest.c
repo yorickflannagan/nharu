@@ -85,7 +85,7 @@ static unsigned char sign_cert[] =
 	0x7E, 0xEC, 0x50, 0xDC, 0xD9, 0x6A, 0x93, 0x0A, 0x08, 0x1D, 0xB8, 0x35, 0x5A, 0x1A, 0x4A, 0x39,
 	0x0F, 0x71, 0xCF, 0x22, 0xAC, 0xEB, 0x52, 0xC2, 0x13, 0xFB
 };
-#define SIGN_DATA           "Transaction to sign"
+#define SIGN_DATA           "Transaction to sign "
 static unsigned char n_value[] =
 {
 	0xCE, 0x3E, 0x56, 0x18, 0x61, 0x37, 0x60, 0x17, 0x07, 0x58, 0x4D, 0xEC, 0x88, 0xAE, 0x46,
@@ -203,22 +203,24 @@ NH_RV cadest_sign(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _UNUSED_
 }
 int test_cadest()
 {
-    NH_RV rv;
-    NH_BLOB blob = { NULL, 0 };
-    NH_CMS_SD_ENCODER hCMS = NULL;
-    NH_CERTIFICATE_HANDLER hCert = NULL;
-    blob.data = (unsigned char*)SIGN_DATA;
-    blob.length = strlen(SIGN_DATA);
+	NH_RV rv;
+	NH_BLOB blob = { NULL, 0 };
+	NH_CMS_SD_ENCODER hCMS = NULL;
+	NH_CERTIFICATE_HANDLER hCert = NULL;
+	blob.data = (unsigned char*)SIGN_DATA;
+	blob.length = strlen(SIGN_DATA);
     
-	printf("Testing CMS BES... ");
-    rv = NH_cms_encode_signed_data(&blob, &hCMS);
-    if (NH_SUCCESS(rv)) rv = hCMS->data_ctype(hCMS, CK_TRUE);
-    if (NH_SUCCESS(rv)) rv = NH_parse_certificate(sign_cert, sizeof(sign_cert), &hCert);
-    if (NH_SUCCESS(rv)) rv = hCMS->add_cert(hCMS, hCert);
-    if (NH_SUCCESS(rv)) rv = hCMS->sign_cades_bes(hCMS, hCert, CKM_SHA256_RSA_PKCS, cadest_sign, NULL);
-    if (hCMS) NH_cms_release_sd_encoder(hCMS);
-    if (hCert) NH_release_certificate(hCert);
-	if (NH_SUCCESS(rv)) printf("Done!\n");
-	else printf("Failed\n");
-    return (int)rv;
+	printf("%s", "Testing CMS BES... ");
+	rv = NH_cms_encode_signed_data(&blob, &hCMS);
+	if (NH_SUCCESS(rv)) rv = hCMS->data_ctype(hCMS, CK_TRUE);
+	if (NH_SUCCESS(rv)) rv = NH_parse_certificate(sign_cert, sizeof(sign_cert), &hCert);
+	if (NH_SUCCESS(rv)) rv = hCMS->add_cert(hCMS, hCert);
+	if (NH_SUCCESS(rv)) rv = hCMS->sign_cades_bes(hCMS, hCert, CKM_SHA256_RSA_PKCS, cadest_sign, NULL);
+
+	if (hCMS) NH_cms_release_sd_encoder(hCMS);
+	if (hCert) NH_release_certificate(hCert);
+
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+	return (int) rv;
 }

@@ -13,13 +13,11 @@ int test_encrypt();
 int test_rsa();
 int test_certificate(char*, char*);
 int test_crl(char*, char*);
-
-int parse_openssl_cms_signed_data();
-int test_cms_signed_data();
-int test_cms_signed_data_with_pubkey();
-int test_openssl_cms_enveloped_data();
-int test_enveloped_data();
+int test_cms_signed_data(char*, char*);
+int test_cms_signed_data_with_pubkey(char*);
+int test_enveloped_data(char*);
 int test_fake_enveloped_data();
 int test_cadest();
+
 
 #endif
