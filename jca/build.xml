@@ -1,12 +1,15 @@
 <?xml version = "1.0" encoding = "UTF-8" standalone = "no"?>
 <!--
 	ARGUMENTS (-D)
-	ANT_CONTRIB_LIB: Ant contrib support library
-	VERSION: provider version
-	DEBUG
-	JAVA_LOG_PATH: logging class package
+	ANT_CONTRIB_LIB: Ant contrib support library. Required.
+	BUILD_DEST: Installation directory. Required.
+	VERSION: provider version. Required.
+	JRE_7: Java 7 runtime lib. Required
+	DEBUG=1: Log level definition for trace. Optional. Default: error
+	JAVA_LOG_PATH: logging class package. Optional. Default: org.crypthing.security
   -->
 <project basedir = "." default = "install" name = "nharu-provider">
+
 	<target name = "init">
 		<property environment = "env"/>
 		<taskdef resource="net/sf/antcontrib/antcontrib.properties">
@@ -31,6 +34,15 @@
 			<isset property = "JAVA_LOG_PATH" />
 		</condition>
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
+		<condition property = "mk.ver" value = "make_version.bat" else = "mkver">
+			<os family = "windows" />
+		</condition>
+	</target>
+
+	<target name = "ver" depends = "init">
+		<condition property = "provider.version" value = "${VERSION}" else = "0.0.0">
+			<isset property="VERSION" />
+		</condition>
 	</target>
 
 	<target name="number" depends="ver" >
@@ -40,17 +52,10 @@
 		<propertyregex property="c.version" input="${full.version}"  regexp="\." replace="_" global="true" />
 	</target>
 
-	<target name = "ver" depends = "init">
-		<condition property = "provider.version" value = "${VERSION}" else = "0.0.0">
-			<isset property="VERSION" />
-		</condition>
-	</target>
-
 	<target name= "display" depends="ver">
-		<echo message="provider.version"> ${provider.version} </echo>
-		<echo message="full.version"> ${full.version} </echo>
-		<echo message="c.version"> ${c.version} </echo>
+		<echo message="Apache Ant Contrib library"> ${ANT_CONTRIB_LIB} </echo>
 		<echo message="src.dir"> ${src.dir} </echo>
+		<echo message="build.dest"> ${build.dest} </echo>
 		<echo message="bin.dir"> ${bin.dir} </echo>
 		<echo message="target.file"> ${target.file} </echo>
 		<echo message="log.level"> ${log.level} </echo>
@@ -59,9 +64,14 @@
 		<echo message="jre.7"> ${jre.7} </echo>
 		<echo message="log.package"> ${log.package} </echo>
 		<echo message="log.dir"> ${log.dir} </echo>
+		<echo message="provider.version"> ${provider.version} </echo>
+		<echo message="full.version"> ${full.version} </echo>
+		<echo message="c.version"> ${c.version} </echo>
+		<echo message="mk.ver"> ${mk.ver} </echo>
 	</target>
 
 	<target name = "prepare" depends = "number, display">
+		<mkdir  dir  = "${bin.dir}" />
 		<mkdir  dir  = "META-INF" />
 		<delete file="META-INF/MANIFEST.MF" />
 		<manifest file="META-INF/MANIFEST.MF" >
@@ -69,25 +79,24 @@
 			<attribute name = "Implementation-Vendor"  value = "The Crypthing Initiative" />
 			<attribute name = "Implementation-Version" value = "${full.version} ${TODAY}" />
 		</manifest>
-		<delete file = "native/version.c" />
-		<echo   file = "native/version.c" >
-#include "version.h"		
-const char *NHARU_VERSION_${c.version} = "${full.version}";
-const char *NHARU_getVersion() { return NHARU_VERSION_${c.version}; }
-		</echo>
+
+		<exec executable = "${basedir}/${mk.ver}" >
+			<arg value = "${provider.version}" />
+			<arg value = "${basedir}/native" />
+		</exec>
+
 		<delete file = "java/org/crypthing/security/provider/Version.java" />
 		<echo   file = "java/org/crypthing/security/provider/Version.java" >
 package ${log.package}.provider;
 public class Version {
 	public static native String getNativeVersion();
-
 	public static String getVersion()
 	{
 		return "${full.version}";
 	}
 }
 		</echo>
-		<mkdir  dir  = "${bin.dir}" />
+
 		<delete file = "${src.dir}/${log.dir}/LogDevice.java" />
 		<echo   file = "${src.dir}/${log.dir}/LogDevice.java">
 package ${log.package};
