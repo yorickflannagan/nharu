@@ -15,8 +15,6 @@ IF "%VER%" EQU "" (
 	ECHO %ME%: Version number required
 	EXIT /B 1
 )
-ECHO %VER%
-ECHO %OUTPUT%
 IF NOT EXIST %CUR%build.number (
 	ECHO %ME%: File %CUR%build.number cannot be read
 	EXIT /B 1

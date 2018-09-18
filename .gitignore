@@ -31,7 +31,6 @@ nharujca.mak
 nharulib.mak
 nharujca.dll
 nharujca.exp
-Makefile
 debug
 test/ntest-app
 mem-check
