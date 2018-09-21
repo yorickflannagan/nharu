@@ -88,6 +88,7 @@ public final class NharuProvider extends Provider
 				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_LOAD_SO, f);
 				throw f;
 			}
+			// TODO: Must refactor this initialization
 		nharuInitPRNG();
 	}
 	public static boolean isLoaded() { return true; }

@@ -1,7 +1,16 @@
 {
 	"folders": [
 		{
-			"path": "C:\\Users\\developer\\dev\\nharu"
+		    "name": "Provider",
+			"path": "../jca"
+		},
+		{
+		    "name": "Library",
+		    "path": "../src"
+		},
+		{
+		    "name": "Test",
+		    "path": "../test"
 		}
 	],
 	"settings": {
@@ -14,6 +23,7 @@
 			"xutility": "c",
 			"functional": "cpp",
 			"test.h": "c"
-		}
+		},
+		"java.configuration.updateBuildConfiguration": "interactive"
 	}
 }

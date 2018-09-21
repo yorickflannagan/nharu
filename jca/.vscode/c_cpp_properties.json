@@ -2,12 +2,13 @@
     "configurations": [
         {
             "name": "Win32",
+			"intelliSenseMode": "msvc-x64",
             "includePath": [
-				"${workspaceFolder}/**",
-				"${workspaceFolder}/src",
-				"${workspaceFolder}/include",
-				"${workspaceFolder}/test",
-				"${workspaceFolder}/jca/native",
+				"${workspaceFolder}/native",
+				"${workspaceFolder:Library}/../include",
+				"${workspaceFolder:Library}/..",
+                "${OPENSSL}/include",
+                "${LIBIDN}/include",
 				"${JAVA_HOME}/include",
 				"${JAVA_HOME}/include/win32",
                 "${MSVC}/include",
@@ -16,9 +17,7 @@
                 "${WINSDK_INCLUDE}/shared",
                 "${WINSDK_INCLUDE}/um",
                 "${WINSDK_INCLUDE}/winrt",
-                "${WINSDK_INCLUDE}/cppwinrt",
-                "${OPENSSL}/include",
-                "${LIBIDN}/include"
+                "${WINSDK_INCLUDE}/cppwinrt"
             ],
             "defines": [
 				"_DEBUG",
@@ -32,14 +31,13 @@
 			"compilerPath": "${MSVC}/bin/Hostx64/x86/cl.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-			"intelliSenseMode": "msvc-x64",
             "browse": {
                 "path": [
-					"${workspaceFolder}/**",
-					"${workspaceFolder}/src",
-					"${workspaceFolder}/include",
-					"${workspaceFolder}/test",
-					"${workspaceFolder}/jca/native",
+					"${workspaceFolder}/native",
+					"${workspaceFolder:Library}/../include",
+					"${workspaceFolder:Library}/..",
+					"${OPENSSL}/include",
+					"${LIBIDN}/include",
 					"${JAVA_HOME}/include",
 					"${JAVA_HOME}/include/win32",
 					"${MSVC}/include",
@@ -48,25 +46,29 @@
 					"${WINSDK_INCLUDE}/shared",
 					"${WINSDK_INCLUDE}/um",
 					"${WINSDK_INCLUDE}/winrt",
-					"${WINSDK_INCLUDE}/cppwinrt",
-					"${OPENSSL}/include",
-					"${LIBIDN}/include"
-				],
+					"${WINSDK_INCLUDE}/cppwinrt"
+					],
       			"limitSymbolsToIncludedHeaders": true,
         		"databaseFilename": "${workspaceFolder}/.vscode/win.vc.db"
 		    }
 		},
 		{
 			"name": "linux",
+			"intelliSenseMode": "gcc-x64",
             "includePath": [
-				"${workspaceFolder}/**",
-				"${workspaceFolder}/src",
-				"${workspaceFolder}/include",
-				"${workspaceFolder}/test",
-				"${workspaceFolder}/jca/native",
-                "${OPENSSL}/include",
-                "${LIBIDN}/include"
-            ],
+				"${workspaceFolder}/native",
+				"${workspaceFolder:Library}/../include",
+				"${workspaceFolder:Library}/..",
+				"${OPENSSL}/include",
+				"${LIBIDN}/include",
+				"${JAVA_HOME}/include",
+				"${JAVA_HOME}/include/linux",
+				"/usr/lib/gcc/x86_64-linux-gnu/5/include",
+				"/usr/local/include",
+				"/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
+				"/usr/include/x86_64-linux-gnu",
+				"/usr/include"
+		],
             "defines": [
 				"_DEBUG",
 				"_DEBUG_"
@@ -74,16 +76,15 @@
 			"compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "c++17",
-			"intelliSenseMode": "gcc-x64",
             "browse": {
                 "path": [
-					"${workspaceFolder}/**",
-					"${workspaceFolder}/src",
-					"${workspaceFolder}/include",
-					"${workspaceFolder}/test",
-					"${workspaceFolder}/jca/native",
+					"${workspaceFolder}/native",
+					"${workspaceFolder:Library}/../include",
+					"${workspaceFolder:Library}/..",
 					"${OPENSSL}/include",
 					"${LIBIDN}/include",
+					"${JAVA_HOME}/include",
+					"${JAVA_HOME}/include/linux",
                     "/usr/lib/gcc/x86_64-linux-gnu/5/include",
                     "/usr/local/include",
                     "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
