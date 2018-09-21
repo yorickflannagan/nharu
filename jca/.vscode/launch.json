@@ -1,0 +1,21 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "java",
+			"name": "Debug (Launch)",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"console": "internalConsole",
+			"stopOnEntry": true,
+			"mainClass": "org.crypthing.security.provider.NharuProvider",
+			"args": "${env:NHARU_HOME}/test/repo/signer.p12 ${env:NHARU_HOME}/test/repo/trust.jks",
+			"classPaths": [
+				"${workspaceFolder}/nharujca.jar"
+			],
+			"sourcePaths": [
+				"${workspaceFolder}/java"
+			]
+		}
+	]
+}

@@ -29,10 +29,14 @@ PROJECT_HOME       = $(USERPROFILE)\dev\nharu
 OPENSSL            = $(OPENSSL)
 LIBIDN             = $(LIBIDN)
 JAVA_HOME          = $(JAVA_HOME)
+ANT_CONTRIB_LIB    = $(ANT_CONTRIB_LIB)
+BUILD_DEST         = $(BUILD_DEST)
+JRE_7              = $(JRE_7)
 
 OBJ_FILES          = $(PROJECT_HOME)\bin\$(TARGET)
 OUT_FILES          = $(PROJECT_HOME)\dist\$(TARGET)
 PKCS_FILES         = $(PROJECT_HOME)\pkcs11
+NHARU_FILES        = $(PROJECT_HOME)\include
 LIB_FILES          = $(PROJECT_HOME)\src
 TEST_FILES         = $(PROJECT_HOME)\test
 JCA_FILES          = $(PROJECT_HOME)\jca\native
@@ -54,6 +58,8 @@ LIB_PATH           = /LIBPATH:"$(OUT_FILES)" /LIBPATH:"$(LIBIDN)\lib" /LIBPATH:"
 LIB_SRCS           = $(LIB_FILES)\cms_env.c $(LIB_FILES)\cms_sd.c $(LIB_FILES)\crypto.c $(LIB_FILES)\libgfshare.c \
 					$(LIB_FILES)\parser.c $(LIB_FILES)\pkibr.c $(LIB_FILES)\pkix.c $(LIB_FILES)\sysservc.c $(LIB_FILES)\x509.c
 LIB_HEADERS        = $(PKCS_FILES)\cryptoki.h $(PKCS_FILES)\pkcs11.h $(PKCS_FILES)\pkcs11f.h $(PKCS_FILES)\pkcs11t.h \
+					$(NHARU_FILES)\base.h $(NHARU_FILES)\cms.h $(NHARU_FILES)\crypto.h $(NHARU_FILES)\error.h \
+					$(NHARU_FILES)\parser.h $(NHARU_FILES)\pkibr.h $(NHARU_FILES)\pkix.h $(NHARU_FILES)\sysservc.h \
 					$(LIB_FILES)\config.h $(LIB_FILES)\libgfshare.h $(LIB_FILES)\libgfshare_tables.h
 LIB_INCLUDES       = /I"$(PROJECT_HOME)" /I"$(PROJECT_HOME)\include" /I"$(OPENSSL)\include" /I"$(LIBIDN)\include"
 LIB_CVARS          = $(TARGET_CVARS) $(COMMON_CVARS) /D "_LIB"
@@ -76,11 +82,12 @@ JCA_INCLUDES       = $(LIB_INCLUDES) /I"$(JCA_FILES)" /I"$(JAVA_HOME)\include" /
 JCA_CVARS          = $(TARGET_CVARS) $(COMMON_CVARS) /D "NHARUJCA_EXPORTS" /D "_WINDOWS" /D "_USRDLL" /D "_WINDLL"
 JCA_CFLAGS         = $(TARGET_CFLAGS) $(TARGET_JCA_CFLAGS) $(COMMON_CFLAGS)
 JCA_LFLAGS         = $(TARGET_LFLAGS) $(TARGET_JCA_LFLAGS) $(COMMON_LFLAGS) /DLL /SUBSYSTEM:WINDOWS /IMPLIB:"$(OUT_FILES)\nharujca.lib" /OUT:"$(OUT_FILES)\nharujca.dll"
+ANT_CMD_LINE       = -buildfile $(PROJECT_HOME)\jca\build.xml -DANT_CONTRIB_LIB=$(ANT_CONTRIB_LIB) \
+					-DBUILD_DEST=$(OUT_FILES) -DVERSION=$(VERSION) -DJRE_7=$(JRE_7) -DOUT_FILES=$(OUT_FILES)
 
 
 ALL: $(OUT_FILES)\nharu.lib $(OUT_FILES)\rtest.exe
-ALL: MKVER $(OUT_FILES)\nharujca.dll
-
+ALL: MKVER $(OUT_FILES)\nharujca.dll JBUILD
 
 $(OUT_FILES)\nharu.lib: $(LIB_SRCS:.c=.obj)
 	$(IMPLIB) $(LIB_LFLAGS) @<<
@@ -134,12 +141,33 @@ $(JCA_SRCS:.c=.obj): $(JCA_SRCS) $(JCA_HEADERS)
 MKVER:
 	-CALL "$(PROJECT_HOME)\jca\make_version.bat" "$(VERSION)" "$(JCA_FILES)"
 
+JBUILD:
+	-CALL ANT $(ANT_CMD_LINE)
 
 CLEAN:
 	-DEL /Q $(OUT_FILES)\*.*
 	-DEL /Q $(OBJ_FILES)\*.*
 	-DEL $(JCA_FILES)\version.c
-
+	-CALL ANT $(ANT_CMD_LINE) clean
 
 TEST:
 	-$(OUT_FILES)\rtest.exe
+	-JAVA -cp $(OUT_FILES)\nharujca.jar org.crypthing.security.provider.NharuProvider $(TEST_FILES)\repo\signer.p12 $(TEST_FILES)\repo\trust.jks
+
+INSTALL:
+	-MKDIR $(BUILD_DEST)
+	-MKDIR $(BUILD_DEST)\lib
+	-MKDIR $(BUILD_DEST)\include
+	-MKDIR $(BUILD_DEST)\include\pkcs11
+	-COPY /B /Y /V $(OUT_FILES)\nharu.lib $(BUILD_DEST)\lib 
+	-COPY /B /Y /V $(OUT_FILES)\nharujca.dll $(BUILD_DEST)\lib 
+	-COPY /B /Y /V $(OUT_FILES)\nharujca.jar $(BUILD_DEST)\lib 
+	-COPY /Y /V $(NHARU_FILES)\*.h $(BUILD_DEST)\include 
+	-COPY /Y /V $(PKCS_FILES)\*.h $(BUILD_DEST)\include\pkcs11
+
+DISTCLEAN:
+	-DEL /S /Q $(BUILD_DEST)
+	-RMDIR $(BUILD_DEST)\include\pkcs11
+	-RMDIR $(BUILD_DEST)\include
+	-RMDIR $(BUILD_DEST)\include\lib
+	-RMDIR $(BUILD_DEST)

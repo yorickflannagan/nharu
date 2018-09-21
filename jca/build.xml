@@ -6,6 +6,7 @@
 	VERSION: provider version. Required.
 	JRE_7: Java 7 runtime lib. Required
 	DEBUG=1: Log level definition for trace. Optional. Default: error
+	OUT_FILES: native build directory. Optional. Default: ./native
 	JAVA_LOG_PATH: logging class package. Optional. Default: org.crypthing.security
   -->
 <project basedir = "." default = "install" name = "nharu-provider">
@@ -36,6 +37,9 @@
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
 		<condition property = "mk.ver" value = "make_version.bat" else = "mkver">
 			<os family = "windows" />
+		</condition>
+		<condition property = "native.dir" value = "${OUT_FILES}" else = "native">
+			<isset property="OUT_FILES" />
 		</condition>
 	</target>
 
@@ -68,6 +72,7 @@
 		<echo message="full.version"> ${full.version} </echo>
 		<echo message="c.version"> ${c.version} </echo>
 		<echo message="mk.ver"> ${mk.ver} </echo>
+		<echo message="native.dir"> ${native.dir} </echo>
 	</target>
 
 	<target name = "prepare" depends = "number, display">
@@ -158,7 +163,7 @@ import java.util.logging.Logger;
 		<delete file = "${target.file}" />
 	</target>
 
-	<target name = "compile" depends = "ver, display">
+	<target name = "compile" depends = "prepare">
 		<javac	debug              = "true"
 				debuglevel         = "source,lines,vars"
 				srcdir             = "${src.dir}"
@@ -174,7 +179,7 @@ import java.util.logging.Logger;
 	<target name = "build" depends = "compile">
 		<jar destfile = "${target.file}" level = "9" manifest="META-INF/MANIFEST.MF" >
 			<fileset dir = "${bin.dir}" />
-			<fileset dir = "native" includes="*.so,*.dll"/>
+			<fileset dir = "${native.dir}" includes="*.so,*.dll"/>
 		</jar>
 	</target>
 

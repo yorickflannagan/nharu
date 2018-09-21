@@ -5,10 +5,12 @@ import static org.crypthing.security.LogDevice.LOG_LEVEL_DEBUG;
 import static org.crypthing.security.LogDevice.LOG_LEVEL_NONE;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Provider;
+import java.security.KeyStore;
 import java.util.Enumeration;
 
 import org.crypthing.security.LogDevice;
@@ -259,9 +261,32 @@ public final class NharuProvider extends Provider
 	/*
 	 * Basic tests
 	 * ==================================
+	 * Command line required arguments:
+	 * args[0]: PKCS #12 signer location.
+	 * args[1]: Trust store JKS location.
 	 */
-	public static void main(final String[] args)
+	private static final String INVALID_ARGS = "A PKCS #12 and a JKS files are expected as arguments";
+	private static void check(final String[] args) throws Exception
 	{
+		if (args.length != 2) throw new RuntimeException(INVALID_ARGS);
+		final InputStream p12Stream = new FileInputStream(args[0]);
+		try
+		{
+			final KeyStore p12 = KeyStore.getInstance("pkcs12");
+			p12.load(p12Stream, "secret".toCharArray());
+		}
+		finally { p12Stream.close(); }
+		final InputStream jksStream = new FileInputStream(args[1]);
+		try
+		{
+			final KeyStore jks = KeyStore.getInstance("jks");
+			jks.load(jksStream, "secret".toCharArray());
+		}
+		finally { jksStream.close(); }
+	}
+	public static void main(final String[] args) throws Exception
+	{
+		check(args);
 		System.out.println("====================================================================");
 		NharuArrays.main(new String[0]);
 		System.out.println("====================================================================");
@@ -273,13 +298,12 @@ public final class NharuProvider extends Provider
 		System.out.println("====================================================================");
 		NharuCertStore.main(new String[0]);
 		System.out.println("====================================================================");
-		final String p12 = args.length == 1 ? args[0] : "signer.p12";
-		System.setProperty("javax.net.ssl.keyStore", p12);
+		System.setProperty("javax.net.ssl.keyStore", args[0]);
 		System.setProperty("javax.net.ssl.keyStorePassword", "secret");
 		System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
-		System.setProperty("javax.net.ssl.trustStore", p12);
+		System.setProperty("javax.net.ssl.trustStore", args[1]);
 		System.setProperty("javax.net.ssl.trustStorePassword", "secret");
-		System.setProperty("javax.net.ssl.trustStoreType", "pkcs12");
+		System.setProperty("javax.net.ssl.trustStoreType", "jks");
 		CMSDocument.main(new String[0]);
 		System.out.println("====================================================================");
 		NharuDigest.main(new String[0]);
