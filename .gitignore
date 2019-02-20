@@ -49,3 +49,6 @@ META-INF/
 .classpath
 .project
 .settings/
+.vscode/
+win32/.wget-hsts
+win32/test.vbs
