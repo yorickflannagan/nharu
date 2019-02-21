@@ -45,104 +45,11 @@
 ' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
 
-Const VS_INSTALL_PATH		= 0
-Const GIT_INSTALL_PATH		= 1
-Const DRMEM_INSTALL_PATH	= 2
-Const NASM_INSTALL_PATH		= 3
-Const PERL_INSTALL_PATH		= 4
-Const JAVA_INSTALL_PATH		= 5
-Const ANT_INSTALL_PATH		= 6
-Const ANTC_INSTALL_PATH		= 7
-Const SSL_INSTALL_PATH		= 8
-Const IDN_INSTALL_PATH		= 9
-
-
-Const HKEY_LOCAL_MACHINE	= &H80000002
-Const INSTALLER_REGKEY		= "SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\Folders"
-Const GIT_REGKEY			= "HKEY_LOCAL_MACHINE\SOFTWARE\GitForWindows\InstallPath"
-Const NASM_REGKEY			= "HKEY_CURRENT_USER\Software\nasm\"
-Const PERL_REGKEY			= "HKEY_LOCAL_MACHINE\SOFTWARE\Perl\"
-
-Dim ARG_PROXY
-Dim ARG_USER
-Dim ARG_PWD
-
-Main
-Sub Main
-
-	Dim args : Set args = Nothing
-	Dim argProxy, argUser, argPwd
-	Dim products
-	On Error Resume Next
-
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-	WScript.Echo " Nharu Library                                    "
-	WScript.Echo " Environment for Windows development configuration"
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-	WScript.Echo ""
-
-	Set args = WScript.Arguments.Named
-	If args.Exists("proxy") Then
-		ARG_PROXY = args.Item("proxy")
-	End If
-	If args.Exists("user") Then
-		ARG_USER = args.Item("user")
-	End If
-	If args.Exists("pwd") Then
-		ARG_PWD = args.Item("pwd")
-	End If
-	Set args = Nothing
-
-	products = GetInstalledProducts()
-
-	WScript.Echo ""
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-	WScript.Echo " Environment for Windows development configured   "
-	WScript.Echo " Use dev-env.bat file to all operations           "
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-
-End Sub
-
-' Search for installed software requirements
-Function GetInstalledProducts()
-
-	Dim fs : Set fs = Nothing
-	Dim ret(10), msiFiles
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	msiFiles = fs.GetParentFolderName(WScript.ScriptFullName) & "\temp"
-	If Not fs.FolderExists(msiFiles) Then
-		fs.CreateFolder(msiFiles) : CheckError
-	End If
-
-	ret(VS_INSTALL_PATH)	= EnsureInstallVS()
-	ret(GIT_INSTALL_PATH)	= EnsureInstallGit(msiFiles, True)
-	ret(DRMEM_INSTALL_PATH)	= EnsureInstallDrMem(msiFiles, True)
-	ret(NASM_INSTALL_PATH)	= EnsureInstallNASM(msiFiles, True)
-	ret(PERL_INSTALL_PATH)	= EnsureInstallPerl(msiFiles, True)
-	ret(JAVA_INSTALL_PATH)	= EnsureInstallJava()
-	ret(ANT_INSTALL_PATH)	= EnsureInstallAnt(msiFiles & "\ant.zip", True)
-	ret(ANTC_INSTALL_PATH)	= EnsureInstallAntContrib(msiFiles & "\antc.zip", True)
-	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), True)
-	ret(IDN_INSTALL_PATH)	= EnsureInstallLibidn(ret(GIT_INSTALL_PATH), True)
-
-	If fs.FolderExists(msiFiles) Then
-		Dim folder
-		Set folder = fs.GetFolder(msiFiles)
-		If folder.Files.Count = 0 Then
-			fs.DeleteFolder(msiFiles)
-		End If
-		Set folder = Nothing
-	End If
-	Set fs = Nothing
-	GetInstalledProducts = ret
-
-End Function
 
 ' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ' Ensures that softaware requirements have been met
 ' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
 ' Check Microsoft Visual Studio
 Function EnsureInstallVS()
 
@@ -209,389 +116,268 @@ Function GetVSInstallPath()
 
 End Function
 
-' Gets Git SCM installation path
-' Arguments:
-'	target: temporary directory files should be downloaded, if necessary
-'	try: True if it should be downloaded and executed
-Function EnsureInstallGit(target, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-
-	stdout.Write("Searching for Git SCM... ")
-	ret = GetRegistryValue(GIT_REGKEY) : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallGit = ret & "\"
-	Else
-		If try Then
-			TryInstallProduct "Git SM", "https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/Git-2.20.1-64-bit.exe", target & "\git.exe"
-			EnsureInstallGit = EnsureInstallGit(target, False)
-		Else
-			stdout.WriteLine("Could not download and/or install  Git SCM")
-			stdout.WriteLine("Please, download it from https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/Git-2.20.1-64-bit.exe,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Dr. Memory installation path
-' Arguments:
-'	target: temporary directory files should be downloaded, if necessary
-'	try: True if it should be downloaded and executed
-Function EnsureInstallDrMem(target, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-
-	stdout.Write("Searching for Dr. Memory Debugger... ")
-	ret = GetInstallPathFromInstaller("Dr. Memory") : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallDrMem = ret
-	Else
-		If try Then
-			TryInstallProduct "Dr. Memory Debugger", "https://github.com/DynamoRIO/drmemory/releases/download/release_1.11.0/DrMemory-Windows-1.11.0-2.msi", target & "\drmem.msi"
-			EnsureInstallDrMem = EnsureInstallDrMem(target, False)
-		Else
-			stdout.WriteLine("Could not download and/or install Dr. Memory Debugger")
-			stdout.WriteLine("Please, download it from https://github.com/DynamoRIO/drmemory/releases/download/release_1.11.0/DrMemory-Windows-1.11.0-2.msi,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Netwide Assembler installation path
-' Arguments:
-'	target: temporary directory files should be downloaded, if necessary
-'	try: True if it should be downloaded and executed
-Function EnsureInstallNASM(target, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-
-	stdout.Write("Searching for Netwide Assembler... ")
-	ret = GetRegistryValue(NASM_REGKEY) : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallNASM = ret & "\"
-	Else
-		If try Then
-			TryInstallProduct "Netwide Assembler", "https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win32/nasm-2.14.02-installer-x86.exe", target & "\nasm.exe"
-			EnsureInstallNASM = EnsureInstallNASM(target, False) & "\"
-		Else
-			stdout.WriteLine("Could not download and/or install Netwide Assembler")
-			stdout.WriteLine("Please, download it from https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win32/nasm-2.14.02-installer-x86.exe,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Active Perl installation path
-' Arguments:
-'	target: temporary directory files should be downloaded, if necessary
-'	try: True if it  should be downloaded and executed
-Function EnsureInstallPerl(target, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-
-	stdout.Write("Searching for Active Perl... ")
-	ret = GetRegistryValue(PERL_REGKEY) : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallPerl = ret
-	Else
-		If try Then
-			TryInstallProduct "Active Perl", "https://downloads.activestate.com/ActivePerl/releases/5.26.3.2603/ActivePerl-5.26.3.2603-MSWin32-x64-a95bce075.exe", target & "\perl.exe"
-			EnsureInstallPerl = EnsureInstallPerl(target, False) & "\"
-		Else
-			stdout.WriteLine("Could not download and/or install Active Perl")
-			stdout.WriteLine("Please, download it from https://downloads.activestate.com/ActivePerl/releases/5.26.3.2603/ActivePerl-5.26.3.2603-MSWin32-x64-a95bce075.exe,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Java SE Development Kit installation path
-Function EnsureInstallJava()
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-
-	stdout.Write("Searching for Java SE Development Kit... ")
-	ret = GetInstallPathFromInstaller("Java SE Development Kit") : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallJava = ret
-	Else
-		stdout.WriteLine("Java SE Development Kit must be previously installed.")
-		stdout.WriteLine("Please, download it from http://www.oracle.com/technetwork/java/javase/downloads/,")
-		stdout.WriteLine("install it and run this configure.vbs again.")
-		stdout.WriteBlankLines(1)
-		WScript.Quit 2
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Apache Ant installation path
-' Arguments:
-'	temp: temporary path (with file name) to download, if necessary
-'	try: True if it should be downloaded and unzipped
-Function EnsureInstallAnt(temp, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim location, ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-	location = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(WScript.ScriptFullName)))
-	stdout.Write("Searching for Apache Ant... ")
-	ret = FindFile(fs, location, "ant.jar") : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallAnt = fs.GetParentFolderName(ret) & "\"
-	Else
-		If try Then
-			TryUnzipDocument "Apache Ant", "http://mirror.nbtelecom.com.br/apache//ant/binaries/apache-ant-1.10.5-bin.zip", temp, location
-			EnsureInstallAnt = EnsureInstallAnt(temp, False)
-		Else
-			stdout.WriteLine("Could not download and/or install Apache Ant")
-			stdout.WriteLine("Please, download it from http://mirror.nbtelecom.com.br/apache//ant/binaries/apache-ant-1.10.5-bin.zip,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Ant Contrib Tasks installation path
-' Arguments:
-'	temp: temporary path (with file name) to download, if necessary
-'	try: True if it should be downloaded and unzipped
-Function EnsureInstallAntContrib(temp, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim location, ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-	location = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(WScript.ScriptFullName)))
-	stdout.Write("Searching for Ant Contrib Tasks... ")
-	ret = FindFile(fs, location, "ant-contrib-1.0b3.jar") : Feedback stdout, ret
-	If Not IsEmpty(ret) Then
-		EnsureInstallAntContrib = fs.GetParentFolderName(ret) & "\"
-	Else
-		If try Then
-			TryUnzipDocument "Ant Contrib Tasks", "https://ufpr.dl.sourceforge.net/project/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip", temp, location
-			EnsureInstallAntContrib = EnsureInstallAntContrib(temp, False)
-		Else
-			stdout.WriteLine("Could not download and/or install Ant Contrib Tasks")
-			stdout.WriteLine("Please, download it from https://ufpr.dl.sourceforge.net/project/ant-contrib/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets OpenSSL installation path
-' Arguments:
-'	gitInstallPath: Git location to download OpenSSL, if necessary
-'	try: True if it should be downloaded
-Function EnsureInstallOpenSSL(gitInstallPath, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim location, ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-	location = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(WScript.ScriptFullName)))
-	stdout.Write("Searching for OpenSSL... ")
-	ret = FindFile(fs, location, "libcrypto.lib") : Feedback stdout, ret
-	If Not Empty(ret) Then
-		EnsureInstallOpenSSL = fs.GetParentFolderName(ret) & "\"
-	Else
-		If try Then
-			Dim shell : Set shell = Nothing
-			Dim git, cmd, rv
-			Set shell = CreateObject("Wscript.Shell") : CheckError
-			SetGitEnv ret(GIT_INSTALL_PATH)
-			git = """" & gitInstallPath & "git-cmd.exe"""
-			cmd = git & " git clone https://github.com/openssl/openssl " & location & "\openssl"
-			rv = shell.Run(cmd, 1, True)
-			If rv <> 0 Then
-				stdout.WriteLine("Could not clone OpenSSL Library to build it.")
-				stdout.WriteLine("You must do it by yourself and run this configure.vbs again.")
-				WScript.Quit 3
-			End If
-			' TODO: Configure and build OpenSSL
-			Set shell = Nothing
-			EnsureInstallOpenSSL = EnsureInstallOpenSSL(gitInstallPath, False)
-		Else
-			stdout.WriteLine("Could not clone and/or install OpenSSL")
-			stdout.WriteLine("Please, download it from https://github.com/openssl/openssl,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
-' Gets Libidn installation path
-' Arguments:
-'	gitInstallPath: Git location to download OpenSSL, if necessary
-'	try: True if it should be downloaded
-Function EnsureInstallLibidn(gitInstallPath, try)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim location, ret
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-	location = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(WScript.ScriptFullName)))
-	stdout.Write("Searching for Libidn... ")
-	ret = FindFile(fs, location, "libidn.lib") : Feedback stdout, ret
-	If Not Empty(ret) Then
-		EnsureInstallLibidn = fs.GetParentFolderName(ret) & "\"
-	Else
-		If try Then
-			Dim shell : Set shell = Nothing
-			Dim git, cmd, rv
-			Set shell = CreateObject("Wscript.Shell") : CheckError
-			SetGitEnv ret(GIT_INSTALL_PATH)
-			git = """" & gitInstallPath & "git-cmd.exe"""
-			cmd = git & " git clone https://git.savannah.gnu.org/git/libidn.git " & location & "\libidn"
-			rv = shell.Run(cmd, 1, True)
-			If rv <> 0 Then
-				stdout.WriteLine("Could not clone Libidn Library to build it.")
-				stdout.WriteLine("You must do it by yourself and run this configure.vbs again.")
-				WScript.Quit 3
-			End If
-			' TODO: Configure and build Libidn
-			Set shell = Nothing
-			EnsureInstallLibidn = EnsureInstallLibidn(gitInstallPath, False)
-		Else
-			stdout.WriteLine("Could not clone and/or install OpenSSL")
-			stdout.WriteLine("Please, download it from https://git.savannah.gnu.org/git/libidn.git,")
-			stdout.WriteLine("install it and run this configure.vbs again.")
-			stdout.WriteBlankLines(1)
-			WScript.Quit 2
-		End If
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-
-End Function
-
 
 ' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ' General utilities
 ' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-Sub Feedback(stdout, value)
 
-	If Not IsEmpty(value) Then
-		stdout.WriteLine("Found!")
-	Else
-		stdout.WriteLine("Not found!")
-	End If	
+' Encapsultes a proxy definition
+Class Proxy
 
-End Sub
+	Public Server, User, Pwd
 
-' Set http.proxy variable to Git use
-' Arguments:
-'	gitInstallPath: Git install folder
-Sub SetGitEnv(gitInstallPath)
+	' Sets Proxy object from command line arguments
+	Public Sub FromArguments
 
-	Dim shell : Set shell = Nothing
-	Dim git, cmd, rv
-	On Error Resume Next
+		Dim args : Set args = Nothing
+		Set args = WScript.Arguments.Named
 
-	Set shell = CreateObject("Wscript.Shell") : CheckError
-	git = """" & gitInstallPath & "git-cmd.exe"""
-	If Not Empty(ARG_PROXY) Then
-		cmd = git & " git config --global --get http.proxy"
-		rv = shell.Run(cmd, 0, True)
-		If rv <> 0 Then
-			cmd = git & " git config --global http.proxy http://" & ARG_PROXY
-			rv = shell.Run(cmd, 0, True)
-			If rv <> 0 Then
-				WScript.Echo "Could not set Git environment to clone Nharu Library."
-				WScript.Echo "You must do it by yourself and run this configure.vbs again."
-				WScript.Quit 3
+		If args.Exists("proxy") Then
+			Server = args.Item("proxy")
+		End If
+		If args.Exists("user") Then
+			User = args.Item("user")
+		End If
+		If args.Exists("pwd") Then
+			Pwd = args.Item("pwd")
+		End If
+		Set args = Nothing
+
+	End Sub
+
+End Class
+
+' Encapsulates GNU WGet operation
+Class WGet
+
+	Private _location, _proxy
+
+	' Configures object to download
+	' Arguments:
+	'	wgetLocation: folder where wget.exe lies
+	'	oProxy: instance of Proxy class
+	Public Sub Configure(wgetLocation, oProxy)
+
+		If Not FolderExists(wgetLocation) Or Not FileExists(wgetLocation & "\wget.exe") Then Err.Raise 1, "WGet.Configure", "Argument must point to an existing wget.exe"
+		_location = """" & wgetLocation & "\wget.exe"""
+		Set _proxy = oProxy
+
+	End Sub
+
+	' Downloads a file
+	' Arguments:
+	'	name: label for feedeback
+	'	uri: resource location
+	'	target: complete path to downloaded resource
+	Public Function Download(name, uri, target)
+
+		If IsEmpty(_location) Or IsEmpty(_proxy) Then Err.Raise 2, "WGet.Download", "Object improperly initialized"
+		Dim cmd
+		Dim shell : Set shell = Nothing
+		Dim ret
+
+		cmd = _location
+		If Not IsEmpty(_proxy.Server) Then
+			If InStr(uri, "https") = 1 Then
+				cmd = cmd & " -e https_proxy=" & _proxy.Server & " --no-check-certificate"
+			Else
+				cmd = cmd & " -e http_proxy=" & _proxy.Server
+			End If
+			If Not IsEmpty(_proxy.User) Then
+				cmd = cmd & " --proxy-user=" & _proxy.User
+			End If
+			If Not IsEmpty(_proxy.Pwd) Then
+					cmd = cmd & " --proxy-password=" & _proxy.Pwd
 			End If
 		End If
-	End If
-	Set shell = Nothing
+		cmd = cmd & " --output-document=" & target & " " & uri
 
-End sub
+		Set shell = CreateObject("Wscript.Shell")
+		ret = shell.Run(cmd, 1, True)
+		If ret <> 0 Then
+			Dim fs : Set fs = Nothing
+			Set fs = CreateObject ("Scripting.FileSystemObject")
+			If fs.FileExists(target) Then
+				fs.DeleteFile(target)
+			End If
+			Set fs = Nothing
+		End If
+		Download = ret
+		
+		Set shell = Nothing
+
+	End Function
+
+End Class
+
+' Install facility
+Class Installer
+
+	' WGet instance
+	Public Getter
+
+	Public Sub Install(source, target)
+
+
+	End Sub
+	
+	Private Sub CheckGetter
+
+		If IsEmpty(Getter) Then
+			Dim oProxy : Set oProxy = Nothing
+			Dim fs : Set fs = Nothing
+			Dim location
+
+			Set oProxy = New Proxy
+			oProxy.FromArguments
+			Set Getter = New WGet
+			Set fs = CreateObject ("Scripting.FileSystemObject")
+			Getter.Configure fs.GetParentFolderName(WScript.ScriptFullName), oProxy
+			Set fs = Nothing
+		End If 
+
+	End Sub
+
+End Class
+
+' Encapsulates Git SCM
+Class GitSCM
+
+	Private _location, _proxy
+
+
+	' Configures object to download
+	' Arguments:
+	'	gitLocation: folder where git-cmd.exe lies
+	'	oProxy: instance of Proxy class
+	Public Sub Configure(gitLocation, oProxy)
+
+		If Not FolderExists(gitLocation) Or Not FileExists(gitLocation & "\git-cmd.exe") Then Err.Raise 1, "GitSCM.Configure", "Argument must point to an existing git-cmd.exe"
+		_location = """" & gitLocation & "\git-cmd.exe"""
+		Set _proxy = oProxy
+
+	End Sub
+
+	' Sets Git SCM proxy global environment, if necessary
+	Public Sub SetEnv
+
+		If IsEmpty(_location) Or IsEmpty(_proxy) Then Err.Raise 2, "GitSCM.SetEnv", "Object improperly initialized"
+		If IsEmpty(_proxy.Server) Then Exit Sub
+		Dim shell : Set shell = Nothing
+		Dim cmd, rv
+
+		Set shell = CreateObject("Wscript.Shell")
+		cmd = _location & " git config --global http.proxy http://"
+		If Not IsEmpty(_proxy.User) And Not IsEmpty(_proxy.Pwd) Then
+			cmd = cmd & _proxy.User & ":" & _proxy.Pwd & "@"
+		End If
+		cmd = cmd & _proxy.Server
+		rv = shell.Run(_location & " git config --global --get http.proxy", 0, True)
+		If rv <> 0 Then
+			rv = shell.Run(cmd, 0, True)
+			If rv <> 0 Then Err.Raise 2, "GitSCM.SetEnv", "Failed to set Git global http.proxy"
+			rv = shell.Run(_location & " git config --global --get https.proxy", 0, True)
+			If rv <> 0 Then
+				cmd = Replace(cmd, "http.proxy", "https.proxy")
+				rv = shell.Run(cmd, 0, True)
+				If rv <> 0 Then Err.Raise 2, "GitSCM.SetEnv", "Failed to set Git global https.proxy"
+			End If
+		End If
+		Set shell = Nothing
+		
+	End Sub
+
+	' Clones specified Git repository
+	' Arguments:
+	'	uri: Git repository identifier
+	'	target: folder where to clone. Must no exists
+	Public Function Clone(uri, target)
+
+		If IsEmpty(_location) Or IsEmpty(_proxy) Then Err.Raise 2, "GitSCM.Clone", "Object improperly initialized"
+		If FolderExists(target) Then err.Raise 3, "GitSCM.Clone", "Target directory must not exists"
+		Dim shell : Set shell = Nothing
+
+		Set shell = CreateObject("Wscript.Shell")
+		Clone = shell.Run(_location & " git clone " & uri & " " & target, 1, True)
+		Set shell = Nothing
+
+	End Function
+
+End Class
+
+' Implements a file finder
+Class Finder
+
+	' Folder where the search must start
+	Public StartFolder
+
+	' Finds specified file name and returns its location, if found
+	' Arguments
+	'	fileName: the file to find
+	Public Function Find(fileName)
+	
+		Dim fs : Set fs = Nothing
+		
+		Set fs = CreateObject ("Scripting.FileSystemObject")
+		If IsEmpty(StartFolder) Then StartFolder = fs.GetParentFolderName(WScript.ScriptFullName)
+		Find = FindFile(fs, StartFolder, fileName)
+		Set fs = Nothing
+
+	End Function
+
+	' Finds specified file name and returns its location, if found
+	' Arguments
+	'	fs: an instance of Scripting.FileSystemObject
+	'	folderName: the folder where the current search begins
+	'	fileName: the file to find
+	Private Function FindFile(fs, folderName, fileName)
+	
+		Dim file, folder, found
+		Dim current : Set current = Nothing
+
+		Set current = fs.GetFolder(folderName)
+		For Each file In current.Files
+			If StrComp(file.Name, fileName, vbTextCompare) = 0 Then
+				found = current.Path
+				Exit For
+			End If
+		Next
+		If IsEmpty(found) Then
+			For Each folder In current.SubFolders
+				file = FindFile(fs, folder.Path, fileName)
+				If Not IsEmpty(file) Then
+					found = file
+					Exit For
+				End If
+			Next
+		End If 
+		Set current = Nothing
+		If Not IsEmpty(found) Then FindFile = found
+	
+	End Function
+
+
+End Class
+
+' Shortcut for Scripting.FileSystemObject.FolderExists
+Function FolderExists(name)
+
+	Dim fs : Set fs = Nothing
+	Set fs = CreateObject("Scripting.FileSystemObject")
+	FolderExists = fs.FolderExists(name)
+	Set fs = Nothing
+
+End Function
+
+' Shortcut for Scripting.FileSystemObject.FileExists
+Function FileExists(name)
+
+	Dim fs : Set fs = Nothing
+	Set fs = CreateObject ("Scripting.FileSystemObject")
+	FileExists = fs.FileExists(name)
+	Set fs = Nothing
+
+End Function
 
 ' Gets value of specified registry key
 ' Arguments:
@@ -600,9 +386,8 @@ Function GetRegistryValue(key)
 
 	Dim shell : Set shell = Nothing
 	Dim value
-	On Error Resume Next
 
-	Set shell = WScript.CreateObject("WScript.Shell") : CheckError
+	Set shell = WScript.CreateObject("WScript.Shell")
 	value = shell.RegRead(key)
 	If Err.number = 0 Then GetRegistryValue = value
 	Set shell = Nothing
@@ -615,14 +400,13 @@ Function GetInstallPathFromInstaller(productName)
 	Dim product, value
 	Dim installer : Set installer = Nothing
 	Dim products : Set products = Nothing
-	On Error Resume Next
 
-	Set installer = Wscript.CreateObject("WindowsInstaller.Installer") : CheckError
-	Set products = installer.Products : CheckError
+	Set installer = Wscript.CreateObject("WindowsInstaller.Installer")
+	Set products = installer.Products
 	For Each product In products
-		value = installer.ProductInfo(product, "ProductName") : CheckError
+		value = installer.ProductInfo(product, "ProductName")
 		If InStrRev(value, productName, -1, vbTextCompare) <> 0 Then 
-			value = installer.ProductInfo(product, "InstallLocation") : CheckError
+			value = installer.ProductInfo(product, "InstallLocation")
 			If value <> Empty Then GetInstallPathFromInstaller = value
 			Exit For
 		End If 
@@ -632,157 +416,23 @@ Function GetInstallPathFromInstaller(productName)
 
 End Function
 
-' Finds specified file name and returns its location, if found
-' Arguments
-'	fs: an instance of Scripting.FileSystemObject
-'	folderName: the folder where the current search begins
-'	fileName: the file to find
-Function FindFile(fs, folderName, fileName)
-
-	Dim file, folder
-	Dim current : Set current = Nothing
-	On Error Resume Next
-
-	Set current = fs.GetFolder(folderName) : CheckError
-	For Each file In current.Files
-		If StrComp(file.Name, fileName, vbTextCompare) = 0 Then
-			FindFile = current.Path & "\"
-			Set current = Nothing
-			Exit Function
-		End If
-	Next
-	For Each folder In current.SubFolders
-		file = FindFile(fs, folder.Path, fileName)
-		If Not IsEmpty(file) Then
-			FindFile = file
-			Set current = Nothing
-			Exit Function
-		End If
-	Next
-	Set current = Nothing
-
-End Function
-
-' Downloads specified Windows Installer and run it t install
+' Set variable in current user environment
 ' Arguments:
-'	productName: Label for executions
-'	uri: URI of Windows installer of product
-'	target: MSI file name and path. It is removed if all succeeds
-Sub TryInstallProduct(productName, uri, target)
+'	name: variable name
+'	value: variable value
+Sub SetEnvironment(name, value)
 
-	If Not DownloadFile(productName, uri, target) Then Exit Sub
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
 	Dim shell : Set shell = Nothing
-	Dim ret
+	Dim var : Set var = Nothing
 	On Error Resume Next
 
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1)
-	Set shell = CreateObject("Wscript.Shell") : CheckError
-	stdout.WriteLine("Running installer at " & target & "...")
-	ret = shell.Run(target, 0, True)
-	If ret = 0 Then
-		fs.DeleteFile(target)
-	Else
-		stdout.WriteLine("Installer returned error level " & ret)
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
+	Set shell = CreateObject("WScript.Shell")
+	Set var = GetObject( "winmgmts://./root/cimv2:Win32_Environment").SpawnInstance_
+	var.Name = name
+	var.VariableValue = value
+	var.UserName = shell.ExpandEnvironmentStrings("%USERNAME%")
+	var.Put_
+	Set var = Nothing
 	Set shell = Nothing
-
-End Sub
-
-' Downloads specified Zip file and uncompress it
-' Arguments:
-'	document: Label for executions
-'	uri: URI of zip file
-'	temp: temporary folder to download document
-'	target: folder where document should be unzipped
-Sub TryUnzipDocument(document, uri, temp, target)
-
-	If Not DownloadFile(document, uri, temp) Then Exit Sub
-	Dim fs : Set fs = Nothing
-	Dim shell : Set shell = Nothing
-	Dim oSource : Set oSource = Nothing
-	Dim oTarget : Set oTarget = Nothing
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	If Not fs.FolderExists(target) Then
-		fs.CreateFolder(target) : CheckError
-	End If
-	Set shell = CreateObject("Shell.Application") : CheckError
-	Set oSource = shell.NameSpace(temp).Items()
-	Set oTarget = shell.NameSpace(target)
-	oTarget.CopyHere oSource, 256
-	fs.DeleteFile(temp)
-	Set oSource = Nothing
-	Set oTarget = Nothing
-	Set fs = Nothing
-	Set shell = Nothing
-
-End Sub
-
-' Downloads a product
-' Arguments:
-'	productName: Label for executions
-'	uri: URI of file to download
-'	target: file name to be created when download ends
-Function DownloadFile(productName, uri, target)
-
-	Dim cmd
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim shell : Set shell = Nothing
-	Dim ret
-	On Error Resume Next
-
-	cmd = "wget.exe "
-	If Not IsEmpty(ARG_PROXY) Then
-		If InStr(uri, "https") = 1 Then
-			cmd = cmd & "-e https_proxy=" & ARG_PROXY & " --no-check-certificate"
-		Else
-			cmd = cmd & "-e http_proxy=" & ARG_PROXY
-		End If
-		If Not IsEmpty(ARG_USER) Then
-			cmd = cmd & " --proxy-user=" & ARG_USER
-		End If
-		If Not IsEmpty(ARG_PWD) Then
-			cmd = cmd & " --proxy-password=" & ARG_PWD
-		End If
-	End If
-	cmd = cmd & " --output-document=" & target & " " & uri
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1)
-	Set shell = CreateObject("Wscript.Shell") : CheckError
-	stdout.WriteLine("Downloading " & productName & " to " & target & "...")
-	ret = shell.Run(cmd, 1, True)
-	If ret = 0 Then
-		DownloadFile = True
-	Else
-		stdout.WriteLine("WGET failed to download installer with error level " & ret)
-		If fs.FileExists(target) Then
-			fs.DeleteFile(target)
-		End If
-		DownloadFile = False
-	End If
-	stdout.Close
-	Set stdout = Nothing
-	Set fs = Nothing
-	Set shell = Nothing
-
-End Function
-
-' Error check
-Sub CheckError
-
-	Dim message
-	If Err.number <> 0 Then
-		WScript.Echo "An error number " & Err.number & " of type " & Err.Source & "has occurred: " & Err.Description
-		Wscript.Quit 1
-	End If
 
 End Sub
