@@ -2,14 +2,15 @@
 <!--
 	ARGUMENTS (-D)
 	ANT_CONTRIB_LIB: Ant contrib support library. Required.
-	BUILD_DEST: Installation directory. Required.
 	VERSION: provider version. Required.
 	JRE_7: Java 7 runtime lib. Required
-	DEBUG=1: Log level definition for trace. Optional. Default: error
-	OUT_FILES: native build directory. Optional. Default: ./native
+	PREFIX: Installation directory.
+	DEBUG=1: Log level definition for trace and output directory. Optional. Default: error and release
+	OUT_DIR: native build directory. Optional. Default: ../dist/${target.dir}
+	BIN_DIR: Intermediate directory. Optional. Default: ../bin//${target.dir}
 	JAVA_LOG_PATH: logging class package. Optional. Default: org.crypthing.security
   -->
-<project basedir = "." default = "install" name = "nharu-provider">
+<project basedir = "." default = "build" name = "nharu-provider" >
 
 	<target name = "init">
 		<property environment = "env"/>
@@ -18,9 +19,20 @@
 				<pathelement location="${ANT_CONTRIB_LIB}"/>
 			</classpath>
 		</taskdef>
+		<condition property = "target.dir" value = "debug" else = "release">
+			<and>
+				<equals arg1="${DEBUG}" arg2="1" />
+				<isset property="DEBUG" />
+			</and>
+		</condition>
 		<property name = "src.dir" value = "java" />
-		<property name = "build.dest" value = "${BUILD_DEST}" />
-		<property name = "bin.dir" value = "java-bin" />
+		<condition property = "bin.dir" value = "${BIN_DIR}" else = "../bin/${target.dir}/java.bin">
+			<isset property="BIN_DIR" />
+		</condition>
+		<condition property = "dist.dir" value = "${OUT_DIR}" else = "../dist/${target.dir}">
+			<isset property="OUT_DIR" />
+		</condition>
+		<property name = "install.dest" value = "${PREFIX}\libs" />
 		<property name = "target.file" value = "nharujca.jar" />
 		<condition property = "log.level" value = "LOG_LEVEL_TRACE" else = "LOG_LEVEL_ERROR">
 			<and>
@@ -35,11 +47,8 @@
 			<isset property = "JAVA_LOG_PATH" />
 		</condition>
 		<propertyregex property = "log.dir" override = "true" input = "${log.package}" regexp = "\." replace = "\/" global = "true"/>
-		<condition property = "mk.ver" value = "make_version.bat" else = "mkver">
-			<os family = "windows" />
-		</condition>
-		<condition property = "native.dir" value = "${OUT_FILES}" else = "native">
-			<isset property="OUT_FILES" />
+		<condition property = "target.builded" value = "true" >
+			<available file = "${dist.dir}/${target.file}" />
 		</condition>
 	</target>
 
@@ -53,26 +62,25 @@
 		<tstamp />
 		<buildnumber/>
 		<property name = "full.version" value = "${provider.version}.${build.number}" />
-		<propertyregex property="c.version" input="${full.version}"  regexp="\." replace="_" global="true" />
 	</target>
 
-	<target name= "display" depends="ver">
-		<echo message="Apache Ant Contrib library"> ${ANT_CONTRIB_LIB} </echo>
-		<echo message="src.dir"> ${src.dir} </echo>
-		<echo message="build.dest"> ${build.dest} </echo>
-		<echo message="bin.dir"> ${bin.dir} </echo>
-		<echo message="target.file"> ${target.file} </echo>
-		<echo message="log.level"> ${log.level} </echo>
-		<echo message="target"> ${target} </echo>
-		<echo message="source"> ${source} </echo>
-		<echo message="jre.7"> ${jre.7} </echo>
-		<echo message="log.package"> ${log.package} </echo>
-		<echo message="log.dir"> ${log.dir} </echo>
-		<echo message="provider.version"> ${provider.version} </echo>
-		<echo message="full.version"> ${full.version} </echo>
-		<echo message="c.version"> ${c.version} </echo>
-		<echo message="mk.ver"> ${mk.ver} </echo>
-		<echo message="native.dir"> ${native.dir} </echo>
+	<target name = "display" depends = "ver">
+		<echo message = "Apache Ant Contrib library"> ${ANT_CONTRIB_LIB} </echo>
+		<echo message = "src.dir"> ${src.dir} </echo>
+		<echo message = "install.dest"> ${install.dest} </echo>
+		<echo message = "bin.dir"> ${bin.dir} </echo>
+		<echo message = "target.file"> ${target.file} </echo>
+		<echo message = "log.level"> ${log.level} </echo>
+		<echo message = "target"> ${target} </echo>
+		<echo message = "source"> ${source} </echo>
+		<echo message = "jre.7"> ${jre.7} </echo>
+		<echo message = "log.package"> ${log.package} </echo>
+		<echo message = "log.dir"> ${log.dir} </echo>
+		<echo message = "target.dir"> ${target.dir} </echo>
+		<echo message = "dist.dir"> ${dist.dir} </echo>
+		<echo message = "provider.version"> ${provider.version} </echo>
+		<echo message = "full.version"> ${full.version} </echo>
+		<echo message = "target.builded"> ${target_builded} </echo>
 	</target>
 
 	<target name = "prepare" depends = "number, display">
@@ -84,11 +92,6 @@
 			<attribute name = "Implementation-Vendor"  value = "The Crypthing Initiative" />
 			<attribute name = "Implementation-Version" value = "${full.version} ${TODAY}" />
 		</manifest>
-
-		<exec executable = "${basedir}/${mk.ver}" >
-			<arg value = "${provider.version}" />
-			<arg value = "${basedir}/native" />
-		</exec>
 
 		<delete file = "java/org/crypthing/security/provider/Version.java" />
 		<echo   file = "java/org/crypthing/security/provider/Version.java" >
@@ -160,31 +163,36 @@ import java.util.logging.Logger;
 
 	<target name = "clean" depends = "init">
 		<delete dir = "${bin.dir}" />
-		<delete file = "${target.file}" />
+		<delete file = "${dist.dir}/${target.file}" />
 	</target>
 
 	<target name = "compile" depends = "prepare">
-		<javac	debug              = "true"
-				debuglevel         = "source,lines,vars"
-				srcdir             = "${src.dir}"
-				destdir            = "${bin.dir}"
-				source             = "${source}"
-				target             = "${target}"
-				bootclasspath      = "${jre.7}"
-				includeantruntime  = "false">
+		<javac	debug             = "true"
+				debuglevel        = "source,lines,vars"
+				srcdir            = "${src.dir}"
+				destdir           = "${bin.dir}"
+				source            = "${source}"
+				target            = "${target}"
+				bootclasspath     = "${jre.7}"
+				includeantruntime = "false">
 			<compilerarg value = "-XDignore.symbol.file" />
 		</javac>
 	</target>
 
 	<target name = "build" depends = "compile">
-		<jar destfile = "${target.file}" level = "9" manifest="META-INF/MANIFEST.MF" >
+		<jar destfile = "${dist.dir}/${target.file}" level = "9" manifest="META-INF/MANIFEST.MF" >
 			<fileset dir = "${bin.dir}" />
-			<fileset dir = "${native.dir}" includes="*.so,*.dll"/>
+			<fileset dir = "${dist.dir}" includes="*.so,*.dll"/>
 		</jar>
 	</target>
 
-	<target name="install" depends="build">
-		<copy file="${target.file}"  todir="${build.dest}" />
+	<target name = "do.build" unless = "target.builded">
+		<antcall target = "build" />
+		<property name = "target.builded" value = "true" />
 	</target>
+	<target name = "do.install" if = "target.builded" >
+		<copy file="${dist.dir}/${target.file}" todir="${install.dest}" />
+	</target>
+	<target name = "install"  depends = "init, do.build, do.install" />
 
 </project>

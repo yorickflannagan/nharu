@@ -59,7 +59,7 @@ SET INCLUDE=%INCLUDE%;%_WIN_CNG%\Include
 SET LIB=%LIB%;%_WIN_CNG%\Lib\X86
 SET LIBPATH=%LIBPATH%;%_WIN_CNG%\Lib\X86
 CALL SET PATH=%%PATH:%_PATH%=%%
-SET PATH=%PATH%;%_GNUWIN%\bin;%_PATH%;%ProgramFiles%\nodejs;%USERPROFILE%\AppData\Roaming\npm;%WIX%\bin;%_NASM%;%_PERL%;%_JRE%\bin;%ANT_HOME%\bin
+SET PATH=%PATH%;%_PATH%;%ProgramFiles%\nodejs;%USERPROFILE%\AppData\Roaming\npm;%WIX%\bin;%_NASM%;%_PERL%;%_JRE%\bin;%ANT_HOME%\bin
 
 :: Kryptonite environment
 SET PROJECT_HOME=%_DEV_HOME%\kryptonite

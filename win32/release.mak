@@ -5,13 +5,10 @@
 #	diego.sohsten@caixa.gov.br
 # 	yorick.flannagan@gmail.com
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-TARGET             = release
-TARGET_CVARS       = /D "NDEBUG"
-TARGET_CFLAGS      = /GL /Gy /O2 /Oi /MD
-TARGET_LIB_CFLAGS  =
-TARGET_TEST_CFLAGS =
-TARGET_JCA_CFLAGS  =
-TARGET_LFLAGS      = /MANIFEST:NO /LTCG:incremental /OPT:REF /SAFESEH /OPT:ICF
-TARGET_LIB_LFLAGS  = /LTCG
-TARGET_TEST_LFLAGS =
-TARGET_JCA_LFLAGS  =
+TARGET       = release
+T_CFLAGS     = /GL /Gy /errorReport:none /O2 /MD
+T_CVARS      = /D "NDEBUG"
+T_LIB_LFLAGS = /LTCG
+T_JCA_LFLAGS = /MANIFEST:NO /OPT:REF /SAFESEH /INCREMENTAL:NO /OPT:ICF
+T_TST_LFLAGS = /MANIFEST:NO /OPT:REF /SAFESEH /INCREMENTAL:NO /OPT:ICF
+TARGET_ANT   = DEBUG=0
