@@ -24,6 +24,9 @@
 '	/proxy:[ip:port]: Proxy server for Internet connection, if needed
 '	/user:[proxy user]: Proxy server user for authentication, if necessary
 '	/pwd:[password]: Proxy server password
+'	/version:[ver]: Version string. Optional. Default: 1.1.10
+'	/prefix:[path]: Folder where Nharu should be installed. Optional. Default [parent of nharu_home]
+'	/debug If present, compilation is set for debug
 '
 ' -----------------------------
 ' Authors:
@@ -37,25 +40,6 @@ Class Proxy
 
 	Public Server, User, Pwd
 
-	' Sets Proxy object from command line arguments
-	Public Sub FromArguments
-
-		Dim args : Set args = Nothing
-		Set args = WScript.Arguments.Named
-
-		If args.Exists("proxy") Then
-			Server = args.Item("proxy")
-		End If
-		If args.Exists("user") Then
-			User = args.Item("user")
-		End If
-		If args.Exists("pwd") Then
-			Pwd = args.Item("pwd")
-		End If
-		Set args = Nothing
-
-	End Sub
-
 End Class
 
 ' Encapsulates GNU WGet operation
@@ -66,13 +50,13 @@ Class WGet
 	' Configures object to download
 	' Arguments:
 	'	wgetLocation: folder where wget.exe lies
-	'	oProxy: instance of Proxy class
-	Public Sub Configure(wgetLocation, oProxy)
+	'	prx: instance of Proxy class
+	Public Sub Configure(wgetLocation, prx)
 
 		Dim fs : Set fs = CreateObject("Scripting.FileSystemObject")
 		If Not fs.FolderExists(wgetLocation) Or Not fs.FileExists(wgetLocation & "\wget.exe") Then Err.Raise 1, "WGet.Configure", "Argument must point to an existing wget.exe"
 		m_location = """" & wgetLocation & "\wget.exe"""
-		Set m_proxy = oProxy
+		Set m_proxy = prx
 		Set fs = Nothing
 
 	End Sub
@@ -102,7 +86,6 @@ Class WGet
 		cmd = cmd & " --output-document=" & target & " " & uri
 
 		Set shell = CreateObject("Wscript.Shell")
-		WScript.Echo cmd
 		ret = shell.Run(cmd, 1, True)
 		If ret <> 0 Then
 			Dim fs : Set fs = Nothing
@@ -131,15 +114,13 @@ Sub Include(fspec)
 
 End Sub
 
-Sub DownloadLib(wGetLocation, lib, uri)
+Sub DownloadLib(wGetLocation, oProxy, lib, uri)
 
-	Dim oProxy : Set oProxy = New Proxy
 	Dim iwr : Set iwr = New WGet
 	Dim ret
-	oProxy.FromArguments
 	iwr.Configure wGetLocation, oProxy
 	ret = iwr.Download(lib, uri, lib)
-	Set iwr = Nothing : Set oProxy = Nothing
+	Set iwr = Nothing
 	If ret <> 0 Then Err.Raise ret, "DownloadLib", "Could not dowload library " & lib & " from URI " & uri
 
 End sub
@@ -163,13 +144,37 @@ End sub
 ' -----------------------------
 ' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
+Dim prx : Set prx = New Proxy
+Dim prefix : prefix = """" & start & "\3rdparty\nharu"""
+Dim ver : ver = "1.1.10"
+Dim debug : debug = """"""
+Dim args : Set args = WScript.Arguments.Named
+If args.Exists("prefix") Then
+	prefix = """" & args.Item("prefix") & """"
+End If
+If args.Exists("version") Then
+	ver = args.Item("version")
+End If
+If args.Exists("debug") Then
+	debug = """DEBUG=1"""
+End If
+If args.Exists("proxy") Then
+	prx.Server = args.Item("proxy")
+End If
+If args.Exists("user") Then
+	prx.User = args.Item("user")
+End If
+If args.Exists("pwd") Then
+	prx.Pwd = args.Item("pwd")
+End If
+Set args = Nothing
 Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
 Dim start : start = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(WScript.ScriptFullName)))
-DownloadLib fs.GetParentFolderName(WScript.ScriptFullName), "library.vbs", """https://docs.google.com/uc?export=download&id=1kQVYeQiqOg50mVbeP3J9bnswBaoD0aNW"""
+DownloadLib fs.GetParentFolderName(WScript.ScriptFullName), prx, "library.vbs", """https://docs.google.com/uc?export=download&id=1kQVYeQiqOg50mVbeP3J9bnswBaoD0aNW"""
 Set fs = Nothing
 Include "library.vbs"
 Main
-
+Set prx = Nothing
 
 Sub Main
 
@@ -177,7 +182,7 @@ Sub Main
 	Dim oInstaller : Set oInstaller = New Installer
 	Dim oFinder : Set oFinder = New Finder
 	oFinder.StartFolder = start
-	SetFacilities oInstaller, oFinder
+	SetFacilities oInstaller, oFinder, prx
 
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo " Nharu Library                                    "
@@ -186,12 +191,14 @@ Sub Main
 	WScript.Echo ""
 
 	products = GetInstalledProducts()
-	GenerateMakefile products
+	GenerateDevEnv products
+	GenerateBuild prefix, ver, debug
 
 	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo " Environment for Windows development configured   "
-	WScript.Echo " Use dev-env.bat file to all operations           "
+	WScript.Echo " Use build.bat file to build                      "
+	WScript.Echo " Use dev-env.bat file to all other operations     "
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
 
 	Set oInstaller = Nothing
@@ -202,13 +209,14 @@ End Sub
 ' Search for installed software requirements
 Function GetInstalledProducts()
 
-	Dim ret(16)
+	Dim ret(17)
 	ret(VS_INSTALL_PATH)	= EnsureInstallVS()
 	ret(GIT_INSTALL_PATH)	= EnsureInstallGit(True)
 	ret(DRMEM_INSTALL_PATH)	= EnsureInstallDrMem(True)
 	ret(NASM_INSTALL_PATH)	= EnsureInstallNASM(True)
 	ret(PERL_INSTALL_PATH)	= EnsureInstallPerl(True)
-	ret(JAVA_INSTALL_PATH)	= EnsureInstallJava()
+	ret(JDK8_INSTALL_PATH)	= EnsureInstallJava(JDK8_INSTALL_PATH, "8")
+	ret(JDK7_INSTALL_PATH)	= EnsureInstallJava(JDK7_INSTALL_PATH, "7")
 	ret(ANT_INSTALL_PATH)	= EnsureInstallAnt(True)
 	ret(ANTC_INSTALL_PATH)	= EnsureInstallAntContrib(True)
 	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), True)
@@ -217,7 +225,76 @@ Function GetInstalledProducts()
 
 End Function
 
-Sub GenerateMakefile(productsPath)
+Sub GenerateDevEnv(productsPath)
 
+	Dim fs : Set fs = Nothing
+	Dim stdout : Set stdout = Nothing
+	Dim template : Set template = Nothing
+	Dim out : Set out = Nothing
+	Dim path
+	On Error Resume Next
+
+	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
+	Set stdout = fs.GetStandardStream(1) : CheckError
+	path = fs.GetParentFolderName(WScript.ScriptFullName)
+	Set template = fs.OpenTextFile(path & "\dev-env.template", 1) : CheckError
+	Set out = fs.CreateTextFile(path & "\dev-env.bat", True) : CheckError
+	stdout.Write(" Generating configuration batch file... ")
+	While Not template.AtEndOfStream
+		Dim line, newLine
+		line = template.ReadLine()
+		newLine = Replace(line, "__OPENSSL__",            productsPath(SSL_INSTALL_PATH))
+		newLine = Replace(newLine, "__LIBIDN__",          productsPath(IDN_INSTALL_PATH))
+		newLine = Replace(newLine, "__JAVA_HOME__",       productsPath(JDK8_INSTALL_PATH))
+		newLine = Replace(newLine, "__ANT_HOME__",        productsPath(ANT_INSTALL_PATH))
+		newLine = Replace(newLine, "__ANT_CONTRIB__",     productsPath(ANTC_INSTALL_PATH) & "ant-contrib-1.0b3.jar")
+		newLine = Replace(newLine, "__JRE_7RT__",         productsPath(JDK7_INSTALL_PATH) & "jre\lib\rt.jar")
+		newLine = Replace(newLine, "__VS_INSTALL_PATH__", productsPath(VS_INSTALL_PATH))
+		out.WriteLine(newLine)
+	Wend
+
+	stdout.WriteLine("Done!")
+	out.Close
+	template.Close
+	stdout.Close
+	Set fs = Nothing
+	Set stdout = Nothing
+	Set template = Nothing
+	Set out = Nothing
+
+End Sub
+
+Sub GenerateBuild(prefix, ver, debug)
+
+	Dim fs : Set fs = Nothing
+	Dim stdout : Set stdout = Nothing
+	Dim template : Set template = Nothing
+	Dim out : Set out = Nothing
+	Dim path
+	On Error Resume Next
+
+	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
+	Set stdout = fs.GetStandardStream(1) : CheckError
+	path = fs.GetParentFolderName(WScript.ScriptFullName)
+	Set template = fs.OpenTextFile(path & "\build.template", 1) : CheckError
+	Set out = fs.CreateTextFile(path & "\build.bat", True) : CheckError
+	stdout.Write(" Generating build batch file... ")
+	While Not template.AtEndOfStream
+		Dim line, newLine
+		line = template.ReadLine()
+		newLine = Replace(line, "__PREFIX__",     prefix)
+		newLine = Replace(newLine, "__VERSION__", ver)
+		newLine = Replace(newLine, "__DEBUG__",   debug)
+		out.WriteLine(newLine)
+	Wend
+
+	stdout.WriteLine("Done!")
+	out.Close
+	template.Close
+	stdout.Close
+	Set fs = Nothing
+	Set stdout = Nothing
+	Set template = Nothing
+	Set out = Nothing
 
 End Sub
