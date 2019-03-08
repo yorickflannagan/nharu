@@ -149,7 +149,7 @@ Sub Initialize
 	Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
 	Dim wgetLocation : wgetLocation = fs.GetParentFolderName(WScript.ScriptFullName)
 	CURRENT = """" & wgetLocation & """"
-	START = """" & fs.GetParentFolderName(fs.GetParentFolderName(wgetLocation)) & """"
+	START = fs.GetParentFolderName(fs.GetParentFolderName(wgetLocation))
 
 	Set PROXY = New ProxyParams
 	If args.Exists("proxy") Then
