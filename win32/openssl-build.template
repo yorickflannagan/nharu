@@ -21,66 +21,50 @@ ECHO.
 FOR %%i IN ("%~dp0..") DO SET "_HOME=%%~fi"
 CALL:GET_PREFIX %_HOME%
 SET _TARGET=%_PREFIX%openssl
-SET _SSLDIR=%_PREFIX%3rdparty\ssl
 SET _PREFIX=%_PREFIX%3rdparty\openssl
 
-SET _NASM_INSTALL_PATH=C:\Program Files (x86)\NASM\
-SET _PERL_INSTALL_PATH=C:\Program Files\Perl64\
-SET _GIT_INSTALL_PATH=C:\Program Files\Git\
-SET _VS_INSTALL_PATH=C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\
+SET _PERL_INSTALL_PATH=__PERL_INSTALL_PATH__
+SET _NASM_INSTALL_PATH=__NASM_INSTALL_PATH__
+SET _VS_INSTALL_PATH=__VS_INSTALL_PATH__
 
 :: Build
 CALL "%_VS_INSTALL_PATH%VC\Auxiliary\Build\vcvarsamd64_x86.bat"
-SET PATH=%PATH%;%_NASM_INSTALL_PATH%
-ECHO.
-ECHO  -----------------------------------------------
-ECHO  Cloning OpenSSL from GitHub
-ECHO  -----------------------------------------------
-ECHO. 
-CALL "%_GIT_INSTALL_PATH%git-cmd.exe" git clone https://github.com/openssl/openssl "%_TARGET%"
-IF %ERRORLEVEL% NEQ 0 GOTO :END
-ECHO.
-ECHO  -----------------------------------------------
-ECHO  Checking out OpenSSL version OpenSSL_1_1_0f
-ECHO  -----------------------------------------------
-ECHO. 
-CALL "%_GIT_INSTALL_PATH%git-cmd.exe" git -C "%_TARGET%" checkout OpenSSL_1_1_0f
-IF %ERRORLEVEL% NEQ 0 GOTO :END
+SET PATH=%_NASM_INSTALL_PATH%;%PATH%
 ECHO.
 ECHO  -----------------------------------------------
 ECHO  Configuring OpenSSL
 ECHO  -----------------------------------------------
 ECHO. 
 CD "%_TARGET%"
-CALL "%_PERL_INSTALL_PATH%bin\perl.exe" Configure VC-WIN32 no-shared --prefix="%_PREFIX%" --openssldir="%_SSLDIR%"
+"%_PERL_INSTALL_PATH%bin\perl.exe" Configure VC-WIN32 no-shared --prefix="%_PREFIX%" --openssldir="%_PREFIX%"
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
 ECHO  Adjusting OpenSSL makefile
 ECHO  -----------------------------------------------
 ECHO. 
-CALL powershell -Command "(Get-Content makefile) -replace 'LIB_CFLAGS=/Zi /Fdossl_static /MT /Zl', 'LIB_CFLAGS=/Zi /Fdossl_static /MD' | Out-File makefile"
+powershell -NoLogo -NoProfile -NonInteractive -Command "(Get-Content makefile) -replace '/MT', '/MD' | Out-File makefile"
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
 ECHO  Building OpenSSL
 ECHO  -----------------------------------------------
 ECHO. 
-CALL NMAKE
+CALL NMAKE /NOLOGO
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
 ECHO  Testing OpenSSL
 ECHO  -----------------------------------------------
 ECHO. 
-CALL NMAKE TEST
+CALL NMAKE /NOLOGO TEST
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
 ECHO  Installing OpenSSL
 ECHO  -----------------------------------------------
 ECHO. 
-CALL NMAKE INSTALL
+CALL NMAKE /NOLOGO INSTALL
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
@@ -97,10 +81,8 @@ GOTO:EOF
 :: Clean-up
 :END
 SET _HOME=
-SET _SSLDIR=
 SET _PREFIX=
-SET _NASM_INSTALL_PATH=
 SET _PERL_INSTALL_PATH=
-SET _GIT_INSTALL_PATH=
+SET _NASM_INSTALL_PATH=
 SET _VS_INSTALL_PATH=
 SET _TARGET=

@@ -147,9 +147,8 @@ Sub Initialize
 
 	Dim args : Set args = WScript.Arguments.Named
 	Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
-	Dim wgetLocation : wgetLocation = fs.GetParentFolderName(WScript.ScriptFullName)
-	CURRENT = """" & wgetLocation & """"
-	START = fs.GetParentFolderName(fs.GetParentFolderName(wgetLocation))
+	CURRENT = fs.GetParentFolderName(WScript.ScriptFullName)
+	START = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(wgetLocation)))
 
 	Set PROXY = New ProxyParams
 	If args.Exists("proxy") Then
@@ -233,7 +232,7 @@ Function GetInstalledProducts()
 	ret(JDK7_INSTALL_PATH)	= EnsureInstallJava(JDK7_INSTALL_PATH, "7")
 	ret(ANT_INSTALL_PATH)	= EnsureInstallAnt(True)
 	ret(ANTC_INSTALL_PATH)	= EnsureInstallAntContrib(True)
-	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), True)
+	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), ret(NASM_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
 	ret(IDN_INSTALL_PATH)	= EnsureInstallLibidn(ret(GIT_INSTALL_PATH), True)
 	GetInstalledProducts = ret
 
