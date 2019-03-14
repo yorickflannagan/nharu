@@ -148,7 +148,7 @@ Sub Initialize
 	Dim args : Set args = WScript.Arguments.Named
 	Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
 	CURRENT = fs.GetParentFolderName(WScript.ScriptFullName)
-	START = fs.GetParentFolderName(fs.GetParentFolderName(fs.GetParentFolderName(wgetLocation)))
+	START = fs.GetParentFolderName(fs.GetParentFolderName(CURRENT))
 
 	Set PROXY = New ProxyParams
 	If args.Exists("proxy") Then
@@ -198,13 +198,26 @@ Sub InitLibrary
 
 End Sub
 
-Sub Main
+Sub ShowConfig
 
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo " Nharu Library                                    "
 	WScript.Echo " Environment for Windows development configuration"
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo ""
+
+	WScript.Echo " Startup configuration:"
+	WScript.Echo " Proxy server: " & PROXY.Server
+	WScript.Echo " Proxy user: " & PROXY.User
+	WScript.Echo " Prefix directory: " & CONFIG.Item("prefix")
+	WScript.Echo " Version number: " & CONFIG.Item("version")
+	WScript.Echo " DEbug flag: " & CONFIG.Item("debug")
+	WScript.Echo " Search folder: " & FFINDER.StartFolder
+	WScript.Echo ""
+	
+End Sub
+
+Sub Main
 
 	products = GetInstalledProducts()
 	GenerateDevEnv products
@@ -308,4 +321,5 @@ End Sub
 
 Initialize
 InitLibrary
+ShowConfig
 Main
