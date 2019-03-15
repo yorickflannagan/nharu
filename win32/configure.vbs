@@ -24,7 +24,7 @@
 '	/proxy:[ip:port]: Proxy server for Internet connection, if needed
 '	/user:[proxy user]: Proxy server user for authentication, if necessary
 '	/pwd:[password]: Proxy server password
-'	/version:[ver]: Version string. Optional. Default: 1.1.10
+'	/version:[ver]: Version string. Optional. Default: 1.2.10
 '	/prefix:[path]: Folder where Nharu should be installed. Optional. Default [parent of nharu_home]
 '	/debug If present, compilation is set for debug
 '
@@ -171,7 +171,7 @@ Sub Initialize
 	If args.Exists("version") Then
 		CONFIG.Add "version", args.Item("version")
 	Else
-		CONFIG.Add "version", "1.1.10"
+		CONFIG.Add "version", "1.2.10"
 	End If
 	If args.Exists("debug") Then
 		CONFIG.Add "debug", """DEBUG=1"""
