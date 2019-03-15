@@ -14,9 +14,9 @@ IMPLIB  = lib
 MC      = mc
 RC      = rc
 
-PACKAGE = C:\Users\developer\dev\libidn
-OUTPUT  = C:\Users\developer\dev\nharu\win32
-PREFIX  = C:\Users\developer\dev\3rdparty\idn
+PACKAGE = $(PACKAGE)
+OUTPUT  = $(OUTPUT)
+PREFIX  = $(PREFIX)
 
 SRC     = $(PACKAGE)\lib
 WIN     = $(PACKAGE)\windows

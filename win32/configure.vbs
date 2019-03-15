@@ -237,16 +237,16 @@ Function GetInstalledProducts()
 
 	Dim ret(17)
 	ret(VS_INSTALL_PATH)	= EnsureInstallVS()
+	ret(JDK8_INSTALL_PATH)	= EnsureInstallJava(JDK8_INSTALL_PATH, "8")
+	ret(JDK7_INSTALL_PATH)	= EnsureInstallJava(JDK7_INSTALL_PATH, "7")
 	ret(GIT_INSTALL_PATH)	= EnsureInstallGit(True)
 	ret(DRMEM_INSTALL_PATH)	= EnsureInstallDrMem(True)
 	ret(NASM_INSTALL_PATH)	= EnsureInstallNASM(True)
 	ret(PERL_INSTALL_PATH)	= EnsureInstallPerl(True)
-	ret(JDK8_INSTALL_PATH)	= EnsureInstallJava(JDK8_INSTALL_PATH, "8")
-	ret(JDK7_INSTALL_PATH)	= EnsureInstallJava(JDK7_INSTALL_PATH, "7")
+	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), ret(NASM_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
+	ret(IDN_INSTALL_PATH)	= EnsureInstallLibidn(ret(GIT_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
 	ret(ANT_INSTALL_PATH)	= EnsureInstallAnt(True)
 	ret(ANTC_INSTALL_PATH)	= EnsureInstallAntContrib(True)
-	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), ret(NASM_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
-	ret(IDN_INSTALL_PATH)	= EnsureInstallLibidn(ret(GIT_INSTALL_PATH), True)
 	GetInstalledProducts = ret
 
 End Function

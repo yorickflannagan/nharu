@@ -17,21 +17,47 @@ ECHO.
 ECHO  * * * * * * * * * * * * * * * * * * * * * * * *
 ECHO.
 
-SET __TARGET=C:\Users\developer\dev\libidn
-SET __PERL=C:\Program Files\Perl64\
-SET __LANGS="C:\Users\developer\dev\libidn\doc\tld\fr.tld" "C:\Users\developer\dev\libidn\doc\tld\no.tld"
+SET __PERL_INSTALL_PATH=__PERL_INSTALL_PATH__
+SET __VS_INSTALL_PATH=__VS_INSTALL_PATH__
+SET __LANGS=__LANGS__
+SET __HOME=__HOME__
+
+SET __TARGET=%__HOME%\libidn
+SET __OUTPUT=%__HOME%\nharu\win32
+SET __PREFIX=%__HOME%\3rdparty\idn
 
 
+ECHO.
+ECHO  -----------------------------------------------
+ECHO  GNU Libidn Windows configuration environment
+ECHO  -----------------------------------------------
+ECHO.
+ECHO  PERL INSTALL FOLDER: %__PERL_INSTALL_PATH%
+ECHO  VISUAL STUDIO INSTALL FOLDER: %__VS_INSTALL_PATH%
+ECHO  SOURCE CODE FOLDER: %__TARGET%
+ECHO  CONFIGURED LANGUAGES: %__LANGS%
+ECHO  OUTPUT FOLDER: %__OUTPUT%
+ECHO  INSTALL FOLDER: %__PREFIX%
+ECHO.
+
+:SDKENV
+CALL "%__VS_INSTALL_PATH%VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+
+ECHO.
+ECHO  -----------------------------------------------
+ECHO  Preparing GNU Libidn for compilation
+ECHO  -----------------------------------------------
+ECHO.
 :GENRFC
 CD %__TARGET%\lib
 IF NOT EXIST "%__TARGET%\lib\rfc3454.c" (
-	CALL "%__PERL%bin\perl.exe" gen-stringprep-tables.pl ..\doc\specifications\rfc3454.txt
+	CALL "%__PERL_INSTALL_PATH%bin\perl.exe" gen-stringprep-tables.pl ..\doc\specifications\rfc3454.txt
 	IF %ERRORLEVEL% NEQ 0 GOTO :END
 )
 
 :GENTLD
 IF NOT EXIST "%__TARGET%\lib\tlds.c" (
-	CALL "%__PERL%bin\perl.exe"  gen-tld-tables.pl %__LANGS%>%__TARGET%\lib\tlds.c
+	CALL "%__PERL_INSTALL_PATH%bin\perl.exe"  gen-tld-tables.pl %__LANGS%>%__TARGET%\lib\tlds.c
 	IF %ERRORLEVEL% NEQ 0 GOTO :END
 )
 
@@ -60,7 +86,39 @@ ECHO #endif>>%__TARGET%\windows\include\ac-stdint.h
 ECHO #endif>>%__TARGET%\windows\include\ac-stdint.h
 ECHO #endif>>%__TARGET%\windows\include\ac-stdint.h
 
+ECHO.
+ECHO  -----------------------------------------------
+ECHO  Building and installing GNU Libidn
+ECHO  -----------------------------------------------
+ECHO.
+:MAKEENV
+SET PACKAGE=%__TARGET%
+SET OUTPUT=%__OUTPUT%
+SET PREFIX=%__PREFIX%
+CD %__OUTPUT%
+IF EXIST %__PREFIX% DO (
+	CALL NMAKE /F idn.mak UNINSTALL
+	CALL NMAKE /F idn.mak CLEAN
+)
+CALL NMAKE /F idn.mak
+IF %ERRORLEVEL% NEQ 0 GOTO :END
+CALL NMAKE /F idn.mak INSTALL
+IF %ERRORLEVEL% NEQ 0 GOTO :END
+CALL NMAKE /F idn.mak CLEAN
+ECHO.
+ECHO  -----------------------------------------------
+ECHO  All tasks are done
+ECHO  -----------------------------------------------
+ECHO.
+
 :END
-SET __TARGET=
-SET __PERL=
+SET __PERL_INSTALL_PATH=
+SET __VS_INSTALL_PATH=
 SET __LANGS=
+SET __HOME=
+SET __TARGET=
+SET __OUTPUT=
+SET __PREFIX=
+SET PACKAGE=
+SET OUTPUT=
+SET PREFIX=
