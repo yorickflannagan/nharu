@@ -65,7 +65,7 @@ Class WGet
 	' Arguments:
 	'	name: label for feedeback
 	'	uri: resource location
-	'	target: complete path to downloaded resource
+	'	target: complete path to directory where downloaded resource
 	Public Function Download(name, uri, target)
 
 		If IsEmpty(m_location) Or IsEmpty(m_proxy) Then Err.Raise 2, "WGet.Download", "Object improperly initialized"
@@ -102,6 +102,7 @@ Class WGet
 	End Function
 
 End Class
+
 
 Sub Include(fspec)
 
@@ -163,9 +164,9 @@ Sub Initialize
 
 	Set CONFIG = CreateObject("Scripting.Dictionary")
 	If args.Exists("prefix") Then
-		CONFIG.Add "prefix", """" & args.Item("prefix") & """"
+		CONFIG.Add "prefix", args.Item("prefix")
 	Else
-		CONFIG.Add "prefix", """" & START & "\3rdparty\nharu"""
+		CONFIG.Add "prefix", START & "\3rdparty\nharu"
 	End If
 	If args.Exists("version") Then
 		CONFIG.Add "version", args.Item("version")
@@ -211,7 +212,7 @@ Sub ShowConfig
 	WScript.Echo " Proxy user: " & PROXY.User
 	WScript.Echo " Prefix directory: " & CONFIG.Item("prefix")
 	WScript.Echo " Version number: " & CONFIG.Item("version")
-	WScript.Echo " DEbug flag: " & CONFIG.Item("debug")
+	WScript.Echo " Debug flag: " & CONFIG.Item("debug")
 	WScript.Echo " Search folder: " & FFINDER.StartFolder
 	WScript.Echo ""
 	
@@ -247,6 +248,20 @@ Function GetInstalledProducts()
 	ret(IDN_INSTALL_PATH)	= EnsureInstallLibidn(ret(GIT_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
 	ret(ANT_INSTALL_PATH)	= EnsureInstallAnt(True)
 	ret(ANTC_INSTALL_PATH)	= EnsureInstallAntContrib(True)
+	WScript.Echo ""
+	WScript.Echo " Support software installation paths:"
+	WScript.Echo " Microsoft Visual Studio: " & ret(VS_INSTALL_PATH)
+	WScript.Echo " Java SDK 8: " & ret(JDK8_INSTALL_PATH)
+	WScript.Echo " Java SDK 7: " & ret(JDK7_INSTALL_PATH)
+	WScript.Echo " Git SCM: " & ret(GIT_INSTALL_PATH)
+	WScript.Echo " Dr. Memory: " & ret(DRMEM_INSTALL_PATH)
+	WScript.Echo " Netwide Assembler: " & ret(NASM_INSTALL_PATH)
+	WScript.Echo " Active Perl: " & ret(PERL_INSTALL_PATH)
+	WScript.Echo " OpenSSL library: " & ret(SSL_INSTALL_PATH)
+	WScript.Echo " GNU Libidn library: " & ret(IDN_INSTALL_PATH)
+	WScript.Echo " Apache Ant: " & ret(ANT_INSTALL_PATH)
+	WScript.Echo " Ant Contrib Tasks: " & ret(ANTC_INSTALL_PATH)
+	WScript.Echo ""
 	GetInstalledProducts = ret
 
 End Function
