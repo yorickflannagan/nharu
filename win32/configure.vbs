@@ -312,8 +312,8 @@ Sub GenerateBuild(prefix, ver, debug)
 
 	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
 	Set stdout = fs.GetStandardStream(1) : CheckError
-	Set template = fs.OpenTextFile("build.template", 1) : CheckError
-	Set out = fs.CreateTextFile("build.bat", True) : CheckError
+	Set template = fs.OpenTextFile(CURRENT & "\build.template", 1) : CheckError
+	Set out = fs.CreateTextFile(CURRENT & "\build.bat", True) : CheckError
 	stdout.Write(" Generating build batch file... ")
 	While Not template.AtEndOfStream
 		Dim line, newLine

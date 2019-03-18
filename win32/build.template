@@ -40,6 +40,7 @@ IF DEFINED --debug (
 )
 CALL:DEQUOTE _DEBUG
 
+CD "%0\.."
 CALL dev-env.bat --prefix=%_PREFIX% --version=%_VERSION%
 ECHO.
 ECHO * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -111,3 +112,4 @@ GOTO:EOF
 SET _PREFIX=
 SET _VERSION=
 SET _DEBUG=
+IF ERRORLEVEL NEQ 0 DO ( PAUSE )
