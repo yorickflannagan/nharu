@@ -86,12 +86,12 @@ Class WGet
 		cmd = cmd & " --output-document=" & target & "\" & name & " " & uri
 
 		Set shell = CreateObject("Wscript.Shell")
-		ret = shell.Run(cmd, 1, True)
+		ret = shell.Run(cmd, 3, True)
 		If ret <> 0 Then
 			Dim fs : Set fs = Nothing
 			Set fs = CreateObject ("Scripting.FileSystemObject")
-			If fs.FileExists(target) Then
-				fs.DeleteFile(target)
+			If fs.FileExists(target & "\" & name) Then
+				fs.DeleteFile(target & "\" & name)
 			End If
 			Set fs = Nothing
 		End If
