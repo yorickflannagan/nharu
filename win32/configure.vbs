@@ -188,9 +188,12 @@ End Sub
 
 Sub InitLibrary
 
+	Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
+	If fs.FileExists(CURRENT & "\library.vbs") Then fs.DeleteFile CURRENT & "\library.vbs"
+	Set fs = Nothing
 	Dim ret : ret = IWR.Download("library.vbs", """https://docs.google.com/uc?export=download&id=1kQVYeQiqOg50mVbeP3J9bnswBaoD0aNW""", CURRENT)
 	If ret <> 0 Then Err.Raise ret, "InitLibrary", "Failed to include library"
-	Include "library.vbs"
+	Include CURRENT & "\library.vbs"
 	Set INSTALL = New Installer
 	Set INSTALL.Getter = IWR
 	Set FFINDER = New Finder
