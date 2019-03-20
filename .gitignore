@@ -45,3 +45,4 @@ win32/.wget-hsts
 win32/library.vbs
 win32/dev-env.bat
 win32/build.bat
+win32/git.template
