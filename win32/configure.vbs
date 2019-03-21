@@ -282,8 +282,8 @@ Sub GenerateDevEnv(productsPath)
 
 	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
 	Set stdout = fs.GetStandardStream(1) : CheckError
-	Set template = fs.OpenTextFile("dev-env.template", 1) : CheckError
-	Set out = fs.CreateTextFile("dev-env.bat", True) : CheckError
+	Set template = fs.OpenTextFile(CURRENT & "\dev-env.template", 1) : CheckError
+	Set out = fs.CreateTextFile(CURRENT & "\dev-env.bat", True) : CheckError
 	stdout.Write(" Generating configuration batch file... ")
 	While Not template.AtEndOfStream
 		Dim line, newLine
