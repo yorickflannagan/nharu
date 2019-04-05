@@ -9,18 +9,20 @@ export BUILD_TYPE=release
 
 export JAVA_HOME=$HOME/apps/jdk7
 # Could be linked to something like /usr/lib/jvm/java-7-oracle/
+# Required by Nharu JCA
 
 export ANT_HOME=$HOME/apps/ant/
 export ANT_CONTRIB=$HOME/apps/ant-contrib/
 export NHARU_HOME="${NHARU_HOME:=$HOME/development/nharu/}"
 
-
+# Used by other tools to download
 export GNULIB_TOOL="${GNULIB_TOOL:=$HOME/development/3rdParty/gnulib/gnulib-tool}"
 export OPENSSL_HOME="${OPENSSL_HOME:=$HOME/development/3rdParty/libssl/}"
 export IDN_HOME="${IDN_HOME:=$HOME/development/3rdParty/libidn/}"
 export LIB_ICONV="${LIB_ICONV:=$HOME/development/3rdParty/libiconv/}"
 
-export VERSION=1.1.10
+# Support to certificate issuing
+export VERSION=1.3.0
 
 clean()
 {
@@ -280,6 +282,7 @@ mknharu()
 
 	if [ "$6" == "debug" ]; then
 		export TYPE="_DEBUG_=1"
+		export ANT_DEBUG="-DDEBUG=1"
 	else
 		if [ "$6" == "fips" ]; then
 			export TYPE="_FIPS_=1"
@@ -292,9 +295,9 @@ mknharu()
 	if [ "$TARGET" = "linux" ]; then
 		cd jca
 		make -C ./native clean $TYPE
-		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/ant-contrib.jar -DVERSION=$VERSION prepare
+		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/lib/ant-contrib-0.6.jar $ANT_DEBUG -DVERSION=$VERSION  prepare
 		make -C ./native $TYPE
-		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/ant-contrib.jar -DBUILD_DEST=$1/nharu/$3/lib/ -DVERSION=$VERSION install
+		$ANT_HOME/bin/ant -DANT_CONTRIB_LIB=$ANT_CONTRIB/lib/ant-contrib-0.6.jar $ANT_DEBUG -DBUILD_DEST=$1/nharu/$3/lib/ -DVERSION=$VERSION install
 		make -C ./native install $TYPE
 		cd ..
 		make -C test clean 

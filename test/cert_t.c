@@ -1,6 +1,7 @@
 #include "test.h"
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 
 int test_certificate(char *szCert, char *szCACert)
 {
@@ -20,7 +21,7 @@ int test_certificate(char *szCert, char *szCACert)
 	const char *SUBJECTTE = "0000000000001113333Rio de Janeiro RJ    ";
 	const char *SUBJECTCEI = "000000000000";
 
-	printf("%s", "Testing certificate parsing... ");
+	printf("Testing certificate parsing with [%s]... ", szCert);
 	if 
 	(
 		NH_SUCCESS(rv = load_file(szCert, &pCert, &certlen)) &&

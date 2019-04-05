@@ -86,6 +86,7 @@
 	<target name = "prepare" depends = "number, display">
 		<mkdir  dir  = "${bin.dir}" />
 		<mkdir  dir  = "META-INF" />
+		<mkdir  dir  = "${dist.dir}" />
 		<delete file="META-INF/MANIFEST.MF" />
 		<manifest file="META-INF/MANIFEST.MF" >
 			<attribute name = "Implementation-Title"   value = "Nharu Provider" />

@@ -8,15 +8,17 @@
 #define PATH_SEPARATOR		"\\"
 #else
 #define PATH_SEPARATOR		"/"
+#include <linux/limits.h>
+#define MAX_PATH			PATH_MAX
 #endif 
 
-#define ARGC1		"C:\\Users\\developer\\dev\\nharu\\test\\repo"
 
 #define PKIBRPF		PATH_SEPARATOR"pkibr-pf.cer"
 #define ENDCA		PATH_SEPARATOR"end-ca.cer"
 #define PKIBRACRL		PATH_SEPARATOR"pkibr-ac.crl"
 #define PKIBRAC		PATH_SEPARATOR"pkibr-ac.cer"
 #define SIGNERCERT	PATH_SEPARATOR"signer.cer"
+
 int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
 	int rv;
@@ -24,19 +26,19 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	char pkibrpf[MAX_PATH], endca[MAX_PATH], pkibrcrl[MAX_PATH], pkibrac[MAX_PATH], signer[MAX_PATH];
 	
 	memset(pkibrpf, 0, MAX_PATH);
-	strcpy(pkibrpf, ARGC1);
+	strcpy(pkibrpf, argc[1]);
 	strcat(pkibrpf, PKIBRPF);
 	memset(endca, 0, MAX_PATH);
-	strcpy(endca, ARGC1);
+	strcpy(endca, argc[1]);
 	strcat(endca, ENDCA);
 	memset(pkibrcrl, 0, MAX_PATH);
-	strcpy(pkibrcrl, ARGC1);
+	strcpy(pkibrcrl, argc[1]);
 	strcat(pkibrcrl, PKIBRACRL);
 	memset(pkibrac, 0, MAX_PATH);
-	strcpy(pkibrac, ARGC1);
+	strcpy(pkibrac, argc[1]);
 	strcat(pkibrac, PKIBRAC);
 	memset(signer, 0, MAX_PATH);
-	strcpy(signer, ARGC1);
+	strcpy(signer, argc[1]);
 	strcat(signer, SIGNERCERT);
 
 	printf("%s\n", "Nharu library regression test");
