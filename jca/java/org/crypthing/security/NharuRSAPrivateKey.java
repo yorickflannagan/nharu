@@ -33,7 +33,7 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey, SignerInterface,
 	/**
 	 * Creates a new NharuRSAPrivateKey instance
 	 * @param encoding: DER encoding of RSA private key attributes according to RFC 3447
-	 * @throws InvalidKeyException
+	 * @throws InvalidKeyException on error
 	 */
 	public NharuRSAPrivateKey(final byte[] encoding) throws InvalidKeyException { this(encoding, null); }
 
@@ -41,7 +41,7 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey, SignerInterface,
 	 * Creates a new NharuRSAPrivateKey instance
 	 * @param encoding: DER encoding of RSA private key attributes according to RFC 3447
 	 * @param chain: certificate chain associated to this private key.
-	 * @throws InvalidKeyException
+	 * @throws InvalidKeyException on error
 	 */
 	public NharuRSAPrivateKey(final byte[] encoding, final NharuX509Certificate[] chain) throws InvalidKeyException
 	{
@@ -96,7 +96,7 @@ public final class NharuRSAPrivateKey implements RSAPrivateKey, SignerInterface,
 	 * @param data: the buffer
 	 * @param padding: RSA private decryption algorithm. Only PKCS1Padding, OAEPPadding and NoPadding are supported.
 	 * @return the plaintext
-	 * @throws GeneralSecurityException
+	 * @throws GeneralSecurityException on failure
 	 */
 	@Override
 	public byte[] decrypt(final byte[] data, final String padding) throws GeneralSecurityException

@@ -21,7 +21,7 @@ public interface DecryptInterface
 	 * @param data: data to be deciphered.
 	 * @param padding: RSA padding algorithm
 	 * @return deciphered text
-	 * @throws GeneralSecurityException
+	 * @throws GeneralSecurityException on failure
 	 */
 	byte[] decrypt(byte[] data, String padding) throws GeneralSecurityException;
 }

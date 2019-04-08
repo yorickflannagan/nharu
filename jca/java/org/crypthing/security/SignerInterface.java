@@ -21,7 +21,7 @@ public interface SignerInterface
 	 * @param data: contents to be signed.
 	 * @param algorithm: signing algorithm.
 	 * @return the signature
-	 * @throws GeneralSecurityException
+	 * @throws GeneralSecurityException on failure
 	 */
 	byte[] sign(byte[] data, String algorithm) throws GeneralSecurityException;
 }

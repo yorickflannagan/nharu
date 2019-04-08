@@ -27,7 +27,7 @@ debug
 test/ntest-app
 mem-check
 *.sdf
-*suo
+*suoSignerInterface
 *filters
 dist/
 bin/
@@ -48,3 +48,4 @@ win32/build.bat
 win32/git.template
 java-bin/
 Makefile
+target/

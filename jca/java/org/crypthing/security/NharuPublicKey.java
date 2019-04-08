@@ -34,8 +34,8 @@ public class NharuPublicKey implements PublicKey
 
 	/**
 	 * Creates a new java.security.PublicKey instance from this certificate PublicKeyInfo
-	 * @param parent
-	 * @return
+	 * @param parent: parent Certificate (if any)
+	 * @return requested public key.
 	 */
 	public static PublicKey newInstance(final NharuX509Certificate parent)
 	{

@@ -30,6 +30,11 @@ public final class CMSSignedDataBuilder
 	private static native void nhcmsSign(long cmsHandle, long certHandle, int mechanism, SignerInterface signer) throws GeneralSecurityException;
 	private static native byte[] nhcmsEncode(long handle) throws CMSParsingException;
 
+	public CMSSignedDataBuilder()
+	{
+		// TODO: Creates new constructor to carry a certificate chain
+	}
+
 	/**
 	 * Creates a new builder for this eContent.
 	 * @param eContent: EncapsulatedContentInfo eContent field.
