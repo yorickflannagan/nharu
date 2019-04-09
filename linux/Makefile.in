@@ -1,3 +1,83 @@
+# # # # # # # # # # # # # # # # # # # # # # # #
+# Makefile of Nharu static library
+# Copyleft (C) 2019 by The Crypthing Initiative
+#
+# # # # # # # # # # # # # # # # # # # # # # # #
+SHELL        = /bin/bash
+CC           = gcc
+AR           = ar
+
+PROJECT      = /home/magut/development/nharu
+BIN_DIR      = /home/magut/development/nharu/bin
+DIST_DIR     = /home/magut/development/nharu/dist/lib
+OPENSSL      = /home/magut/development/build/ssl/linux
+IDN          = /home/magut/development/build/idn/linux
+DLA_LIB      = /usr/lib/x86_64-linux-gnu
+JAVA_HOME    = /usr/lib/jvm/java-7-oracle
+
+LIB_SRCDIR   = $(PROJECT)/src
+LIB_OBJDIR   = $(BIN_DIR)/lib
+LIB_INCLUDES = -I$(LIB_SRCDIR) -I$(PROJECT)/include -I$(PROJECT) -I$(OPENSSL)/include -I$(IDN)/include
+LIB_TARGET   = $(DIST_DIR)/libnharu.a
+LIB_SRCS     = $(shell find $(LIB_SRCDIR) -name '*.c')
+LIB_OBJS     = $(patsubst $(LIB_SRCDIR)/%.c,$(LIB_OBJDIR)/%.o,$(LIB_SRCS))
+JCA_SRCDIR   = $(PROJECT)/jca/native
+JCA_OBJDIR   = $(BIN_DIR)/jca
+JCA_INCLUDES = -I$(JCA_SRCDIR) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux $(LIB_INCLUDES)
+JCA_TARGET   = $(DIST_DIR)/libnharujca.so
+JCA_SRCS     = $(shell find $(JCA_SRCDIR) -name '*.c')
+JCA_OBJS     = $(patsubst $(JCA_SRCDIR)/%.c,$(JCA_OBJDIR)/%.o,$(JCA_SRCS))
+IMP_LIBS     = -lnharu -lcrypto -lidn -lpthread -ldl
+LDLIBS       = -L$(DIST_DIR) -L$(OPENSSL)/lib -L$(IDN)/lib -L$(DLA_LIB)
+VPATH        = $(LIB_SRCDIR) : $(JCA_SRCDIR)
+FILES        = $(LIB_SRCS) $(JCA_SRCS)
+
+CFLAGS       = -pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -pthread -fPIC
+ifeq ($(_DEBUG_),)
+CFLAGS      += -O2
+else
+CFLAGS      += -ggdb3 -D_DEBUG -D_DEBUG_ -O0
+endif
+ifneq ($(_FIPS_),)
+CFLAGS      += -D_FIPS_
+endif
+ARFLAGS      = -r -s
+LDFLAGS      = -static-libgcc -Xlinker -z -Xlinker defs -fPIC -shared
+
+
+all: prepare $(LIB_TARGET) $(JCA_TARGET)
+
+$(LIB_TARGET): $(LIB_OBJS)
+	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
+
+$(LIB_OBJDIR)/%.o: $(LIB_SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(LIB_INCLUDES) -c $< -o $@
+
+$(JCA_TARGET): $(JCA_OBJS)
+	$(CC) $(LDFLAGS) $(LDLIBS) $(JCA_OBJS) -o $@ $(IMP_LIBS)
+
+$(JCA_OBJDIR)/%.o: $(JCA_SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(JCA_INCLUDES) -c $< -o $@
+
+
+.PHONY: clean prepare
+clean:
+	rm $(BIN_DIR)/files.d $(DIST_DIR) $(LIB_OBJDIR) $(JCA_OBJDIR) -Rf
+
+prepare:
+	mkdir -p $(LIB_OBJDIR) $(JCA_OBJDIR) $(DIST_DIR)
+
+
+$(BIN_DIR)/files.d: $(FILES)
+	cat /dev/null > $(BIN_DIR)/files.d;                        \
+	for i in $(FILES); do                                      \
+		$(CC) -MM $$i $(JCA_INCLUDES) >> $(BIN_DIR)/files.d; \
+	done;                                                      \
+	touch -m $(BIN_DIR)/files.d
+
+include $(BIN_DIR)/files.d
+
+
 SHELL = /bin/bash
 
 ifeq ($(strip $(VERSION)),)

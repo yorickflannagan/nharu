@@ -5,27 +5,31 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.crypthing</groupId>
 	<artifactId>nharujca</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.3.0</version>
 	<packaging>jar</packaging>
-	<name>Archetype - nharujca</name>
+	<name>Nharu Library</name>
 	<url>http://maven.apache.org</url>
 
 	<build>
-		<sourceDirectory>jca/java</sourceDirectory>
-		<outputDirectory>jca/java-bin</outputDirectory>
+		<directory>${project.basedir}/dist</directory>  
+		<sourceDirectory>${project.basedir}/jca/java</sourceDirectory>
+		<outputDirectory>${project.basedir}/bin/java-bin</outputDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.1.0</version>
 				<configuration>
-					<outputDirectory>jca/apidocs</outputDirectory>
+					<outputDirectory>${project.basedir}/docs/apidocs</outputDirectory>
 					<bottom>Copyleft &#169; 2019 by The Crypthing Initiative. All rights reversed.</bottom>
 					<charset>utf8</charset>
+					<doctitle>${project.name} ${project.version}</doctitle>
 					<excludePackageNames>org.crypthing.security.cms:org.crypthing.security.cert:org.crypthing.security.provider:org.crypthing.security.x509:org.crypthing.util</excludePackageNames>
+					<docencoding>UTF-8</docencoding>
+					<encoding>UTF-8</encoding>
 					<locale>en_US</locale>
 					<show>public</show>
-					<windowtitle>Nharu Library</windowtitle>
+					<windowtitle>${project.name} ${project.version}</windowtitle>
 				</configuration>
 			</plugin>
 		</plugins>

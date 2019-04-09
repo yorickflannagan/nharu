@@ -82,30 +82,30 @@ import org.crypthing.security.provider.NharuProvider;
  * </p>
  * <pre>
  * 
- *  byte[] encoding = ...						// Collect CA private key RSA DER encoding
- *  NharuX509Certificate[] chain = ...				// Collect CA chain
+ *  byte[] encoding = ...                                   // Collect CA private key RSA DER encoding
+ *  NharuX509Certificate[] chain = ...                      // Collect CA chain
  *  try
  *  {
  *  	NharuRSAPrivateKey pKey = new NharuRSAPrivateKey(encoding);
  *  	try
  *  	{
- *  		byte[] certRequest = ...				// Collect PKCS#10 request
+ *  		byte[] certRequest = ...                        // Collect PKCS#10 request
  *  		NharuCertificateRequest request = NharuCertificateRequest.parse(certRequest);
  *  		try
  *  		{
- *  			request.verify();					// Verify PKCS#10 signature
- *  			request.getSubject();				// Locate user and collect its data
- *  			request.getPublicKey();				// Extract PKCS#10 public key to certificate
- *  			String json = ...					// Collect subject data according to certificate profile
+ *  			request.verify();                         // Verify PKCS#10 signature
+ *  			request.getSubject();                     // Locate user and collect its data
+ *  			request.getPublicKey();                   // Extract PKCS#10 public key to certificate
+ *  			String json = ...                         // Collect subject data according to certificate profile
  *  			NharuCertificateEncoder encoder = new NharuCertificateEncoder(json);
  *  			try
  *  			{
  *  				encoder.sign("SHA256withRSA", pKey);// Sign certificate with CA key
  *  				NharuX509Certificate cert = new NharuX509Certificate(encoder.encode());
  *  				CMSSignedDataBuilder cms = new CMSSignedDataBuilder();
- *  				cms.addCertificate(cert);		// Add user certificate
- *  				cms.addCertificates(chain);		// Add CA chain
- *  				byte[] pkcs7 = cms.encode();		// Encode CMS Signed Data and bon voyage
+ *  				cms.addCertificate(cert);           // Add user certificate
+ *  				cms.addCertificates(chain);         // Add CA chain
+ *  				byte[] pkcs7 = cms.encode();        // Encode CMS Signed Data and bon voyage
  *  			}
  *  			finally { encoder.releaseObject(); }
  *  		}
@@ -113,11 +113,11 @@ import org.crypthing.security.provider.NharuProvider;
  *  	}
  *  	finally { pKey.releaseObject(); }
  *  } 
- *  catch (InvalidKeyException e)		{ * Thrown if CA private key could not be retrieved * }
- *  catch (EncodingException e)		{ * Thrown if PKCS#10 request or generated Certifiate is malformed * }
- *  catch (SignatureException e)		{ * Thrown if PKCS#10 signature could not be verified * }
- *  catch (CertificateProfileException e)	{ * Thrown if certificate profile is inconsistent * }
- *  catch (GeneralSecurityException e)	{ * Thrown if certificate could not be signed * }
+ *  catch (InvalidKeyException e)         { * Thrown if CA private key could not be retrieved * }
+ *  catch (EncodingException e)           { * Thrown if PKCS#10 request or generated Certifiate is malformed * }
+ *  catch (SignatureException e)          { * Thrown if PKCS#10 signature could not be verified * }
+ *  catch (CertificateProfileException e) { * Thrown if certificate profile is inconsistent * }
+ *  catch (GeneralSecurityException e)    { * Thrown if certificate could not be signed * }
  * 
  * </pre>
  * 

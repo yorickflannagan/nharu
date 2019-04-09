@@ -128,7 +128,7 @@ static NH_NOISE_HANDLER_STR hDevice =
 
 #if defined(_DEBUG_) && defined(NH_LINUX_IMPL)
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-        NH_FUNCTION(void*, debug_malloc)(size_t num, const char * file, int line)
+        NH_FUNCTION(void*, debug_malloc)(size_t num, _UNUSED_ const char * file, _UNUSED_ int line)
         {
             void *ret = malloc(num);
             VALGRIND_MAKE_MEM_DEFINED(ret, num);
