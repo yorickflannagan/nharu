@@ -1,7 +1,7 @@
 #ifndef TEST_H_INCLUDED
 #define TEST_H_INCLUDED
 
-#include "cms.h"
+#include "pki-issue.h"
 
 int save_buffer(unsigned char*, size_t, char*);
 int load_file(char*, unsigned char**, int*);
@@ -19,5 +19,6 @@ int test_enveloped_data(char*);
 int test_fake_enveloped_data();
 int test_cadest();
 
+int test_parse_request();
 
 #endif

@@ -56,6 +56,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_fake_enveloped_data();
 	if (NH_SUCCESS(rv)) rv = test_cadest();
 
+	if (NH_SUCCESS(rv)) rv = test_parse_request();
 	/*
 	 * TODO: Encoding RSA public and private key must be corrected
 	 * TODO: Test signature using NH_RSA_from_privkey_info

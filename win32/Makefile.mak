@@ -73,7 +73,7 @@ C_LFLAGS    = /NOLOGO
 C_LIB_FLAGS = $(T_CFLAGS) $(C_CFLAGS)
 C_LIB_VARS  = $(T_CVARS) $(C_CVARS) /D "_LIB"
 L_LIB_FLAGS = $(T_LIB_LFLAGS) $(C_LFLAGS)
-LIB_SOURCE  = $(LIB_SRC)\cms_env.c $(LIB_SRC)\cms_sd.c $(LIB_SRC)\crypto.c $(LIB_SRC)\libgfshare.c $(LIB_SRC)\parser.c $(LIB_SRC)\pkibr.c $(LIB_SRC)\pkix.c $(LIB_SRC)\sysservc.c $(LIB_SRC)\x509.c
+LIB_SOURCE  = $(LIB_SRC)\cms_env.c $(LIB_SRC)\cms_sd.c $(LIB_SRC)\crypto.c $(LIB_SRC)\libgfshare.c $(LIB_SRC)\parser.c $(LIB_SRC)\pkibr.c $(LIB_SRC)\pkix.c $(LIB_SRC)\sysservc.c $(LIB_SRC)\x509.c $(LIB_SRC)\issue.c
 LIB_HEADERS = $(LIB_SRC) $(NHU_HEADERS) $(P11_HEADERS)
 LIB_INCLUDE = /I"$(NHU_HEADERS)" /I"$(LIB_SRC)" /I"$(P11_HEADERS)" $(SSL_INCLUDE) $(IDN_INCLUDE)
 
@@ -95,7 +95,7 @@ JCA_IMPLIBS = "nharu.lib" "libidn.lib" "libcrypto.lib" "crypt32.lib" "ws2_32.lib
 C_TST_FLAGS = $(C_LIB_FLAGS)
 C_TST_VARS  = $(T_CVARS) $(C_CVARS) /D "_CONSOLE"
 L_TST_FLAGS = $(T_TST_LFLAGS) $(C_LFLAGS) /SUBSYSTEM:CONSOLE
-TST_SOURCE  = $(TST_SRC)\cadest.c $(TST_SRC)\cert_t.c $(TST_SRC)\cms_t.c $(TST_SRC)\crl_t.c $(TST_SRC)\crypto_t.c $(TST_SRC)\nmain.c $(TST_SRC)\parser_t.c
+TST_SOURCE  = $(TST_SRC)\cadest.c $(TST_SRC)\cert_t.c $(TST_SRC)\cms_t.c $(TST_SRC)\crl_t.c $(TST_SRC)\crypto_t.c $(TST_SRC)\nmain.c $(TST_SRC)\parser_t.c $(TST_SRC)\issue_t.c
 TST_HEADERS = $(LIB_HEADERS) $(TST_SRC)
 TST_INCLUDE = $(LIB_INCLUDE) /I"$(TST_SRC)"
 TST_LIBPATH = $(JCA_LIBPATH)

@@ -9,11 +9,12 @@ INLINE_SIMPLE_STRUCTS	= YES
 TYPEDEF_HIDES_STRUCT	= YES
 HIDE_UNDOC_MEMBERS	= YES
 WARN_NO_PARAMDOC		= YES
-INPUT				= $(PROJECT)/include/pki-issue.h
-MACRO_EXPANSION		= YES
+INPUT				= $(PROJECT)/include/pki-issue.h $(PROJECT)/src/issue.c
+EXTRACT_ALL             = YES
 ENABLE_PREPROCESSING    = YES
+MACRO_EXPANSION		= YES
 EXPAND_ONLY_PREDEF      = YES
-PREDEFINED              = "NH_METHOD(type, name)=type (*name)"
+PREDEFINED              = "NH_FUNCTION(type, name)=type name"
 GENERATE_HTML           = YES
 GENERATE_LATEX          = NO
 GENERATE_RTF            = NO
@@ -22,3 +23,4 @@ GENERATE_XML            = NO
 GENERATE_DOCBOOK        = NO
 GENERATE_AUTOGEN_DEF    = NO
 GENERATE_PERLMOD        = NO
+DIRECTORY_GRAPH         = NO
