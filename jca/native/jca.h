@@ -79,6 +79,7 @@
 #define J_CMS_SIGFAIL_ERROR		"Could not sign CMS SignedData document"
 #define J_CMS_DECRYPT_ERROR		"Could not decrypt CMS EnvelopedData document"
 #define J_CMS_ENCRYPT_ERROR		"Could not encrypt CMS contents"
+#define J_CERTREQ_PARSE_ERROR		"Could not parse certificate request"
 
 #define J_NATIVE_EX			"java/lang/Error"
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
@@ -99,6 +100,7 @@
 #define J_INVALID_KEY_EX		"java/security/InvalidKeyException"
 #define J_CMS_DECRYPT_EX		"org/crypthing/security/cms/CMSDecryptException"
 #define J_CMS_ENCRYPT_EX		"org/crypthing/security/cms/CMSEncryptException"
+#define J_CERT_ENCODING_EX		"org/crypthing/security/issue/EncodingException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */

@@ -32,6 +32,7 @@ typedef int					NH_SYSRV;
 #define NH_CANNOT_RELEASE_MUTEX	(NH_BASE_ERROR + 5)	/**< Cannot release mutex object */
 #define NH_CANNOT_LOCK			(NH_BASE_ERROR + 6)	/**< Cannot acquire the mutex object */
 #define NH_CANNOT_UNLOCK		(NH_BASE_ERROR + 7)	/**< Cannot release lock from mutex object */
+#define NH_GENERAL_ERROR		(NH_BASE_ERROR + 8)	/**< Unexpected error */
 
 /**
  * @brief ASN.1 parser errors 

@@ -8,5 +8,8 @@ import java.security.GeneralSecurityException;
 public class EncodingException extends GeneralSecurityException
 {
 	private static final long serialVersionUID = 6843488935275999517L;
-	
+	public EncodingException() { super(); }
+	public EncodingException(String message) { super(message); }
+	public EncodingException(String message, Throwable cause) { super(message, cause); }
+	public EncodingException(Throwable cause) { super(cause); }
 }

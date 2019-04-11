@@ -1,0 +1,6 @@
+package org.crypthing.security.provider;
+public class Version
+{
+	public static native String getNativeVersion();
+	public static String getVersion() { return "@full-version"; }
+}

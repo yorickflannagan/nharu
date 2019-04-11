@@ -15,6 +15,7 @@
 		<sourceDirectory>${project.basedir}/jca/java</sourceDirectory>
 		<outputDirectory>${project.basedir}/bin/java-bin</outputDirectory>
 		<plugins>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
@@ -32,11 +33,61 @@
 					<windowtitle>${project.name} ${project.version}</windowtitle>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>com.google.code.maven-replacer-plugin</groupId>
+				<artifactId>replacer</artifactId>
+				<version>1.5.3</version>
+				<executions>
+					<execution>
+						<id>replace-version</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>replace</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<file>${version.template.file}</file>
+							<outputFile>${version.file}</outputFile>
+							<replacements>
+								<replacement>
+									<token>@full-version</token>
+									<value>${project.version}</value>
+								</replacement>
+							</replacements>
+						</configuration>
+					</execution>
+					<execution>
+						<id>replace-log</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>replace</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<file>${log.template.file}</file>
+							<outputFile>${log.file}</outputFile>
+							<replacements>
+								<replacement>
+									<token>0xFFFFFFFF</token>
+									<value>${log.level}</value>
+								</replacement>
+							</replacements>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 		</plugins>
 	</build>
 
 	<properties>
 		<maven.compiler.source>1.7</maven.compiler.source>
 		<maven.compiler.target>1.7</maven.compiler.target>
+		<version.template.file>${project.basedir}/jca/Version.java.template</version.template.file>
+		<version.file>${project.basedir}/jca/java/org/crypthing/security/provider/Version.java</version.file>
+		<log.template.file>${project.basedir}/jca/LogDevice.java.template</log.template.file>
+		<log.file>${project.basedir}/jca/java/org/crypthing/security/LogDevice.java</log.file>
+		<log.level>LOG_LEVEL_ERROR</log.level>
 	</properties>
 </project>
