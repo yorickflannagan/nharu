@@ -4,8 +4,40 @@
 
 static NH_RV __verify(_IN_ NH_CREQUEST_PARSER_STR *hHandler)
 {
-	/* TODO: */
-	return NH_OK;
+	NH_RV rv;
+	NH_ASN1_PNODE pAlg, pSig, pInfo;
+	CK_MECHANISM_TYPE hashAlg;
+
+	if
+	(
+		NH_SUCCESS(rv = (pInfo = hHandler->hParser->sail(hHandler->hParser->root, NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+		NH_SUCCESS(rv = (pAlg = hHandler->hParser->sail(pInfo, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+		NH_SUCCESS(rv = (pSig = hHandler->hParser->sail(pInfo, NH_PARSE_EAST | 2)) ? NH_OK : NH_UNEXPECTED_ENCODING)
+	)
+	{
+		switch(NH_oid_to_mechanism(pAlg->value, pAlg->valuelen))
+		{
+		case CKM_SHA256_RSA_PKCS:
+			hashAlg = CKM_SHA256;
+			break;
+		case CKM_SHA1_RSA_PKCS:
+			hashAlg = CKM_SHA_1;
+			break;
+		case CKM_SHA384_RSA_PKCS:
+			hashAlg = CKM_SHA384;
+			break;
+		case CKM_SHA512_RSA_PKCS:
+			hashAlg = CKM_SHA512;
+			break;
+		case CKM_MD5_RSA_PKCS:
+			hashAlg = CKM_MD5;
+			break;
+		case CKM_ECDSA_SHA1:
+		default: return NH_UNSUPPORTED_MECH_ERROR;
+		}
+		rv = NH_SUCCESS(NHIX_verify_signature(pInfo, hHandler->subjectPKInfo, hashAlg, pSig)) ? NH_OK : NH_ISSUE_INVALID_SIG_ERROR;
+	}
+	return rv;
 }
 
 /**
@@ -121,11 +153,8 @@ NH_FUNCTION(NH_RV, NH_parse_cert_request)(_IN_ unsigned char *pBuffer, _IN_ size
 	if (NH_SUCCESS(rv)) rv = hParser->parse_bitstring(hParser, node);
 	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(hParser->root, ((NH_PARSE_SOUTH | 2) << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL;
 	if (NH_SUCCESS(rv)) rv = NHIX_parse_name(hParser, node, &subject);
-	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(node, (NH_SAIL_SKIP_EAST << 8) | (NH_PARSE_SOUTH | 2))) ? NH_OK : NH_CANNOT_SAIL;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_oid(hParser, node);
-	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(node, (NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_bitstring(hParser, node);
-	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(node, (NH_SAIL_SKIP_WEST << 8) | NH_SAIL_SKIP_NORTH)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(node, NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = NHIX_parse_pubkey(hParser, node);
 	if (NH_SUCCESS(rv))
 	{
 		rv = (hOut = (NH_CREQUEST_PARSER) malloc(sizeof(NH_CREQUEST_PARSER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;

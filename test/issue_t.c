@@ -1,5 +1,6 @@
 #include "test.h"
 #include <stdio.h>
+#include <string.h>
 
 static unsigned char __request[] =
 {
@@ -60,7 +61,7 @@ static unsigned char __request[] =
 };
 static unsigned char __pubkey[] =
 {
-	0x00,  0x30,  0x82,  0x01,  0x0a,  0x02,  0x82,  0x01,  0x01,  0x00,  0xb7,  0x92,  0x8b,  0xd8,  0xcd,  0x77,
+	0x30,  0x82,  0x01,  0x0a,  0x02,  0x82,  0x01,  0x01,  0x00,  0xb7,  0x92,  0x8b,  0xd8,  0xcd,  0x77,
 	0x99,  0x7d,  0xf1,  0x9d,  0x53,  0x4f,  0xb1,  0xdb,  0xc6,  0x50,  0x22,  0xd9,  0xab,  0xd7,  0xb0,  0x40,
 	0xa3,  0x0c,  0x05,  0xd5,  0xcb,  0xbb,  0x69,  0x7d,  0xa4,  0xc3,  0xda,  0x92,  0xf1,  0xa9,  0x8c,  0x06,
 	0x14,  0x5a,  0x2e,  0xf6,  0x1f,  0x4b,  0xad,  0x70,  0x9e,  0xa2,  0x84,  0xe7,  0x60,  0xbe,  0x83,  0xda,
@@ -83,11 +84,21 @@ int test_parse_request()
 {
 	NH_RV rv;
 	NH_CREQUEST_PARSER hRequest;
+	NH_ASN1_PNODE pPubKey = NULL;
+	NH_PBITSTRING_VALUE pValue;
 
-	printf("%s\n", "Testing PKCS#10 request parsing... ");
+	printf("%s", "Testing PKCS#10 request parsing... ");
 	if (NH_SUCCESS(rv = NH_parse_cert_request(__request, sizeof(__request), &hRequest)))
 	{
-		printf("Subject: [%s]\n", hRequest->subject->stringprep);
+		rv = strcmp(hRequest->subject->stringprep, __subject) == 0 ? NH_OK : NH_ISSUE_ERROR;
+		if (NH_SUCCESS(rv)) rv = (pPubKey = hRequest->hParser->sail(hRequest->subjectPKInfo, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_ISSUE_ERROR;
+		if (NH_SUCCESS(rv))
+		{
+			pValue = (NH_PBITSTRING_VALUE) pPubKey->value;
+			rv = (pValue->len == sizeof(__pubkey)) ? NH_OK : NH_ISSUE_ERROR;
+			if (NH_SUCCESS(rv)) rv = (memcmp(pValue->string, &__pubkey, pValue->len) == 0) ? NH_OK : NH_ISSUE_ERROR;
+			if (NH_SUCCESS(rv)) rv = hRequest->verify(hRequest);
+		}
 		NH_release_cert_request(hRequest);
 	}
 	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
