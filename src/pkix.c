@@ -482,3 +482,61 @@ NH_UTILITY(NH_RV, NHIX_verify_signature)
 	}
 	return rv;
 }
+
+
+/**
+ * @brief Public Key Parsing
+ * 
+ */
+NH_NODE_WAY __pubkey_map[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* algorithm */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_SEQUENCE,
+		pkix_algid_map,
+		PKIX_ALGID_COUNT
+	},
+	{	/* subjectPublicKey */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_BIT_STRING,
+		NULL,
+		0
+	}
+};
+NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char *pBuffer, _IN_ size_t ulBuflen, _OUT_ NHIX_PUBLIC_KEY *hHandler)
+{
+	NH_RV rv;
+	NH_ASN1_PARSER_HANDLE hParser = NULL;
+	NH_ASN1_PNODE algorithm, pubkey;
+	NHIX_PUBLIC_KEY hOut;
+
+	if (NH_FAIL(rv = NH_new_parser(pBuffer, ulBuflen, 12, 1024, &hParser))) return rv;
+	rv = hParser->map(hParser, __pubkey_map, ASN_NODE_WAY_COUNT(__pubkey_map));
+	if (NH_SUCCESS(rv)) rv = NHIX_parse_pubkey(hParser, hParser->root);
+	if (NH_SUCCESS(rv)) rv = (algorithm = hParser->sail(hParser->root, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = (pubkey  = hParser->sail(hParser->root, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL;
+	if (NH_SUCCESS(rv)) rv = (hOut = (NHIX_PUBLIC_KEY) malloc(sizeof(NHIX_PUBLIC_KEY_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
+	if (NH_SUCCESS(rv))
+	{
+		hOut->hParser = hParser;
+		hOut->algorithm = algorithm;
+		hOut->pubkey = pubkey;
+		*hHandler = hOut;
+	}
+	else if (hParser) NH_release_parser(hParser);
+	return rv;
+}
+NH_FUNCTION(void, NHIX_release_pubkey)(_INOUT_ NHIX_PUBLIC_KEY hHandler)
+{
+	if (hHandler)
+	{
+		if (hHandler->hParser) NH_release_parser(hHandler->hParser);
+		free(hHandler);
+	}
+}

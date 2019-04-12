@@ -488,6 +488,12 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuCRLEntry_nhix
  * Signature: (JJ)J
  */
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuCRLEntry_nhixGetRevocationDate(JNIEnv *, jclass, jlong, jlong);
+/*
+ * Class:     org_crypthing_security_x509_NharuX509Certificate
+ * Method:    nhixGetPubkeyEncoding
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetPubkeyEncoding(JNIEnv*, jclass, jlong);
 
 
 #ifdef __cplusplus

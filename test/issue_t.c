@@ -105,3 +105,36 @@ int test_parse_request()
 	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
+int test_parse_pubkey()
+{
+	NH_RV rv;
+	NH_CREQUEST_PARSER hRequest;
+	unsigned int ulSize;
+	NHIX_PUBLIC_KEY hPubkey;
+	NH_ASN1_PNODE node;
+	NH_PBITSTRING_VALUE pValue, qValue;
+
+	printf("%s", "Testing public key parser... ");
+	if (NH_SUCCESS(rv = NH_parse_cert_request(__request, sizeof(__request), &hRequest)))
+	{
+		ulSize = hRequest->subjectPKInfo->contents - hRequest->subjectPKInfo->identifier + hRequest->subjectPKInfo->size;
+		if (NH_SUCCESS(rv = NHIX_pubkey_parser(hRequest->subjectPKInfo->identifier, ulSize, &hPubkey)))
+		{
+			rv = (node = hRequest->hParser->sail(hRequest->subjectPKInfo, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_ISSUE_ERROR;
+			if (NH_SUCCESS(rv)) rv = NH_match_oid((unsigned int*) node->value, node->valuelen,(unsigned int*) hPubkey->algorithm->value, hPubkey->algorithm->valuelen) ? NH_OK : NH_ISSUE_ERROR;
+			if (NH_SUCCESS(rv)) rv = (node = hRequest->hParser->sail(hRequest->subjectPKInfo, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_ISSUE_ERROR;
+			if (NH_SUCCESS(rv))
+			{
+				pValue = (NH_PBITSTRING_VALUE) node->value;
+				qValue = (NH_PBITSTRING_VALUE) hPubkey->pubkey->value;
+				rv = (pValue->len == qValue->len) ? NH_OK : NH_ISSUE_ERROR;
+				if (NH_SUCCESS(rv)) rv = memcmp(pValue->string, qValue->string, pValue->len) == 0  ? NH_OK : NH_ISSUE_ERROR;
+			}
+			NHIX_release_pubkey(hPubkey);
+		}
+		NH_release_cert_request(hRequest);
+	}
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+	return rv;
+}

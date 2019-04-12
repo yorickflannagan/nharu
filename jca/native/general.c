@@ -283,23 +283,76 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_util_NharuArrays_nhToBase64(JNIE
 /** ******************************
  *  NharuPublicKey interface
  *  ******************************/
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyInfo
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_NharuPublicKey_nhixParsePublicKey
 (
 	JNIEnv *env,
 	_UNUSED_ jclass ignored,
-	jlong handle
+	jbyteArray encoding
 )
 {
-	return get_node_encoding(env, ((JNH_CERTIFICATE_HANDLER) handle)->hCert->pubkey);
-}
+	jsize len;
+	jbyte *jbuffer, *copy = NULL;
+	NH_RV rv = NH_OK;
+	NHIX_PUBLIC_KEY hPubkey = NULL;
+	JPUBKEY_HANDLER hHandler;
+	jlong ret = 0L;
 
-JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyType
+	len = (*env)->GetArrayLength(env, encoding);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, encoding, NULL)))
+	{
+		if ((copy = (jbyte*) malloc(len)))
+		{
+			memcpy(copy, jbuffer, len * sizeof(jbyte));
+			if (NH_SUCCESS(rv = NHIX_pubkey_parser((unsigned char*) copy, len, &hPubkey)))
+			{
+				if ((hHandler = (JPUBKEY_HANDLER) malloc(sizeof(JPUBKEY_HANDLER_STR))))
+				{
+					hHandler->encoding = copy;
+					hHandler->len = len;
+					hHandler->hPubkey = hPubkey;
+					ret = (jlong) hHandler;
+				}
+				else { throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0); rv = NH_OUT_OF_MEMORY_ERROR; }
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_PUBKEY_PARSE_ERROR, rv);
+		}
+		else { throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0); rv = NH_OUT_OF_MEMORY_ERROR; }
+		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
+	}
+	else { throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0); rv = NH_GENERAL_ERROR; }
+	if (NH_FAIL(rv))
+	{
+		if (copy) free(copy);
+		if (hPubkey) NHIX_release_pubkey(hPubkey);
+	}
+	return ret;
+}
+JNIEXPORT void JNICALL 
+Java_org_crypthing_security_NharuPublicKey_nhixReleasePublicKey
 (
 	JNIEnv *env,
 	_UNUSED_ jclass ignored,
 	jlong handle
 )
 {
+	JPUBKEY_HANDLER hHandler = (JPUBKEY_HANDLER) handle;
+	if (hHandler)
+	{
+		free(hHandler->encoding);
+		NHIX_release_pubkey(hHandler->hPubkey);
+		free(hHandler);
+	}
+}
+JNIEXPORT jint JNICALL
+Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyType
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	/* TODO: CHANGE EVERYTHING */
 	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jint ret = 0L;
@@ -318,23 +371,15 @@ JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicK
 /** ******************************
  *  NharuRSAPublicKey interface
  *  ******************************/
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyHandle
-(
-	_UNUSED_ JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong handle
-)
-{
-	return (jlong) ((JNH_CERTIFICATE_HANDLER) handle)->hCert->pubkey;
-}
-
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyModulus
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyModulus
 (
 	JNIEnv *env,
 	_UNUSED_ jclass ignored,
 	jlong handle
 )
 {
+	/* TODO: CHANGE EVERYTHING */
 	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jbyteArray ret = NULL;
@@ -346,14 +391,15 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixG
 	else throw_new(env, J_RUNTIME_EX, J_PARSE_ERROR, 0);
 	return ret;
 }
-
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent
 (
 	JNIEnv *env,
 	_UNUSED_ jclass ignored,
 	jlong handle
 )
 {
+	/* TODO: CHANGE EVERYTHING */
 	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jbyteArray ret = NULL;
@@ -365,7 +411,16 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixG
 	else throw_new(env, J_RUNTIME_EX, J_PARSE_ERROR, 0);
 	return ret;
 }
-
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyInfoNode
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	/* TODO: CHANGE EVERYTHING */
+}
 
 /** ****************************
  *  RSA private key operations

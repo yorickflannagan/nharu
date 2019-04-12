@@ -34,7 +34,7 @@
 #endif
 
 #include <jni.h>
-#include "pkibr.h"
+#include "pki-issue.h"
 
 /** ****************************
  *  Java magic numbers
@@ -80,6 +80,7 @@
 #define J_CMS_DECRYPT_ERROR		"Could not decrypt CMS EnvelopedData document"
 #define J_CMS_ENCRYPT_ERROR		"Could not encrypt CMS contents"
 #define J_CERTREQ_PARSE_ERROR		"Could not parse certificate request"
+#define J_PUBKEY_PARSE_ERROR		"Could not parse public key encoding"
 
 #define J_NATIVE_EX			"java/lang/Error"
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
@@ -100,16 +101,24 @@
 #define J_INVALID_KEY_EX		"java/security/InvalidKeyException"
 #define J_CMS_DECRYPT_EX		"org/crypthing/security/cms/CMSDecryptException"
 #define J_CMS_ENCRYPT_EX		"org/crypthing/security/cms/CMSEncryptException"
-#define J_CERT_ENCODING_EX		"org/crypthing/security/issue/EncodingException"
+#define J_CERT_ENCODING_EX		"org/crypthing/security/EncodingException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */
 #define JCLASS_ACCESS_ERROR		(NH_VENDOR_DEFINED_ERROR + 2)	/* NH_RV that means could not access a Java class */
 
+typedef struct JPUBKEY_HANDLER_STR
+{
+	jbyte*		encoding;
+	jsize			len;
+	NHIX_PUBLIC_KEY	hPubkey;
+
+} JPUBKEY_HANDLER_STR, *JPUBKEY_HANDLER;
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /*
  * Class:     org_crypthing_security_provider_NharuProvider
@@ -166,16 +175,22 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_util_NharuArrays_nhToBase64(JNIE
  *  ******************************/
 /*
  * Class:     org_crypthing_security_NharuPublicKey
- * Method:    nhixGetPublicKeyInfo
- * Signature: (J)[B
- */
-JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyInfo(JNIEnv *, jclass, jlong);
-/*
- * Class:     org_crypthing_security_NharuPublicKey
  * Method:    nhixGetPublicKeyType
  * Signature: (J)I
  */
 JNIEXPORT jint JNICALL Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyType(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuPublicKey
+ * Method:    nhixParsePublicKey
+ * Signature: ([B)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuPublicKey_nhixParsePublicKey(JNIEnv*, jclass, jbyteArray);
+/*
+ * Class:     org_crypthing_security_NharuPublicKey
+ * Method:    nhixReleasePublicKey
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_NharuPublicKey_nhixReleasePublicKey(JNIEnv*, jclass, jlong);
 
 /** ******************************
  *  NharuRSAPublicKey interface
@@ -194,10 +209,10 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixG
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent(JNIEnv *, jclass, jlong);
 /*
  * Class:     org_crypthing_security_NharuRSAPublicKey
- * Method:    nhixGetPublicKeyHandle
+ * Method:    nhixGetPublicKeyInfoNode
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyHandle(JNIEnv *, jclass, jlong);
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyInfoNode(JNIEnv*, jclass, jlong);
 
 
 /** ****************************

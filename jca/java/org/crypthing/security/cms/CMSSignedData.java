@@ -100,7 +100,7 @@ public final class CMSSignedData
 		{
 			final NharuX509Certificate cert = (NharuX509Certificate) getSignerCertificate(i);
 			if (!store.isTrusted(cert)) throw new UntrustedCertificateException();
-			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) cert.getPublicKey()).getKeyHandle());
+			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) cert.getPublicKey()).getInternalNode());
 		}
 	}
 
@@ -144,7 +144,7 @@ public final class CMSSignedData
 			final NharuX509Certificate signerCert;
 			if (!(cert instanceof NharuX509Certificate)) signerCert = NharuX509Factory.generateCertificate(cert.getEncoded());
 			else signerCert = (NharuX509Certificate) cert;
-			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) signerCert.getPublicKey()).getKeyHandle());
+			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) signerCert.getPublicKey()).getInternalNode());
 			nhcmsValidate(hHandle, eContent);
 		}
 	}

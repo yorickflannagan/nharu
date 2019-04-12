@@ -20,5 +20,6 @@ int test_fake_enveloped_data();
 int test_cadest();
 
 int test_parse_request();
+int test_parse_pubkey();
 
 #endif

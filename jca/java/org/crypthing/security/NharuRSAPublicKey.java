@@ -7,7 +7,8 @@ import java.io.ObjectStreamException;
 import java.math.BigInteger;
 import java.security.interfaces.RSAPublicKey;
 
-import org.crypthing.security.x509.NharuX509Certificate;
+import org.crypthing.security.provider.NharuProvider;
+
 
 /**
  * RSA PublicKey implementation
@@ -17,35 +18,29 @@ import org.crypthing.security.x509.NharuX509Certificate;
 public final class NharuRSAPublicKey extends NharuPublicKey implements RSAPublicKey
 {
 	private static final long serialVersionUID = 6023121324073746434L;
+	static { NharuProvider.isLoaded(); }
 	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
 
 	private BigInteger modulus = null;
 	private BigInteger exponent = null;
-
-	NharuRSAPublicKey(NharuX509Certificate parent, final int type) { super(parent, type); }
-
+	public NharuRSAPublicKey(final byte[] encoding) throws EncodingException { super(encoding); }
 	@Override
 	public BigInteger getModulus()
 	{
-		if (modulus == null ) modulus = new BigInteger(nhixGetRSAKeyModulus(parent.getCertificateHandle()));
+		if (modulus == null ) modulus = new BigInteger(nhixGetRSAKeyModulus(hHandle));
 		return modulus;
 	}
-
 	@Override
 	public BigInteger getPublicExponent()
 	{
-		if (exponent == null) exponent = new BigInteger(nhixGetRSAKeyPublicExponent(parent.getCertificateHandle()));
+		if (exponent == null) exponent = new BigInteger(nhixGetRSAKeyPublicExponent(hHandle));
 		return exponent;
 	}
-
-	public long getKeyHandle()
-	{
-		return nhixGetPublicKeyHandle(parent.getCertificateHandle());
-	}
+	public long getInternalNode() { return nhixGetPublicKeyInfoNode(hHandle); }
 
 	private static native byte[] nhixGetRSAKeyModulus(long handle);
 	private static native byte[] nhixGetRSAKeyPublicExponent(long handle);
-	protected static native long nhixGetPublicKeyHandle(long handle);
+	private static native long nhixGetPublicKeyInfoNode(long handle);
 }

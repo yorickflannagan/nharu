@@ -7,6 +7,7 @@ import java.security.SignatureException;
 
 import javax.security.auth.x500.X500Principal;
 
+import org.crypthing.security.EncodingException;
 import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.provider.NharuProvider;
 

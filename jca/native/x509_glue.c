@@ -1758,3 +1758,13 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_x509_NharuCRLEntry_nhixGetRe
 {
 	return java_mktime((NH_PTIME) ((NH_ASN1_PNODE) handle)->child->next->value);
 }
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_x509_NharuX509Certificate_nhixGetPubkeyEncoding
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	return get_node_encoding(env, ((JNH_CERTIFICATE_HANDLER) handle)->hCert->pubkey);
+}

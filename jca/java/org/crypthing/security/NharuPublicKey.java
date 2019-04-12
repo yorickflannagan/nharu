@@ -1,19 +1,17 @@
 package org.crypthing.security;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
 import java.security.PublicKey;
-import java.security.cert.CertificateFactory;
 
-import org.crypthing.security.x509.NharuX509Certificate;
+import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.util.NharuArrays;
 
 /**
  * Nharu Public Key implementation
- * @author magut
+ * @author yorick.flannagan@gmail.com
  *
  */
 public class NharuPublicKey implements PublicKey
@@ -23,91 +21,101 @@ public class NharuPublicKey implements PublicKey
 	 */
 	static final int NHIX_DSA_ALGORITHM = 1;
 	static final int NHIX_RSA_ALGORITHM = 2;
-	static final int NHIX_EC_ALGORITHM = 3;
 
 	private static final long serialVersionUID = 6349591703890493892L;
+	static { NharuProvider.isLoaded(); }
 	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
 
-
-
 	/**
-	 * Creates a new java.security.PublicKey instance from this certificate PublicKeyInfo
-	 * @param parent: parent Certificate (if any)
+	 * Creates a new java.security.PublicKey instance
+	 * @param encoding: PublicKeyInfo DER encoding
 	 * @return requested public key.
+	 * @throws EncodingException on error.
 	 */
-	public static PublicKey newInstance(final NharuX509Certificate parent)
+	@SuppressWarnings("restriction")
+	public static PublicKey newInstance(final byte[] encoding) throws EncodingException
 	{
 		PublicKey ret = null;
-		final int type = nhixGetPublicKeyType(parent.getCertificateHandle());
+		NharuPublicKey me = new NharuPublicKey(encoding);
+		EncodingException err = null;
+		final int type = nhixGetPublicKeyType(me.hHandle);
 		switch (type)
 		{
-		// TODO: Must support DSA
 		case NHIX_DSA_ALGORITHM:
-			try { ret = new sun.security.provider.DSAPublicKeyImpl(nhixGetPublicKeyInfo(parent.getCertificateHandle())); }
-			catch(final java.security.InvalidKeyException e) { throw new RuntimeException(e.getMessage(), e); }
+			me.releaseObject();
+			try { ret = new sun.security.provider.DSAPublicKeyImpl(encoding); }
+			catch (final java.security.InvalidKeyException e) { throw new EncodingException(e.getMessage(), e); }
 			break;
 		case NHIX_RSA_ALGORITHM:
-			ret = new NharuRSAPublicKey(parent, type);
+			me.algorithm = "RSA";
+			ret = me;
 			break;
-		// TODO: Must support ECDSA
-		case NHIX_EC_ALGORITHM:
-			try
-			{
-				ret = CertificateFactory
-						.getInstance("X509", "SUN")
-						.generateCertificate(new ByteArrayInputStream(parent.getEncoded()))
-						.getPublicKey();
-			}
-			catch(Exception e) { throw new RuntimeException(e.getMessage(),e); }
-			break;
-		default: throw new RuntimeException("Unsupported key type " + type);
+		default:
+			me.releaseObject();
+			throw new EncodingException("Unsupported key type " + type);
 		}
 		return ret;
 	}
 
-	protected final NharuX509Certificate parent;
-	protected final int type;
+	private final byte[] encoding;
+	protected long hHandle;
+	private String algorithm;
 	private int hash = 0;
-
-	protected NharuPublicKey(final NharuX509Certificate parent, final int type)
+	protected NharuPublicKey(final byte[] encoding) throws EncodingException
 	{
-		this.parent = parent;
-		this.type = type;
+		this.encoding = encoding;
+		hHandle = nhixParsePublicKey(encoding);
 	}
-	
+	public void releaseObject()
+	{
+		if (hHandle != 0)
+		{
+			nhixReleasePublicKey(hHandle);
+			hHandle = 0;
+		}
+	}
+	protected void recallHandle()
+	{
+		if (hHandle == 0)
+		{
+			try { hHandle = nhixParsePublicKey(encoding); }
+			catch (EncodingException e) { throw new RuntimeException(e); }
+		}
+	}
 	@Override
 	public String getAlgorithm()
 	{
-		switch (type)
+		if (algorithm == null)
 		{
-		case NHIX_DSA_ALGORITHM: return "DSA";
-		case NHIX_RSA_ALGORITHM: return "RSA";
-		case NHIX_EC_ALGORITHM: return "EC";
-		default: throw new RuntimeException("Unsupported key type " + type);
+			recallHandle();
+			switch (nhixGetPublicKeyType(hHandle))
+			{
+			case NHIX_DSA_ALGORITHM: algorithm = "DSA";
+			case NHIX_RSA_ALGORITHM: algorithm = "RSA";
+			default: throw new RuntimeException("Unsupported key type");
+			}
 		}
+		return algorithm;
 	}
-
 	@Override public String getFormat() { return "SubjectPublicKeyInfo"; }
-	@Override public byte[] getEncoded() { return nhixGetPublicKeyInfo(parent.getCertificateHandle()); }
-
+	@Override public byte[] getEncoded() { return encoding; }
 	@Override
 	public boolean equals(final Object other)
 	{
 		if (this == other) return true;
 		if (!(other instanceof NharuPublicKey)) return false;
-		final byte[] otherEncoding = ((PublicKey) other).getEncoded();
-		return NharuArrays.equals(otherEncoding, nhixGetPublicKeyInfo(parent.getCertificateHandle()));
+		return NharuArrays.equals(((PublicKey) other).getEncoded(), getEncoded());
 	}
-
 	@Override
 	public int hashCode()
 	{
-		if (hash == 0) hash = NharuArrays.hashCode(nhixGetPublicKeyInfo(parent.getCertificateHandle()));
+		if (hash == 0) hash = NharuArrays.hashCode(getEncoded());
 		return hash;
 	}
 
-	private static native byte[] nhixGetPublicKeyInfo(long handle);
+	private static native long nhixParsePublicKey(byte[] encoding) throws EncodingException;
+	private static native void nhixReleasePublicKey(long handle);
 	private static native int nhixGetPublicKeyType(long handle);
 }

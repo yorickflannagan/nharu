@@ -5,6 +5,7 @@ import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.security.GeneralSecurityException;
 
+import org.crypthing.security.EncodingException;
 import org.crypthing.security.SignerInterface;
 import org.crypthing.security.provider.NharuProvider;
 

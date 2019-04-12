@@ -772,6 +772,15 @@ struct NH_CRL_HANDLER_STR
 typedef struct NH_CRL_HANDLER_STR		*NH_CRL_HANDLER;
 
 
+typedef struct NHIX_PUBLIC_KEY_STR
+{
+	NH_ASN1_PARSER_HANDLE	hParser;
+	NH_ASN1_PNODE		algorithm;
+	NH_ASN1_PNODE		pubkey;
+
+} NHIX_PUBLIC_KEY_STR, *NHIX_PUBLIC_KEY;
+
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -1061,6 +1070,9 @@ NH_FUNCTION(void, NH_release_crl)(_INOUT_ NH_CRL_HANDLER);
 EXTERN NH_NODE_WAY pkix_x500_rdn_map[];
 #define PKIX_X500_RDN_COUNT		2
 
+
+NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NHIX_PUBLIC_KEY*);
+NH_FUNCTION(void, NHIX_release_pubkey)(_INOUT_ NHIX_PUBLIC_KEY);
 
 #if defined(_ALIGN_)
 #pragma pack(pop, pkix_align)

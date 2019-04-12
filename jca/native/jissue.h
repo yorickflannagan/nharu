@@ -12,7 +12,6 @@
 #define __JISSUE_H__
 
 #include "jca.h"
-#include "pki-issue.h"
 
 
 typedef struct JCERT_REQUEST_HANDLER_STR

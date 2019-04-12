@@ -37,36 +37,38 @@ import java.util.TimeZone;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.crypthing.security.NharuPublicKey;
+import org.crypthing.security.EncodingException;
 import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.util.NharuArrays;
 import org.crypthing.util.NharuCommon;
 
 /**
- * java.security.cert.X509Certificate native implementation.
- * This implementation is NOT fully compatible with Sun JDK. The methods getIssuerAlternativeNames() and getSubjectAlternativeNames()
- * of both implementations return different DER encodings if referenced GeneralName is an OtherName. JDK implementation does not
- * return DER encoding as is, but alters it's contents, while Nharu implementation does not.
+ * java.security.cert.X509Certificate native implementation. This implementation
+ * is NOT fully compatible with Sun JDK. The methods getIssuerAlternativeNames()
+ * and getSubjectAlternativeNames() of both implementations return different DER
+ * encodings if referenced GeneralName is an OtherName. JDK implementation does
+ * not return DER encoding as is, but alters it's contents, while Nharu
+ * implementation does not.
+ * 
  * @author magut & dsohsten
  *
  */
 public final class NharuX509Certificate extends X509Certificate
 {
 	static { NharuProvider.isLoaded(); }
-
-	/*
-	 * Certificate parsing native handle.
-	 * This means that NharuX509Certificate must not be serialiazed.
-	 */
-	private long hHandle; 
 	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObject(java.io.ObjectInputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObjectNoData() throws ObjectStreamException { throw new NotSerializableException(); }
 
 	/*
-	 * Certificate fields shortcuts.
-	 * This prevents continuous native calls.
+	 * Certificate parsing native handle. This means that NharuX509Certificate
+	 * must not be serialiazed.
+	 */
+	private long hHandle;
+
+	/*
+	 * Certificate fields shortcuts. This prevents continuous native calls.
 	 */
 	private byte[] encoded;
 	private int hash;
@@ -98,10 +100,12 @@ public final class NharuX509Certificate extends X509Certificate
 
 	private final byte[] encoding;
 	private long cota;
+
 	public NharuX509Certificate(final byte[] encoding) throws CertificateException
 	{
 		super();
-		if (encoding == null) throw new CertificateException("Certificate encoding must not be null", new NullPointerException());
+		if (encoding == null)
+			throw new CertificateException("Certificate encoding must not be null", new NullPointerException());
 		hHandle = nhixParseCertificate(encoding);
 		this.encoding = encoding;
 		cota = 1;
@@ -113,9 +117,9 @@ public final class NharuX509Certificate extends X509Certificate
 		encoding = nhixGetEncoded(hHandle);
 	}
 
-	/* * * * * * * * * * * * * * * * *
-	 * java.lang.Object implementation
-	 * * * * * * * * * * * * * * * * *
+	/*
+	 * * * * * * * * * * * * * * * * * java.lang.Object implementation * * * *
+	 * * * * * * * * * * * * *
 	 */
 	@Override
 	public String toString()
@@ -124,12 +128,9 @@ public final class NharuX509Certificate extends X509Certificate
 		if (thisString == null)
 		{
 			final StringBuilder builder = new StringBuilder(512);
-			builder.append("Certificate issued to ")
-				.append(getSubjectX500Principal().getName())
-				.append(" by CA ")
-				.append(getIssuerX500Principal().getName())
-				.append(" with serial number ")
-				.append(getSerialNumber().toString());
+			builder.append("Certificate issued to ").append(getSubjectX500Principal().getName()).append(" by CA ")
+					.append(getIssuerX500Principal().getName()).append(" with serial number ")
+					.append(getSerialNumber().toString());
 			thisString = builder.toString();
 		}
 		return thisString;
@@ -156,10 +157,10 @@ public final class NharuX509Certificate extends X509Certificate
 		return hash;
 	}
 
-
-	/* * * * * * * * * * * * * * * * * * * * * * * *
-	 * java.security.cert.Certificate implementation
+	/*
 	 * * * * * * * * * * * * * * * * * * * * * * * *
+	 * java.security.cert.Certificate implementation * * * * * * * * * * * * *
+	 * * * * * * * * * * *
 	 */
 	@Override
 	public byte[] getEncoded()
@@ -173,27 +174,25 @@ public final class NharuX509Certificate extends X509Certificate
 		return encoded;
 	}
 
+	@Override public void verify(final PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException { verify(key, (String) null); }
 	@Override
-	public void verify(final PublicKey key) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException { verify(key, (String) null); }
-
-
-	@Override
-	public void verify(final PublicKey key,final String sigProvider) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException
+	public void verify(final PublicKey key, final String sigProvider) throws CertificateException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, SignatureException
 	{
 		cota++;
-		if (key == null) throw new CertificateException("Argument key must not be null.", new IllegalArgumentException());
-		// TODO: Must support ECDSA
+		if (key == null)
+			throw new CertificateException("Argument key must not be null.", new IllegalArgumentException());
 		if (key instanceof NharuRSAPublicKey)
 		{
 			if (hHandle == 0) recallHandle();
-			nhixVerify(hHandle, ((NharuRSAPublicKey) key).getKeyHandle());
+			nhixVerify(hHandle, ((NharuRSAPublicKey) key).getInternalNode());
 		}
 		else
 		{
 			final byte[] tbs = getTBSCertificate();
 			final String algorithm = getSigAlgName();
 			final byte[] sig = getSignature();
-			final Signature verify = (sigProvider == null) ? Signature.getInstance(algorithm) : Signature.getInstance(algorithm, sigProvider);
+			final Signature verify = (sigProvider == null) ? Signature.getInstance(algorithm)
+					: Signature.getInstance(algorithm, sigProvider);
 			verify.initVerify(key);
 			verify.update(tbs);
 			if (!verify.verify(sig)) throw new SignatureException("Signature does not match.");
@@ -204,7 +203,12 @@ public final class NharuX509Certificate extends X509Certificate
 	public PublicKey getPublicKey()
 	{
 		cota++;
-		if (pubkey == null) pubkey = NharuPublicKey.newInstance(this);
+		if (pubkey == null)
+		{
+			final byte[] encoding = nhixGetPubkeyEncoding(hHandle);
+			try { pubkey = new NharuRSAPublicKey(encoding); }
+			catch (EncodingException e) { throw new RuntimeException(e); }
+		}
 		return pubkey;
 	}
 
@@ -668,6 +672,7 @@ public final class NharuX509Certificate extends X509Certificate
 	private static native String nhixGetNameIssuer(long handle);
 	private static native String nhixGetNameSubject(long handle);
 
+	private static native byte[] nhixGetPubkeyEncoding(long handle);
 
 
 	/*

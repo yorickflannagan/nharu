@@ -1,4 +1,4 @@
-package org.crypthing.security.issue;
+package org.crypthing.security;
 
 import java.security.GeneralSecurityException;
 

@@ -224,7 +224,7 @@ public class NharuX509CRL extends X509CRL
 		(
 			key instanceof NharuRSAPublicKey &&
 			(sigProvider == null || NharuProvider.NHARU_PROVIDER_NAME.equalsIgnoreCase(sigProvider))
-		)	nhixVerify(hHandle, ((NharuRSAPublicKey) key).getKeyHandle());
+		)	nhixVerify(hHandle, ((NharuRSAPublicKey) key).getInternalNode());
 		else
 		{
 			final byte[] tbs = getTBSCertList();
