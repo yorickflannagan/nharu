@@ -45,6 +45,19 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest
  * Signature: (J)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertGetSubject(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequest
+ * Method:    nhCertGetPubkey
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertGetPubkey(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequest
+ * Method:    nhCertVerify
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertVerify(JNIEnv*, jclass, jlong);
+
 
 #ifdef __cplusplus
 }

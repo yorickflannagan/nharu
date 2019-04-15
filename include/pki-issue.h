@@ -57,6 +57,9 @@ struct NH_CREQUEST_PARSER_STR
 	 * @brief Verifies PKCS#10 signature
 	 * @param NH_CREQUEST_PARSER_STR *self: the handler
 	 * @return
+	 * 	NH_UNEXPECTED_ENCODING
+	 * 	NH_UNSUPPORTED_MECH_ERROR
+	 * 	NH_ISSUE_INVALID_SIG_ERROR
 	 *
 	 */
 	CR_VRFY_FUNCTION		verify;
@@ -83,17 +86,17 @@ typedef struct NH_NAME_STR*					NH_OTHER_NAME;	/**< General Name Other Name */
 
 
 typedef struct  NH_TBSCERT_ENCODER_STR			NH_TBSCERT_ENCODER_STR;
-typedef NH_METHOD(NH_RV, NH_TBS_SETVER)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ unsigned int);
-typedef NH_METHOD(NH_RV, NH_TBS_SETSERIAL)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_BIG_INTEGER*);
-typedef NH_METHOD(NH_RV, NH_TBS_SETSIGNALG)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID);
-typedef NH_METHOD(NH_RV, NH_TBS_SETNAME)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_NAME, _IN_ size_t);
-typedef NH_METHOD(NH_RV, NH_TBS_SETVALIDITY)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ char*, _IN_ char*);
-typedef NH_METHOD(NH_RV, NH_TBS_SETPUBKEY)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_ASN1_PNODE);
-typedef NH_METHOD(NH_RV, NH_TBS_SETOCTET)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OCTET_SRING*);
-typedef NH_METHOD(NH_RV, NH_TBS_SETSUBALTNAME)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OTHER_NAME*, _IN_ size_t);
-typedef NH_METHOD(NH_RV, NH_TBS_SETBASCONSTRAINT)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ int);
-typedef NH_METHOD(NH_RV, NH_TBS_SETEXTKEYUSAGE)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID*, _IN_ size_t);
-typedef NH_METHOD(NH_RV, NH_TBS_SETCDP)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ char*);
+typedef NH_METHOD(NH_RV, NH_TBS_SETVER)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ unsigned int);
+typedef NH_METHOD(NH_RV, NH_TBS_SETSERIAL)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_BIG_INTEGER*);
+typedef NH_METHOD(NH_RV, NH_TBS_SETSIGNALG)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID);
+typedef NH_METHOD(NH_RV, NH_TBS_SETNAME)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_NAME*, _IN_ size_t);
+typedef NH_METHOD(NH_RV, NH_TBS_SETVALIDITY)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ char*, _IN_ char*);
+typedef NH_METHOD(NH_RV, NH_TBS_SETPUBKEY)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_ASN1_PNODE);
+typedef NH_METHOD(NH_RV, NH_TBS_SETOCTET)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OCTET_SRING*);
+typedef NH_METHOD(NH_RV, NH_TBS_SETSUBALTNAME)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OTHER_NAME*, _IN_ size_t);
+typedef NH_METHOD(NH_RV, NH_TBS_SETBASCONSTRAINT)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ int);
+typedef NH_METHOD(NH_RV, NH_TBS_SETEXTKEYUSAGE)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID*, _IN_ size_t);
+typedef NH_METHOD(NH_RV, NH_TBS_SETCDP)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ char*);
 typedef NH_METHOD(NH_RV, NH_TBS_SETEXT)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID, _IN_ int, _IN_ NH_OCTET_SRING*);
 /**
  * @brief X.509 TBSCertificate Encoder
@@ -103,14 +106,15 @@ typedef NH_METHOD(NH_RV, NH_TBS_SETEXT)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OI
  */
 struct  NH_TBSCERT_ENCODER_STR
 {
-	NH_ASN1_ENCODER_HANDLE	hEncoder;			/**< ASN.1 encoder */
+	NH_ASN1_ENCODER_HANDLE	hHandler;			/**< ASN.1 encoder */
+	int				fields;			/**< Fields bitmap (for validation) */
 	/**
 	 * @brief Sets X.509 certificate version number
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param unsigned int uVersion: version number { v1(0), v2(1), v3(2) }
 	 * @return
 	 */
-	NH_TBS_SETVER		set_version;
+	NH_TBS_SETVER		put_version;
 	/**
 	 * @brief Sets X.509 certificate serial number
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -118,7 +122,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETSERIAL		set_serial;
+	NH_TBS_SETSERIAL		put_serial;
 	/**
 	 * @brief Sets X.509 certificate signature algorithm
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -126,7 +130,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETSIGNALG		set_sign_alg;
+	NH_TBS_SETSIGNALG		put_sign_alg;
 	/**
 	 * @brief Sets X.509 certificate issuer
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -135,7 +139,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETNAME		set_issuer;
+	NH_TBS_SETNAME		put_issuer;
 	/**
 	 * @brief Sets X.509 certificate suject
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -144,7 +148,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETNAME		set_subject;
+	NH_TBS_SETNAME		put_subject;
 	/**
 	 * @brief Sets X.509 certificate validity
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -153,39 +157,39 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETVALIDITY	set_validity;
+	NH_TBS_SETVALIDITY	put_validity;
 	/**
 	 * @brief Sets X.509 certificate subject public key info
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
-	 * @param _IN_NH_ASN1_PNODE pPubkey: subjectPublicKeyInfo (extracted from PKCS#10)
+	 * @param NH_ASN1_PNODE pPubkey: subjectPublicKeyInfo (extracted from PKCS#10)
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETPUBKEY		set_pubkey;
+	NH_TBS_SETPUBKEY		put_pubkey;
 	/**
 	 * @brief Sets X.509 certificate authority key identifier extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
-	 * @param NH_OCTET_SRING pValue: extension value
+	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETOCTET		set_aki;
+	NH_TBS_SETOCTET		put_aki;
 	/**
 	 * @brief Sets X.509 certificate subject key identifier extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
-	 * @param NH_OCTET_SRING pValue: extension value
+	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETOCTET		set_ski;
+	NH_TBS_SETOCTET		put_ski;
 	/**
 	 * @brief Sets X.509 certificate key usage extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
-	 * @param NH_OCTET_SRING pValue: extension value
+	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETOCTET		set_key_usage;
+	NH_TBS_SETOCTET		put_key_usage;
 	/**
 	 * @brief Sets X.509 certificate subject alternative name extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -194,7 +198,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETSUBALTNAME	set_subject_altname;
+	NH_TBS_SETSUBALTNAME	put_subject_altname;
 	/**
 	 * @brief Sets X.509 certificate basic constraints extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -202,7 +206,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETBASCONSTRAINT	set_basic_constraints;
+	NH_TBS_SETBASCONSTRAINT	put_basic_constraints;
 	/**
 	 * @brief Sets X.509 certificate extended key usage extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -211,7 +215,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETEXTKEYUSAGE	set_extkey_usage;
+	NH_TBS_SETEXTKEYUSAGE	put_extkey_usage;
 	/**
 	 * @brief Sets X.509 certificate CRL distribution points extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -219,7 +223,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETCDP		set_cdp;
+	NH_TBS_SETCDP		put_cdp;
 	/**
 	 * @brief Sets X.509 certificate extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
@@ -229,7 +233,7 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @return
 	 * 
 	 */
-	NH_TBS_SETEXT		set_extension;
+	NH_TBS_SETEXT		put_extension;
 };
 typedef struct  NH_TBSCERT_ENCODER_STR			*NH_TBSCERT_ENCODER;
 

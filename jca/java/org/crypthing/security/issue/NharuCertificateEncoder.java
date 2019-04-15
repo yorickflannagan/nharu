@@ -124,18 +124,13 @@ import org.crypthing.security.provider.NharuProvider;
  * 
  * 
  */
-public class NharuCertificateEncoder {
-	static {
-		NharuProvider.isLoaded();
-	}
+public class NharuCertificateEncoder
+{
 
-	private void writeObject(ObjectOutputStream stream) throws IOException {
-		throw new NotSerializableException();
-	}
+	static { NharuProvider.isLoaded(); }
+	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
+	private void readObject(java.io.ObjectInputStream stream) throws NotSerializableException { throw new NotSerializableException(); }
 
-	private void readObject(java.io.ObjectInputStream stream) throws NotSerializableException {
-		throw new NotSerializableException();
-	}
 
 	/**
 	 * Creates a new encoder to issue a X.509 Certificate.
@@ -452,7 +447,8 @@ public class NharuCertificateEncoder {
 	 * @throws CertificateProfileException on failure.
 	 * 
 	 */
-	public NharuCertificateEncoder(final String profile) throws CertificateProfileException {
+	public NharuCertificateEncoder(final String profile) throws CertificateProfileException
+	{
 
 	}
 
@@ -466,7 +462,8 @@ public class NharuCertificateEncoder {
 	 *                   java.security.interfaces.RSAPrivateKey.
 	 * @throws GeneralSecurityException on failure.
 	 */
-	public void sign(final String algorithm, final SignerInterface signer) throws GeneralSecurityException {
+	public void sign(final String algorithm, final SignerInterface signer) throws GeneralSecurityException
+	{
 
 	}
 
@@ -476,14 +473,16 @@ public class NharuCertificateEncoder {
 	 * @return a DER encoded X.509 Certificate.
 	 * @throws EncodingException on failure.
 	 */
-	public byte[] encode() throws EncodingException {
+	public byte[] encode() throws EncodingException
+	{
 		return null;
 	}
 
 	/**
 	 * Releases this object. Must be called when object is no more needed
 	 */
-	public void releaseObject() {
+	public void releaseObject()
+	{
 
 	}
 }

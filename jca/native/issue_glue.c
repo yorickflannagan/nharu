@@ -59,10 +59,10 @@ Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertReleaseRequestPa
 (
 	_UNUSED_ JNIEnv *env,
 	_UNUSED_ jclass ignored,
-	jlong hHandle
+	jlong handle
 )
 {
-	JCERT_REQUEST_HANDLER hHandler = (JCERT_REQUEST_HANDLER) hHandle;
+	JCERT_REQUEST_HANDLER hHandler = (JCERT_REQUEST_HANDLER) handle;
 	if (hHandler)
 	{
 		if (hHandler->encoding) free (hHandler->encoding);
@@ -76,11 +76,30 @@ Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertGetSubject
 (
 	JNIEnv *env,
 	_UNUSED_ jclass ignored,
-	jlong hHandle
+	jlong handle
 )
 {
-	JCERT_REQUEST_HANDLER hHandler = (JCERT_REQUEST_HANDLER) hHandle;
-	jbyteArray ret = NULL;
-	if (hHandler) ret = get_node_encoding(env, hHandler->hCert->subject->node);
-	return ret;
+	return get_node_encoding(env, ((JCERT_REQUEST_HANDLER) handle)->hCert->subject->node);
+}
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertGetPubkey
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	return get_node_encoding(env, ((JCERT_REQUEST_HANDLER) handle)->hCert->subjectPKInfo);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertVerify
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	JCERT_REQUEST_HANDLER hHandler = (JCERT_REQUEST_HANDLER) handle;
+	NH_RV rv = hHandler->hCert->verify(hHandler->hCert);
+	if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGNATURE_ERROR, rv);
 }

@@ -192,6 +192,7 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuPublicKey_nhixParsePubl
  */
 JNIEXPORT void JNICALL Java_org_crypthing_security_NharuPublicKey_nhixReleasePublicKey(JNIEnv*, jclass, jlong);
 
+
 /** ******************************
  *  NharuRSAPublicKey interface
  *  ******************************/

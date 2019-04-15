@@ -129,6 +129,7 @@ int test_parse_pubkey()
 				qValue = (NH_PBITSTRING_VALUE) hPubkey->pubkey->value;
 				rv = (pValue->len == qValue->len) ? NH_OK : NH_ISSUE_ERROR;
 				if (NH_SUCCESS(rv)) rv = memcmp(pValue->string, qValue->string, pValue->len) == 0  ? NH_OK : NH_ISSUE_ERROR;
+				if (NH_SUCCESS(rv)) rv = hRequest->verify(hRequest);
 			}
 			NHIX_release_pubkey(hPubkey);
 		}

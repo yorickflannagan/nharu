@@ -331,7 +331,7 @@ Java_org_crypthing_security_NharuPublicKey_nhixParsePublicKey
 JNIEXPORT void JNICALL 
 Java_org_crypthing_security_NharuPublicKey_nhixReleasePublicKey
 (
-	JNIEnv *env,
+	_UNUSED_ JNIEnv *env,
 	_UNUSED_ jclass ignored,
 	jlong handle
 )
@@ -347,23 +347,17 @@ Java_org_crypthing_security_NharuPublicKey_nhixReleasePublicKey
 JNIEXPORT jint JNICALL
 Java_org_crypthing_security_NharuPublicKey_nhixGetPublicKeyType
 (
-	JNIEnv *env,
+	_UNUSED_ JNIEnv *env,
 	_UNUSED_ jclass ignored,
 	jlong handle
 )
 {
-	/* TODO: CHANGE EVERYTHING */
-	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
-	NH_ASN1_PNODE node;
+	JPUBKEY_HANDLER hHandler = (JPUBKEY_HANDLER) handle;
 	jint ret = 0L;
 
-	if ((node = hHandler->hCert->hParser->sail(hHandler->hCert->pubkey, NH_PARSE_SOUTH | 2)))
-	{
-		if (NH_match_oid(rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT, (unsigned int*) node->value, node->valuelen)) ret = NHIX_RSA_ALGORITHM;
-		else if (NH_match_oid(ecPublicKey_oid, NHC_ECDSA_PUBKEY_OID_COUNT, (unsigned int*) node->value, node->valuelen)) ret = NHIX_EC_ALGORITHM;
-		else if (NH_match_oid(dsa_oid, NHC_DSA_OID_COUNT, (unsigned int*) node->value, node->valuelen)) ret = NHIX_DSA_ALGORITHM;
-	}
-	else throw_new(env, J_RUNTIME_EX, J_PARSE_ERROR, 0);
+	if (NH_match_oid(rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT, (unsigned int*) hHandler->hPubkey->algorithm->value, hHandler->hPubkey->algorithm->valuelen)) ret = NHIX_RSA_ALGORITHM;
+	else if (NH_match_oid(ecPublicKey_oid, NHC_ECDSA_PUBKEY_OID_COUNT, (unsigned int*) hHandler->hPubkey->algorithm->value, hHandler->hPubkey->algorithm->valuelen)) ret = NHIX_EC_ALGORITHM;
+	else if (NH_match_oid(dsa_oid, NHC_DSA_OID_COUNT, (unsigned int*) hHandler->hPubkey->algorithm->value, hHandler->hPubkey->algorithm->valuelen)) ret = NHIX_DSA_ALGORITHM;
 	return ret;
 }
 
@@ -379,12 +373,11 @@ Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyModulus
 	jlong handle
 )
 {
-	/* TODO: CHANGE EVERYTHING */
-	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
+	JPUBKEY_HANDLER hHandler = (JPUBKEY_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jbyteArray ret = NULL;
 
-	if ((node = hHandler->hCert->hParser->sail(hHandler->hCert->pubkey, (NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | (NH_PARSE_SOUTH | 2))))
+	if ((node = hHandler->hPubkey->hParser->sail(hHandler->hPubkey->pubkey, NH_PARSE_SOUTH | 2)))
 	{
 		ret = get_node_value(env, node);
 	}
@@ -399,12 +392,11 @@ Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent
 	jlong handle
 )
 {
-	/* TODO: CHANGE EVERYTHING */
-	JNH_CERTIFICATE_HANDLER hHandler = (JNH_CERTIFICATE_HANDLER) handle;
+	JPUBKEY_HANDLER hHandler = (JPUBKEY_HANDLER) handle;
 	NH_ASN1_PNODE node;
 	jbyteArray ret = NULL;
 
-	if ((node = hHandler->hCert->hParser->sail(hHandler->hCert->pubkey, (NH_SAIL_SKIP_SOUTH << 24) | (NH_SAIL_SKIP_EAST << 16) | ((NH_PARSE_SOUTH | 2) << 8) | NH_SAIL_SKIP_EAST)))
+	if ((node = hHandler->hPubkey->hParser->sail(hHandler->hPubkey->pubkey, ((NH_PARSE_SOUTH | 2) << 8) | NH_SAIL_SKIP_EAST)))
 	{
 		ret = get_node_value(env, node);
 	}
@@ -414,13 +406,14 @@ Java_org_crypthing_security_NharuRSAPublicKey_nhixGetRSAKeyPublicExponent
 JNIEXPORT jlong JNICALL
 Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyInfoNode
 (
-	JNIEnv *env,
+	_UNUSED_ JNIEnv *env,
 	_UNUSED_ jclass ignored,
 	jlong handle
 )
 {
-	/* TODO: CHANGE EVERYTHING */
+	return (jlong) ((JPUBKEY_HANDLER) handle)->hPubkey->hParser->root;
 }
+
 
 /** ****************************
  *  RSA private key operations
