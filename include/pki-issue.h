@@ -96,8 +96,9 @@ typedef NH_METHOD(NH_RV, NH_TBS_SETOCTET)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ 
 typedef NH_METHOD(NH_RV, NH_TBS_SETSUBALTNAME)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OTHER_NAME*, _IN_ size_t);
 typedef NH_METHOD(NH_RV, NH_TBS_SETBASCONSTRAINT)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ int);
 typedef NH_METHOD(NH_RV, NH_TBS_SETEXTKEYUSAGE)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID*, _IN_ size_t);
-typedef NH_METHOD(NH_RV, NH_TBS_SETCDP)(_INOUT_ NH_TBSCERT_ENCODER_STR*, _IN_ char*);
+typedef NH_METHOD(NH_RV, NH_TBS_SETCDP)(_INOUT_ NH_TBSCERT_ENCODER_STR*, char*);
 typedef NH_METHOD(NH_RV, NH_TBS_SETEXT)(_IN_ NH_TBSCERT_ENCODER_STR*, _IN_ NH_OID, _IN_ int, _IN_ NH_OCTET_SRING*);
+typedef NH_METHOD(NH_RV, NH_TBS_ENCODE)(_IN_ NH_TBSCERT_ENCODER_STR*, _OUT_ unsigned char*, _INOUT_ size_t*);
 /**
  * @brief X.509 TBSCertificate Encoder
  * <em>Warning: encoder is not thread safe</em>
@@ -113,6 +114,10 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param unsigned int uVersion: version number { v1(0), v2(1), v3(2) }
 	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETVER		put_version;
 	/**
@@ -120,7 +125,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param __IN_ NH_BIG_INTEGER *pSerial: serial number (little endian)
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETSERIAL		put_serial;
 	/**
@@ -128,7 +137,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param NH_OID pOID: signature algorithm object identifier
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETSIGNALG		put_sign_alg;
 	/**
@@ -137,7 +150,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_NAME *pIssuer: certificate issuer
 	 * @param size_t ulCount: pIssuer count
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETNAME		put_issuer;
 	/**
@@ -146,7 +163,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_NAME *pSubject: certificate subject
 	 * @param size_t ulCount: pSubject count
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETNAME		put_subject;
 	/**
@@ -155,7 +176,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param char *szNotBefore: notBefore instant in form YYYYMMDDHHSSZ (must be NULL terminated)
 	 * @param char *szNotAfter: notAfter instant in form YYYYMMDDHHSSZ (must be NULL terminated)
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETVALIDITY	put_validity;
 	/**
@@ -163,7 +188,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param NH_ASN1_PNODE pPubkey: subjectPublicKeyInfo (extracted from PKCS#10)
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETPUBKEY		put_pubkey;
 	/**
@@ -171,7 +200,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETOCTET		put_aki;
 	/**
@@ -179,7 +212,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETOCTET		put_ski;
 	/**
@@ -187,7 +224,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETOCTET		put_key_usage;
 	/**
@@ -196,7 +237,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_OTHER_NAME *pValue: extension value
 	 * @param size_t ulCount: pValue count.
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETSUBALTNAME	put_subject_altname;
 	/**
@@ -204,7 +249,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param int isCA: TRUE if this is a CA certificate
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETBASCONSTRAINT	put_basic_constraints;
 	/**
@@ -213,7 +262,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_OID *pValues: extension value
 	 * @param size_t ulCount: pValues count.
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETEXTKEYUSAGE	put_extkey_usage;
 	/**
@@ -221,7 +274,11 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param char *pValues: double-null-terminated string of URLs.
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETCDP		put_cdp;
 	/**
@@ -231,9 +288,26 @@ struct  NH_TBSCERT_ENCODER_STR
 	 * @param int isCritical: critical extension indicator
 	 * @param NH_OCTET_SRING *pValue: extension value
 	 * @return
-	 * 
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
 	 */
 	NH_TBS_SETEXT		put_extension;
+	/**
+	 * @brief Encodes this TBS certificate
+	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
+	 * @param unsigned char *pBuffer: output buffer
+	 * @param size_t *ulSize: size of pBuffer; if pBuffer is NULL, returns required buffer size;
+	 * @return
+	 * 	NH_ISSUE_INCOMPLETEOB_ERROR
+	 * 	NH_BUF_TOO_SMALL
+	 * 	NH_INVALID_DER_TYPE
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_UNEXPECTED_ENCODING
+	 */
+	NH_TBS_ENCODE		encode;
 };
 typedef struct  NH_TBSCERT_ENCODER_STR			*NH_TBSCERT_ENCODER;
 

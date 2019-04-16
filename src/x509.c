@@ -514,8 +514,8 @@ NH_UTILITY(NH_RV, subject_unique_ID)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT
 /** ************************************
  *  X.509 Certificate extensions parsing
  *  ************************************/
-const static unsigned int aki_oid[] = { 2, 5, 29, 35 };
-static NH_NODE_WAY pkix_aki_map[] =
+unsigned int aki_oid[] = { 2, 5, 29, 35 };
+NH_NODE_WAY pkix_aki_map[] =
 {
 	{	/* AuthorityKeyIdentifier */
 		NH_PARSE_ROOT,
@@ -579,8 +579,8 @@ NH_UTILITY(NH_RV, aki)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT_ NH_ASN1_PNOD
 	return rv;
 }
 
-const static unsigned int ski_oid[] = { 2, 5, 29, 14 };
-static NH_NODE_WAY pkix_ski_map[] =
+unsigned int ski_oid[] = { 2, 5, 29, 14 };
+NH_NODE_WAY pkix_ski_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -621,8 +621,8 @@ NH_UTILITY(NH_RV, ski)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT_ NH_ASN1_PNOD
 	return rv;
 }
 
-const static unsigned int key_usage_oid[] = { 2, 5, 29, 15 };
-static NH_NODE_WAY key_usage_map[] =
+unsigned int key_usage_oid[] = { 2, 5, 29, 15 };
+NH_NODE_WAY key_usage_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -663,7 +663,7 @@ NH_UTILITY(NH_RV, key_usage)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT_ NH_ASN
 	return rv;
 }
 
-const static unsigned int subject_alt_names_oid[] = { 2, 5, 29, 17 };
+unsigned int subject_alt_names_oid[] = { 2, 5, 29, 17 };
 const static unsigned int issuer_alt_names_oid[] = { 2, 5, 29, 18 };
 INLINE NH_UTILITY(NH_RV, parse_alt_names)
 (
@@ -708,8 +708,8 @@ NH_UTILITY(NH_RV, issuer_alt_names)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT_
 	return parse_alt_names(self, issuer_alt_names_oid, NHC_OID_COUNT(issuer_alt_names_oid), node);
 }
 
-const static unsigned int basic_constraints_oid[] = { 2, 5, 29, 19 };
-static NH_NODE_WAY pkix_cert_basic_constraints_map[] =
+unsigned int basic_constraints_oid[] = { 2, 5, 29, 19 };
+NH_NODE_WAY pkix_cert_basic_constraints_map[] =
 {
 	{	/* BasicConstraints */
 		NH_PARSE_ROOT,
@@ -766,7 +766,7 @@ NH_UTILITY(NH_RV, basic_constraints)(_IN_ NH_CERTIFICATE_HANDLER_STR *self, _OUT
 	return rv;
 }
 
-const static unsigned int ext_key_usage_oid[] = { 2, 5, 29, 37 };
+unsigned int ext_key_usage_oid[] = { 2, 5, 29, 37 };
 static NH_NODE_WAY pkix_cert_key_purpose_id_map[] =
 {
 	{

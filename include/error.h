@@ -112,6 +112,7 @@ typedef int					NH_SYSRV;
 #define NH_ISSUE_ERROR			(NH_CMS_ERROR + 128)
 #define NH_ISSUE_INVALID_SIG_ERROR	(NH_ISSUE_ERROR + 1)	/**< Certificate request signature validation failure */
 #define NH_ISSUE_ALREADY_PUT_ERROR	(NH_ISSUE_ERROR + 2)	/**< Field alread set */
+#define NH_ISSUE_INCOMPLETEOB_ERROR	(NH_ISSUE_ERROR + 3)	/**< Incomplete object */
 
 
 #define NH_VENDOR_DEFINED_ERROR	(NH_ISSUE_ERROR + 32)	/**< Slot for new range of error codes consistent with this library */
