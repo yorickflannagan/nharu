@@ -139,3 +139,34 @@ int test_parse_pubkey()
 	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
+
+
+static unsigned int _uVersion = 2;
+static int _iSerial = 0x22DE;
+static unsigned int _sha256WithRSAEncryption_oid[] = { 1, 2, 840, 113549, 1, 1, 11 };
+static unsigned int _c_oid[] = { 2, 5, 4, 6 };
+static char *_c_issuer = "BR";
+static unsigned int _o_oid[] = { 2, 5, 4, 10 };
+static char *_o_issuer = "PKI Brazil";
+static unsigned int _ou_oid[] = { 2, 5, 4, 11 };
+static char *_ou_issuer = "PKI Ruler for All Cats";
+static unsigned int _cn_oid[] = { 2, 5, 4, 3 };
+static char *_cn_issuer = "Common Name for All Cats End User CA";
+static char *_cn_subject = "JOAQUIM JOSE DA SILVA XAVIER";
+static char *_notBefore = "20190425173943Z";
+static char *_notAfter = "20200425173943Z";
+static unsigned char _aki[] = { 0x06, 0x06, 0x9A, 0x22, 0xC4, 0xA7, 0xC0, 0xF8, 0x55, 0xFE, 0x05, 0xEA, 0x86, 0x37, 0x0A, 0x8D, 0x2D, 0xC0, 0x17, 0xD3 };
+static unsigned char _keyUsage[] = { 0x0F };
+static unsigned int _microsoft_upn_oid[] = { 1, 3, 6, 1, 4, 1, 311, 20, 2, 3 };
+static char *_upn_value = "imyself@microsofot, com";
+static unsigned int _subject_id_oid[] = { 2, 16, 76, 1, 3, 1 };
+static char *_subject_id_value = "000000000000000000000000000000000000000000000DETRANRJ";
+static unsigned int _subject_te_id_oid[] = { 2, 16, 76, 1, 3, 5 };
+static char *_subject_te_value = "0000000000000000000Rio de Janeiro      RJ";
+static unsigned int _subject_cei_id_oid[] = { 2, 16, 76, 1, 3, 6 };
+static char *_subject_cei = "000000000000";
+static unsigned int _clientAuth_oid[] = { 1, 3, 6, 1, 5, 5, 7, 3, 2 };
+static unsigned int _emailProtection_oid[] = { 1, 3, 6, 1, 5, 5, 7, 3, 4  };
+static char *_cdp = "http://www.caixa.gov.br/tkn/repo";
+/* TODO: dump cakey.pem */
+

@@ -308,12 +308,11 @@ static NH_NODE_WAY __tbscert_map[] =
 #define __NH_VALIDITY_SET		(__NH_VERSION_SET << 5)
 #define __NH_PUBKEY_SET			(__NH_VERSION_SET << 6)
 #define __NH_AKI_SET			(__NH_VERSION_SET << 7)
-#define __NH_SKI_SET			(__NH_VERSION_SET << 8)
-#define __NH_KEYUSAGE_SET		(__NH_VERSION_SET << 9)
-#define __NH_ALTNAME_SET		(__NH_VERSION_SET << 10)
-#define __NH_EXTKEYUSAGE_SET		(__NH_VERSION_SET << 11)
-#define __NH_CDP_SET			(__NH_VERSION_SET << 12)
-#define __NH_WELLFORMED_TBS		0x1FFF
+#define __NH_KEYUSAGE_SET		(__NH_VERSION_SET << 8)
+#define __NH_ALTNAME_SET		(__NH_VERSION_SET << 9)
+#define __NH_EXTKEYUSAGE_SET		(__NH_VERSION_SET << 10)
+#define __NH_CDP_SET			(__NH_VERSION_SET << 11)
+#define __NH_WELLFORMED_TBS		0x0FFF
 #define __IS_SET(_a, _b)		(((_a) & (_b)) == (_a))
 #define __PATH_TO_EXTENSIONS		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 9) << 8) | NH_SAIL_SKIP_SOUTH)
 INLINE static NH_RV __add_child(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
@@ -575,18 +574,6 @@ static NH_RV __put_aki(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING
 		}
 		NH_release_encoder(hEncoder);
 	}
-	return rv;
-}
-static NH_RV __put_ski(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING *pValue)
-{
-	NH_RV rv;
-	NH_OID_STR oid = { ski_oid, SKI_OID_COUNT };
-
-	if
-	(
-		NH_SUCCESS(rv = !__IS_SET(__NH_SKI_SET, hTBS->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
-		NH_SUCCESS(rv = __add_extension(hTBS->hHandler, &oid, FALSE, pValue))
-	)	hTBS->fields |= __NH_SKI_SET;
 	return rv;
 }
 static NH_RV __put_key_usage(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING *pValue)
@@ -934,7 +921,6 @@ static NH_TBSCERT_ENCODER_STR __hTBSCertificate =
 	__put_validity,
 	__put_pubkey,
 	__put_aki,
-	__put_ski,
 	__put_key_usage,
 	__put_subject_altname,
 	__put_basic_constraints,
