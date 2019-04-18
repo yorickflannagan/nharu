@@ -1091,6 +1091,9 @@ EXTERN unsigned int ext_key_usage_oid[];
 #define EXT_KEYUSAGE_OID_COUNT		4
 EXTERN NH_NODE_WAY pkix_cert_ext_key_usage_map[];
 #define PKIX_EXT_KEYUSAGE_MAP_COUNT		2
+EXTERN NH_NODE_WAY pkix_extension_map[];
+#define PKIX_EXTENSION_MAP_COUNT		4
+
 
 NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NHIX_PUBLIC_KEY*);
 NH_FUNCTION(void, NHIX_release_pubkey)(_INOUT_ NHIX_PUBLIC_KEY);

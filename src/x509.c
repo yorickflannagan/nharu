@@ -51,7 +51,7 @@ NH_UTILITY(NH_RV, verify)
 /** ****************************
  *  X.509 Certificate handler
  *  ****************************/
-static NH_NODE_WAY pkix_extension_map[] =
+NH_NODE_WAY pkix_extension_map[] =
 {
 	{	/* Extension */
 		NH_PARSE_ROOT,

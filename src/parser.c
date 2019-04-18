@@ -1332,7 +1332,7 @@ int saveTo(unsigned char *buffer, size_t size, char *filename)
 	FILE *stream;
 	int err = 0;
 
-	if ((stream = fopen(filename, "w")))
+	if ((stream = fopen(filename, "wb")))
 	{
 		if (fwrite(buffer, sizeof(unsigned char), size, stream) != size) err = ferror(stream);
 		fclose(stream);
