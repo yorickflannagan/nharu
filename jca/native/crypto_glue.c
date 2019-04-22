@@ -27,12 +27,13 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_provider_NharuDigest_nh
 			if
 			(
 				NH_SUCCESS(rv = hHash->init(hHash, mechanism)) &&
-				NH_SUCCESS(rv = hHash->digest(hHash, (unsigned char*) jbuffer, len, NULL, &size))
+				NH_SUCCESS(rv = hHash->update(hHash, (unsigned char*) jbuffer, len)) &&
+				NH_SUCCESS(rv = hHash->finish(hHash, NULL, &size))
 			)
 			{
 				if (NH_SUCCESS(rv = (out = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 				{
-					if (NH_SUCCESS(rv = hHash->digest(hHash, (unsigned char*) jbuffer, len, out, &size)))
+					if (NH_SUCCESS(rv = hHash->finish(hHash, out, &size)))
 					{
 						if
 						(

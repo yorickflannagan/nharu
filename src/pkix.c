@@ -443,10 +443,11 @@ NH_UTILITY(NH_RV, NHIX_verify_signature)
 
 	if (NH_FAIL(rv = NH_new_hash(&hHash))) return rv;
 	rv = hHash->init(hHash, hashAlg);
-	if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, data->identifier, data->contents - data->identifier + data->size, NULL, &hashsize);
+	if (NH_SUCCESS(rv)) rv = hHash->update(hHash, data->identifier, data->contents - data->identifier + data->size);
+	if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, NULL, &hashsize);
 	if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (hash = (unsigned char*) malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 	{
-		rv = hHash->digest(hHash, data->identifier, data->contents - data->identifier + data->size, hash, &hashsize);
+		rv = hHash->finish(hHash, hash, &hashsize);
 		NH_release_hash(hHash);
 		if (NH_SUCCESS(rv))
 		{

@@ -225,10 +225,11 @@ NH_RV test_signature(NH_RSA_PRIVKEY_HANDLER hPrivKey, NH_RSA_PUBKEY_HANDLER hPub
 	if (NH_SUCCESS(rv = NH_new_hash(&hHash)))
 	{
 		rv = hHash->init(hHash, CKM_SHA512);
-		if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, (unsigned char*)CHALLENGE, strlen(CHALLENGE), NULL, &hashsize);
+		if (NH_SUCCESS(rv)) rv = hHash->update(hHash, (unsigned char*)CHALLENGE, strlen(CHALLENGE));
+		if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, NULL, &hashsize);
 		if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (hash = (unsigned char*)malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 		{
-			rv = hHash->digest(hHash, (unsigned char*)CHALLENGE, strlen(CHALLENGE), hash, &hashsize);
+			rv = hHash->finish(hHash, hash, &hashsize);
 			if (NH_SUCCESS(rv)) rv = hPrivKey->sign(hPrivKey, CKM_SHA512_RSA_PKCS, hash, hashsize, NULL, &sigSize);
 			if (NH_SUCCESS(rv) && NH_SUCCESS(rv = (signature = (unsigned char*)malloc(sigSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 			{

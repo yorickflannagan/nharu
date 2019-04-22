@@ -798,19 +798,19 @@ static NH_NODE_WAY __distribution_point_map[] =
 	},
 	{
 		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0,
+		NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_EXPLICIT_BIT,
 		NULL,
 		0
 	},
 	{
 		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0,
+		NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_EXPLICIT_BIT,
 		NULL,
 		0
 	},
 	{
 		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_IA5_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_6 | NH_ASN1_EXPLICIT_BIT,
+		NH_ASN1_IA5_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_6,
 		NULL,
 		0
 	}
@@ -850,12 +850,7 @@ static NH_RV __put_cdp(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, char *pValues)
 		NH_SUCCESS(rv = 	NH_new_encoder(16, 2048, &hEncoder))
 	)
 	{
-		if
-		(
-			NH_SUCCESS(rv = hEncoder->chart(hEncoder, __cdp_map, ASN_NODE_WAY_COUNT(__cdp_map), &ext)) &&
-			NH_SUCCESS(rv = __add_child(hEncoder, ext, NH_ASN1_SEQUENCE)) &&
-			NH_SUCCESS(rv = (ext = ext->child) ? NH_OK : NH_CANNOT_SAIL)
-		)
+		if (NH_SUCCESS(rv = hEncoder->chart(hEncoder, __cdp_map, ASN_NODE_WAY_COUNT(__cdp_map), &ext)))
 		{
 			szURI = pValues;
 			while (NH_SUCCESS(rv) && *szURI)
@@ -864,7 +859,7 @@ static NH_RV __put_cdp(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, char *pValues)
 				(
 					NH_SUCCESS(rv = (node = hEncoder->add_to_set(hEncoder->container, ext)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
 					NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, __distribution_point_map, ASN_NODE_WAY_COUNT(__distribution_point_map))) &&
-					NH_SUCCESS(rv = (node = hEncoder->sail(node, (NH_PARSE_SOUTH | 4))) ? NH_OK : NH_CANNOT_SAIL) &&
+					NH_SUCCESS(rv = (node = hEncoder->sail(node, (NH_PARSE_SOUTH | 3))) ? NH_OK : NH_CANNOT_SAIL) &&
 					NH_SUCCESS(rv = hEncoder->put_ia5_string(hEncoder, node, szURI, strlen(szURI)))
 				)	szURI += strlen(szURI) + 1;
 			}
@@ -1067,13 +1062,14 @@ static NH_RV __sign
 			if
 			(
 				NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
-				NH_SUCCESS(rv = hHash->digest(hHash, pBuffer, uSize, NULL, &hash.length)) &&
+				NH_SUCCESS(rv = hHash->update(hHash, pBuffer, uSize)) &&
+				NH_SUCCESS(rv = hHash->finish(hHash, NULL, &hash.length)) &&
 				NH_SUCCESS(rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 			)
 			{
 				if
 				(
-					NH_SUCCESS(rv = hHash->digest(hHash, pBuffer, uSize, hash.data, &hash.length)) &&
+					NH_SUCCESS(hHash->finish(hHash, hash.data, &hash.length)) &&
 					NH_SUCCESS(rv = callback(&hash, mechanism, pParams, NULL, &uSigsize)) &&
 					NH_SUCCESS(rv = (pSignature = (unsigned char*) malloc(uSigsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 				)

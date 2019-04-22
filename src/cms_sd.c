@@ -219,11 +219,12 @@ NH_UTILITY(NH_RV, _verify_signature_)
 		if
 		(
 			NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
-			NH_SUCCESS(rv = hHash->digest(hHash, node->identifier, node->contents - node->identifier + node->size, NULL, &hashsize)) &&
+			NH_SUCCESS(hHash->update(hHash, node->identifier, node->contents - node->identifier + node->size)) &&
+			NH_SUCCESS(rv  = hHash->finish(hHash, NULL, &hashsize)) &&
 			NH_SUCCESS(rv = (hash = (unsigned char*) malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 		)
 		{
-			if (NH_SUCCESS(rv = hHash->digest(hHash, node->identifier, node->contents - node->identifier + node->size, hash, &hashsize)))
+			if (NH_SUCCESS(rv = hHash->finish(hHash, hash, &hashsize)))
 			{
 				switch (hashAlg)
 				{
@@ -340,12 +341,13 @@ NH_UTILITY(NH_RV, cms_sd_validate)(_IN_ NH_CMS_SD_PARSER_STR *self, _IN_ unsigne
 			}
 			rv = NH_new_hash(&hHash);
 			if (NH_SUCCESS(rv)) rv = hHash->init(hHash, hashAlg);
-			if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, eContent, eSize, NULL, &hashsize);
+			if (NH_SUCCESS(rv)) rv = hHash->update(hHash, eContent, eSize);
+			if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, NULL, &hashsize);
 			if
 			(
 				NH_SUCCESS(rv) &&
 				NH_SUCCESS(rv = (hash = (unsigned char*) malloc(hashsize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
-			)	rv = hHash->digest(hHash, eContent, eSize, hash, &hashsize);
+			)	rv = hHash->finish(hHash, hash, &hashsize);
 			if (hHash)
 			{
 				NH_release_hash(hHash);
@@ -929,9 +931,12 @@ NH_UTILITY(NH_RV, cms_sd_sign_init)
 	if (NH_FAIL(rv = add_signing_time(self->hEncoder, set))) return rv;
 	if (NH_FAIL(rv = NH_new_hash(&hHash))) return rv;
 	rv = hHash->init(hHash, hashAlg);
-	if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, self->eContent.data, self->eContent.length, NULL, &hash.length);
+	
+	hHash->finish(hHash, hash.data, &hash.length);
+	if (NH_SUCCESS(rv)) rv = hHash->update(hHash, self->eContent.data, self->eContent.length);
+	if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, NULL, &hash.length);
 	if (NH_SUCCESS(rv)) rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
-	if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, self->eContent.data, self->eContent.length, hash.data, &hash.length);
+	if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, hash.data, &hash.length);
 	NH_release_hash(hHash);
 	if (NH_SUCCESS(rv)) rv = add_message_digest(self->hEncoder, set, &hash);
 	if (hash.data) free(hash.data);
@@ -1000,9 +1005,10 @@ NH_UTILITY(NH_RV, cms_sd_sign_finish)
 	{
 		rv = NH_new_hash(&hHash);
 		if (NH_SUCCESS(rv)) rv = hHash->init(hHash, hashAlg);
-		if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, encoding, encodingsize, NULL, &hash.length);
+		if (NH_SUCCESS(rv)) rv = hHash->update(hHash, encoding, encodingsize);
+		if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, NULL, &hash.length);
 		if (NH_SUCCESS(rv)) rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
-		if (NH_SUCCESS(rv)) rv = hHash->digest(hHash, encoding, encodingsize, hash.data, &hash.length);
+		if (NH_SUCCESS(rv)) rv = hHash->finish(hHash, hash.data, &hash.length);
 		NH_release_hash(hHash);
 	}
 	free(encoding);
@@ -1139,9 +1145,10 @@ NH_UTILITY(NH_RV, add_signing_cert)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 		if
 		(
 			NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
-			NH_SUCCESS(rv = hHash->digest(hHash, signingCert->hParser->encoding, signingCert->hParser->length, NULL, &hash.length)) &&
+			NH_SUCCESS(rv = hHash->update(hHash, signingCert->hParser->encoding, signingCert->hParser->length)) &&
+			NH_SUCCESS(rv = hHash->finish(hHash, NULL, &hash.length)) &&
 			NH_SUCCESS(rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
-			NH_SUCCESS(rv = hHash->digest(hHash, signingCert->hParser->encoding, signingCert->hParser->length, hash.data, &hash.length))
+			NH_SUCCESS(rv = hHash->finish(hHash, hash.data, &hash.length))
 		)
 		{
 			if

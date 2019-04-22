@@ -418,31 +418,6 @@ NH_UTILITY(NH_RV, NH_hash_finish)(_INOUT_ NH_HASH_HANDLER_STR *hHash, _OUT_ unsi
 	hHash->mechanism = UINT_MAX;
 	return rv;
 }
-
-NH_UTILITY(NH_RV, NH_digest)
-(
-	_INOUT_ NH_HASH_HANDLER_STR *hHash,
-	_IN_ unsigned char *data,
-	_IN_ size_t size,
-	_OUT_ unsigned char *buffer,
-	_INOUT_ size_t *bufsize
-)
-{
-	int len;
-	NH_RV rv;
-
-	if (!hHash->md || hHash->mechanism == UINT_MAX) return NH_INVALID_STATE_ERROR;
-	len = EVP_MD_CTX_size(hHash->ctx);
-	if (!buffer)
-	{
-		*bufsize = len;
-		return NH_OK;
-	}
-	if (*bufsize < (size_t) len) return NH_BUF_TOO_SMALL;
-	if (NH_FAIL(rv = hHash->update(hHash, data, size))) return rv;
-	return hHash->finish(hHash, buffer, bufsize);
-}
-
 NH_UTILITY(NH_RV, NH_hash_copy)(_IN_ NH_HASH_HANDLER_STR *hCurrent, _OUT_ NH_HASH_HANDLER_STR **hNew)
 {
 	NH_RV rv;
@@ -465,7 +440,6 @@ const static NH_HASH_HANDLER_STR defHashHandler =
 	NH_init_hash,
 	NH_hash_update,
 	NH_hash_finish,
-	NH_digest,
 	NH_hash_copy
 };
 
@@ -2184,29 +2158,21 @@ NH_UTILITY(NH_RV, NH_RSA_from_privkey_info)(_INOUT_ NH_RSA_PRIVKEY_HANDLER_STR *
 		rv = hParser->map_from(hParser, pkey, rsa_privkey_pkcs_map, ASN_NODE_WAY_COUNT(rsa_privkey_pkcs_map));
 	}
 	if (NH_SUCCESS(rv)) rv = (node = hParser->sail(pkey, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* modulus */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &n);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &n);	/* modulus */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* publicExponent */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &e);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &e);	/* publicExponent */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* privateExponent */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &d);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &d);	/* privateExponent */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* prime1 */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &p);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &p);	/* prime1 */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* prime2 */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &q);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &q);	/* prime2 */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* exponent1 */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &dmp);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &dmp);/* exponent1 */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* exponent2 */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &dmq);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &dmq);/* exponent2 */
 	if (NH_SUCCESS(rv)) rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING;
-	if (NH_SUCCESS(rv)) rv = hParser->parse_integer(node);	/* coefficient */
-	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &qmp);
+	if (NH_SUCCESS(rv)) rv = decode_bignum(hParser, node, &qmp);/* coefficient */
 	if (NH_SUCCESS(rv)) rv = hHandler->create(hHandler, &n, &e, &d, &p, &q, &dmp, &dmq, &qmp);
 	NH_release_parser(hParser);
 	return rv;

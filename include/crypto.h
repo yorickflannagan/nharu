@@ -379,31 +379,6 @@ typedef NH_METHOD(NH_RV, NH_UDGST_FUNCTION)(_IN_ NH_HASH_HANDLER_STR*, _IN_ unsi
 typedef NH_METHOD(NH_RV, NH_FDGST_FUNCTION)(_INOUT_ NH_HASH_HANDLER_STR*, _OUT_ unsigned char*, _INOUT_ size_t*);
 
 /*
- ****f* NH_HASH_HANDLER/digest
- *
- * NAME
- *	digest
- *
- * PURPOSE
- *	Single pass hash
- *
- * ARGUMENTS
- *	_INOUT_ NH_HASH_HANDLER_STR *hHash: hash handler
- *	_IN_ unsigned char *data: data to hash
- *	_IN_ size_t size: size of data.
- *	_OUT_ unsigned char *buffer: output buffer. If NULL, required size is returned in size.
- *	__INOUT_ size_t *size: size of buffer.
- *
- * RESULT
- *	NH_INVALID_STATE_ERROR
- *	NH_HASH_ERROR
- *
- ******
- *
- */
-typedef NH_METHOD(NH_RV, NH_DGSTALL_FUNCTION)(_INOUT_ NH_HASH_HANDLER_STR*, _IN_ unsigned char*, _IN_ size_t, _OUT_ unsigned char*, _INOUT_ size_t*);
-
-/*
  ****f* NH_HASH_HANDLER/copy
  *
  * NAME
@@ -445,7 +420,6 @@ struct NH_HASH_HANDLER_STR
 	NH_IDGST_FUNCTION		init;		/* _IN_ CK_MECHANISM_TYPE, _INOUT_ NH_HASH_HANDLER_STR*: Initializes a digest operation */
 	NH_UDGST_FUNCTION		update;	/* _IN_ NH_HASH_HANDLER_STR*, _IN_ unsigned char*, _IN_ size_t: Updates a digest */
 	NH_FDGST_FUNCTION		finish;	/* _IN_ NH_HASH_HANDLER_STR*, _OUT_ unsigned char*, _INOUT_ size_t*: Finalizes a digest. For handler reuse, call init() */
-	NH_DGSTALL_FUNCTION	digest;	/* _INOUT_ NH_HASH_HANDLER_STR*, _IN_ unsigned char*, _IN_ size_t _OUT_ unsigned char*, _INOUT_ size_t*: Single pass hash */
 	NH_SDGST_FUNCTION		copy;		/* _IN_ NH_HASH_HANDLER_STR*, _OUT_ NH_HASH_HANDLER_STR**: Copies current hash state to a new object. */
 };
 typedef NH_HASH_HANDLER_STR	*NH_HASH_HANDLER;
