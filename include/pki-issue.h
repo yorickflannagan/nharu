@@ -208,6 +208,18 @@ struct  NH_TBSCERT_ENCODER_STR
 	 */
 	NH_TBS_SETOCTET		put_aki;
 	/**
+	 * @brief Sets X.509 certificate subject key identifier extension
+	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
+	 * @param NH_OCTET_SRING *pValue: extension value
+	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
+	 */
+	NH_TBS_SETOCTET		put_ski;
+	/**
 	 * @brief Sets X.509 certificate key usage extension
 	 * @param NH_TBSCERT_ENCODER_STR *hEncoder: ASN.1 encoder handler
 	 * @param NH_OCTET_SRING *pValue: extension value

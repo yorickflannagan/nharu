@@ -535,6 +535,49 @@ static NH_RV __put_aki(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING
 	}
 	return rv;
 }
+static NH_RV __put_ski(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING *pValue)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE ext;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	size_t uSize;
+	unsigned char *pBuffer;
+	NH_OCTET_SRING extValue = { 0, 0 };
+	NH_OID_STR oid = { ski_oid, SKI_OID_COUNT };
+
+	if
+	(
+		NH_SUCCESS(rv = pValue ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = 	NH_new_encoder(8, 1024, &hEncoder))
+	)
+	{
+		if
+		(
+			NH_SUCCESS(rv = hEncoder->chart(hEncoder, pkix_ski_map, PKIX_SKI_MAP_COUNT, &ext)) &&
+			NH_SUCCESS(rv = (ext = ext->child) ? NH_OK : NH_CANNOT_SAIL)
+		)
+		{
+			*ext->identifier = NH_asn_get_tag(ext->knowledge);
+			if
+			(
+				NH_SUCCESS(rv = hEncoder->put_octet_string(hEncoder, ext, pValue->data, pValue->length)) &&
+				NH_SUCCESS(rv = (uSize = hEncoder->encoded_size(hEncoder, hEncoder->root)) > 0 ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+				NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(uSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pBuffer)))
+				{
+					extValue.data = pBuffer;
+					extValue.length = uSize;
+					rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue);
+				}
+				free(pBuffer);
+			}
+		}
+		NH_release_encoder(hEncoder);
+	}
+	return rv;
+}
 static NH_NODE_WAY __key_usage[] =
 {
 	{
@@ -941,6 +984,7 @@ static NH_TBSCERT_ENCODER_STR __hTBSCertificate =
 	__put_validity,
 	__put_pubkey,
 	__put_aki,
+	__put_ski,
 	__put_key_usage,
 	__put_subject_altname,
 	__put_basic_constraints,

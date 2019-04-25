@@ -41,6 +41,7 @@ public final class NharuCommon
 
 	public static int[] stringToOID(final String oid)
 	{
+		if (oid == null) throw new NullPointerException();
 		String[] id = oid.split("\\.");
 		final int[] ret = new int[id.length];
 		for (int i = 0; i < id.length; i++)

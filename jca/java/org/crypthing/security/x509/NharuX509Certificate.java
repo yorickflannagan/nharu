@@ -668,10 +668,8 @@ public final class NharuX509Certificate extends X509Certificate
 	private static native List<int[]> nhixGetExtendedKeyUsage(long handle);
 	private static native Collection<List<?>> nhixGetSubjectAltNames(long handle);
 	private static native Collection<List<?>> nhixGetIssuerAltNames(long handle);
-
 	private static native String nhixGetNameIssuer(long handle);
 	private static native String nhixGetNameSubject(long handle);
-
 	private static native byte[] nhixGetPubkeyEncoding(long handle);
 
 

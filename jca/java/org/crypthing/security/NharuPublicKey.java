@@ -39,7 +39,6 @@ public class NharuPublicKey implements PublicKey
 	{
 		PublicKey ret = null;
 		NharuPublicKey me = new NharuPublicKey(encoding);
-		EncodingException err = null;
 		final int type = nhixGetPublicKeyType(me.hHandle);
 		switch (type)
 		{
@@ -65,7 +64,7 @@ public class NharuPublicKey implements PublicKey
 	private int hash = 0;
 	protected NharuPublicKey(final byte[] encoding) throws EncodingException
 	{
-		this.encoding = encoding;
+		if ((this.encoding = encoding) == null) throw new EncodingException("Argument must not be null");
 		hHandle = nhixParsePublicKey(encoding);
 	}
 	public void releaseObject()
