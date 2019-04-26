@@ -214,6 +214,12 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixG
  * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyInfoNode(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAPublicKey
+ * Method:    getKeyEncoding
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPublicKey_getKeyEncoding(JNIEnv*, jclass, jlong);
 
 
 /** ****************************

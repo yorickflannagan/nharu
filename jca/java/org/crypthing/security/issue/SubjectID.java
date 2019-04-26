@@ -2,6 +2,7 @@ package org.crypthing.security.issue;
 
 /**
  * Implements a PKI Brazil SubjectID Other Name
+ * @since 1.3.0
  */
 public final class SubjectID extends NharuOtherName
 {

@@ -1,5 +1,6 @@
 package org.crypthing.security;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.json.JSONArray;
@@ -19,9 +20,22 @@ import org.json.JSONObject;
  * 0.9.2342.19200300.100.1.1 - userid           UID
  * 0.9.2342.19200300.100.1.25 - domainComponent DC
  * </pre>
+ * @since 1.3.0
  */
 public class NharuX500Name
 {
+	private static class Placeholder
+	{
+		private final int[] value;
+		Placeholder(int[] value) { this.value = value; }
+		@Override public int hashCode() { return Arrays.hashCode(value); }
+		@Override public boolean equals(Object ano)
+		{
+			if (this == ano) return true;
+			if (!(ano instanceof Placeholder)) return false;
+			return Arrays.equals(value, ((Placeholder)ano).value);
+		}
+	}
 	private static final int[] CN_OID		= new int[] { 2, 5, 4, 3 };
 	private static final int[] L_OID		= new int[] { 2, 5, 4, 7 };
 	private static final int[] ST_OID		= new int[] { 2, 5, 4, 8 };
@@ -32,7 +46,7 @@ public class NharuX500Name
 	private static final int[] UID_OID		= new int[] { 0, 9, 2342, 19200300, 100, 1, 1 };
 	private static final int[] DC_OID		= new int[] { 0, 9, 2342, 19200300, 100, 1, 25 };
 	private static final HashMap<String, int[]> x500Att = new HashMap<>();
-	private static final HashMap<int[], String> attLookup = new HashMap<>();
+	private static final HashMap<Placeholder, String> attLookup = new HashMap<>();
 	static
 	{
 		x500Att.put("CN", CN_OID);
@@ -45,15 +59,15 @@ public class NharuX500Name
 		x500Att.put("UID", UID_OID);
 		x500Att.put("DC", DC_OID);
 
-		attLookup.put(CN_OID, "CN");
-		attLookup.put(L_OID, "L");
-		attLookup.put(ST_OID, "ST");
-		attLookup.put(O_OID, "O");
-		attLookup.put(OU_OID, "OU");
-		attLookup.put(C_OID, "C");
-		attLookup.put(STREET_OID, "STREET");
-		attLookup.put(UID_OID, "UID");
-		attLookup.put(DC_OID, "DC");
+		attLookup.put(new Placeholder(CN_OID), "CN");
+		attLookup.put(new Placeholder(L_OID), "L");
+		attLookup.put(new Placeholder(ST_OID), "ST");
+		attLookup.put(new Placeholder(O_OID), "O");
+		attLookup.put(new Placeholder(OU_OID), "OU");
+		attLookup.put(new Placeholder(C_OID), "C");
+		attLookup.put(new Placeholder(STREET_OID), "STREET");
+		attLookup.put(new Placeholder(UID_OID), "UID");
+		attLookup.put(new Placeholder(DC_OID), "DC");
 	}
 	/**
 	 * Parses JSON representation of a GeneralName
@@ -66,11 +80,12 @@ public class NharuX500Name
 		final JSONArray oidOb = ob.getJSONArray("oid");
 		int[] oid = new int[oidOb.length()];
 		for (int i = 0; i < oidOb.length(); i++) oid[i] = oidOb.getInt(i);
-		if (!attLookup.containsKey(oid)) throw new IllegalArgumentException("Unrecognized X500 name");
+		final Placeholder holder = new Placeholder(oid);
+		if (!attLookup.containsKey(holder)) throw new IllegalArgumentException("Unrecognized X500 name");
 		final NharuX500Name ret = new NharuX500Name();
 		ret.oid = oid;
 		ret.value = ob.getString("value");
-		ret.canonical = attLookup.get(oid) + "=" + ret.value;
+		ret.canonical = attLookup.get(holder) + "=" + ret.value;
 		return ret;
 	}
 	private int[] oid;

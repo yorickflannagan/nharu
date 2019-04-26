@@ -16,9 +16,9 @@ public class NharuCertificateEncoder
 	private void writeObject(ObjectOutputStream stream) throws IOException { throw new NotSerializableException(); }
 	private void readObject(java.io.ObjectInputStream stream) throws NotSerializableException { throw new NotSerializableException(); }
 
-	public NharuCertificateEncoder(final String profile) throws CertificateProfileException
+	public NharuCertificateEncoder(final String profile) throws ParameterException
 	{
-		final CertificateProfile in = new CertificateProfile(profile);
+		final CertificateParams in = new CertificateParams(profile);
 	}
 
 	/**

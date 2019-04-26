@@ -13,6 +13,7 @@ import org.json.JSONObject;
  * 	type-id    OBJECT IDENTIFIER,
  * 	value      [0] EXPLICIT ANY DEFINED BY type-id }
  * </pre>
+ * @since 1.3.0
  */
 public class NharuOtherName
 {

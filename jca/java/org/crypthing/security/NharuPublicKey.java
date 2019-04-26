@@ -91,8 +91,8 @@ public class NharuPublicKey implements PublicKey
 			recallHandle();
 			switch (nhixGetPublicKeyType(hHandle))
 			{
-			case NHIX_DSA_ALGORITHM: algorithm = "DSA";
-			case NHIX_RSA_ALGORITHM: algorithm = "RSA";
+			case NHIX_DSA_ALGORITHM: algorithm = "DSA"; break;
+			case NHIX_RSA_ALGORITHM: algorithm = "RSA"; break;
 			default: throw new RuntimeException("Unsupported key type");
 			}
 		}

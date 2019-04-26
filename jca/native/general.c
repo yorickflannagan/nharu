@@ -413,7 +413,23 @@ Java_org_crypthing_security_NharuRSAPublicKey_nhixGetPublicKeyInfoNode
 {
 	return (jlong) ((JPUBKEY_HANDLER) handle)->hPubkey->hParser->root;
 }
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_NharuRSAPublicKey_getKeyEncoding
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	NH_PBITSTRING_VALUE block;
+	jbyteArray ret = NULL;
 
+	block = (NH_PBITSTRING_VALUE) ((JPUBKEY_HANDLER) handle)->hPubkey->pubkey->value;
+	if ((ret = (*env)->NewByteArray(env, block->len))) (*env)->SetByteArrayRegion(env, ret, 0L, block->len, (jbyte*) block->string);
+	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+
+	return ret;
+}
 
 /** ****************************
  *  RSA private key operations

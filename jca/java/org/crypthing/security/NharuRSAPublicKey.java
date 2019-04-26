@@ -7,6 +7,7 @@ import java.io.ObjectStreamException;
 import java.math.BigInteger;
 import java.security.interfaces.RSAPublicKey;
 
+import org.crypthing.security.provider.NharuDigest;
 import org.crypthing.security.provider.NharuProvider;
 
 
@@ -25,6 +26,7 @@ public final class NharuRSAPublicKey extends NharuPublicKey implements RSAPublic
 
 	private BigInteger modulus = null;
 	private BigInteger exponent = null;
+	private byte[] keyId = null;
 	public NharuRSAPublicKey(final byte[] encoding) throws EncodingException { super(encoding); }
 	@Override
 	public BigInteger getModulus()
@@ -38,9 +40,25 @@ public final class NharuRSAPublicKey extends NharuPublicKey implements RSAPublic
 		if (exponent == null) exponent = new BigInteger(nhixGetRSAKeyPublicExponent(hHandle));
 		return exponent;
 	}
-	public long getInternalNode() { return nhixGetPublicKeyInfoNode(hHandle); }
+	public long getInternalNode()
+	{
+		recallHandle();
+		return nhixGetPublicKeyInfoNode(hHandle);
+	}
+	/**
+	 * Calculates the SHA-1 hash of this key according to RFC 5280 section 4.2.1.2
+	 * @return required hash value
+	 * @since 1.3.0
+	 */
+	public byte[] getKeyIdentifier()
+	{
+		recallHandle();
+		if (keyId == null) keyId = new NharuDigest.SHA().digestBuffer(getKeyEncoding(hHandle));
+		return keyId;
+	}
 
 	private static native byte[] nhixGetRSAKeyModulus(long handle);
 	private static native byte[] nhixGetRSAKeyPublicExponent(long handle);
 	private static native long nhixGetPublicKeyInfoNode(long handle);
+	private static native byte[] getKeyEncoding(long handle);
 }
