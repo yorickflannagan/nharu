@@ -103,3 +103,114 @@ Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertVerify
 	NH_RV rv = hHandler->hCert->verify(hHandler->hCert);
 	if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGNATURE_ERROR, rv);
 }
+
+
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceNewCertificateEncoder
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored
+)
+{
+	jlong ret = 0L;
+	NH_TBSCERT_ENCODER hEncoder = NULL;
+	NH_CERT_ENCODER hCert = NULL;
+	JNH_CERT_ENCODER hHandler;
+	NH_RV rv;
+
+	if
+	(
+		NH_SUCCESS(rv = NH_new_tbscert_encoder(&hEncoder)) &&
+		NH_SUCCESS(rv = NH_new_cert_encoder(&hCert)) &&
+		NH_SUCCESS(rv = (hHandler = (JNH_CERT_ENCODER) malloc(sizeof(JNH_CERT_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+	)
+	{
+		hHandler->hTBS = hEncoder;
+		hHandler->hCert = hCert;
+		ret = (jlong) hHandler;
+	}
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	if (NH_FAIL(rv))
+	{
+		if (hEncoder) NH_delete_tbscert_encoder(hEncoder);
+		if (hCert) NH_delete_cert_encoder(hCert);
+	}
+	return ret;
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceReleaseCertificageEncoder
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
+	NH_delete_tbscert_encoder(hHandler->hTBS);
+	NH_delete_cert_encoder(hHandler->hCert);
+	free(hHandler);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetVersion
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jint version
+)
+{
+	NH_RV rv;
+	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
+	if (NH_FAIL(rv = hHandler->hTBS->put_version(hHandler->hTBS, version))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSerial
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jbyteArray value
+)
+{
+	NH_RV rv;
+	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
+	NH_BIG_INTEGER pSerial = { NULL, 0 };
+	jsize len;
+	jbyte *jbuffer;
+
+	len = (*env)->GetArrayLength(env, value);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, value, NULL)))
+	{
+		pSerial.data = (unsigned char*) jbuffer;
+		pSerial.length = len;
+		if (NH_FAIL(rv = hHandler->hTBS->put_serial(hHandler->hTBS, &pSerial))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		(*env)->ReleaseByteArrayElements(env, value, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}
+
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSignatureAlgorithm
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jintArray value
+)
+{
+	NH_RV rv;
+	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
+	NH_OID_STR pOID = { NULL, 0 };
+	jsize len;
+	jint *jbuffer;
+
+	len = (*env)->GetArrayLength(env, value);
+	if ((jbuffer = (*env)->GetIntArrayElements(env, value, NULL)))
+	{
+		pOID.pIdentifier = (unsigned int*) jbuffer;
+		pOID.uCount = len;
+		if (NH_FAIL(rv = hHandler->hTBS->put_sign_alg(hHandler->hTBS, &pOID))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		(*env)->ReleaseIntArrayElements(env, value, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}

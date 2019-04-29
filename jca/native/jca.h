@@ -81,6 +81,7 @@
 #define J_CMS_ENCRYPT_ERROR		"Could not encrypt CMS contents"
 #define J_CERTREQ_PARSE_ERROR		"Could not parse certificate request"
 #define J_PUBKEY_PARSE_ERROR		"Could not parse public key encoding"
+#define J_TBS_PUT_ERROR			"Could not set Certificate field due to encoding error"
 
 #define J_NATIVE_EX			"java/lang/Error"
 #define J_RUNTIME_EX			"java/lang/RuntimeException"

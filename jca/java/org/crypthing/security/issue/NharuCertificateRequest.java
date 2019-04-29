@@ -118,7 +118,7 @@ public class NharuCertificateRequest
 	 * Basic tests
 	 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 	 */
-	private static final String CERTIFICATE_REQUEST =
+	static final String CERTIFICATE_REQUEST =
 		"-----BEGIN CERTIFICATE REQUEST-----"
 		+ "MIICfzCCAWcCAQAwOjE4MDYGA1UEAxMvRnJhbmNpc3ZhbGRvIEdlbmV2YWxkbyBkYXMgVG9y"
 		+ "cmVzIDE1NTQ5MjIxNjMzMDkwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC3kovY"

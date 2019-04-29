@@ -131,7 +131,16 @@ public class NharuX500Name
 		}
 		return json;
 	}
-	@Override public boolean equals(Object anoObject) { return canonical.equalsIgnoreCase((String) anoObject); }
+	@Override public boolean equals(Object anoObject) { return canonical.equalsIgnoreCase(((NharuX500Name) anoObject).canonical); }
 	@Override public int hashCode() { return canonical.hashCode(); }
 	@Override public String toString() { return canonical; }
+	@Override
+	public Object clone()
+	{
+		final NharuX500Name ret = new NharuX500Name();
+		ret.oid = Arrays.copyOf(oid, oid.length);
+		ret.value = new String(value);
+		ret.canonical = new String(canonical);
+		return ret;
+	}
 }

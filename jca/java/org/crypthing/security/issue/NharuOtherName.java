@@ -17,8 +17,9 @@ import org.json.JSONObject;
  */
 public class NharuOtherName
 {
-	private final int[] oid;
-	private final String value;
+	private int[] oid;
+	private String value;
+	private NharuOtherName() {}
 	/**
 	 * Creates a new Other Name
 	 * @param oid: object identifier as an array of int
@@ -71,5 +72,12 @@ public class NharuOtherName
 		while (i < oid.length - 1) builder.append(oid[i++]).append(", ");
 		builder.append(oid[i]).append(" ], \"value\": \"").append(value).append("\" }");
 		return builder.toString();
+	}
+	@Override public Object clone()
+	{
+		final NharuOtherName ret = new NharuOtherName();
+		ret.oid = Arrays.copyOf(oid, oid.length);
+		ret.value = new String(value);
+		return ret;
 	}
 }

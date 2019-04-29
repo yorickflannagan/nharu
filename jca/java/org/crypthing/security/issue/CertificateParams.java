@@ -13,6 +13,7 @@ import java.util.TimeZone;
 import org.crypthing.security.EncodingException;
 import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.NharuX500Name;
+import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuCommon;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -30,7 +31,7 @@ public class CertificateParams
 	private Date notBefore;
 	private Date notAfter;
 	private NharuX500Name[] subject;
-	private PublicKey publicKey;
+	private NharuRSAPublicKey publicKey;
 	private byte[] aki;
 	private byte[] keyUsage;
 	private NharuOtherName[] subjectAltName;
@@ -357,21 +358,18 @@ public class CertificateParams
 			setCDP(param);
 
 			if (extensions.has("basicConstraints") && extensions.getBoolean("basicConstraints")) turnonBasicConstraints();
+			if (extensions.has("subjectKeyIdentifier")) setSKI(fromHex(extensions.getString("subjectKeyIdentifier")));
 		}
 		catch (RuntimeException e) { throw new ParameterException(e); }
 	}
-
 	/**
-	 * <p>
-	 * Creates a default certificate parameters instance.
-	 * The following values are default:
-	 * </p>
+	 * <p>Creates a default certificate parameters instance.
+	 * The following values are default:</p>
 	 * <ul>
 	 * <li>version: 2 (v(3))</li>
 	 * <li>signature algorithm: SHA256withRSA</li>
 	 * <li>validity: 3 years from now</li>
-	 * <li>key usage: Digital Signature, Non Repudiation, Key
-	 * Encipherment</li>
+	 * <li>key usage: Digital Signature, Non Repudiation, Key Encipherment</li>
 	 * </ul>
 	 */
 	public CertificateParams()
@@ -386,6 +384,46 @@ public class CertificateParams
 		setNotAfter(cal.getTime());
 		setKeyUsage(fromHex("05E0"));
 	}
+	/**
+	 * Creates a default certificate parameters instance with specified issuer
+	 * <p>The following values are set:</p>
+	 * <ul>
+	 * <li>version: 2 (v(3))</li>
+	 * <li>signature algorithm: SHA256withRSA</li>
+	 * <li>validity: 3 years from now</li>
+	 * <li>key usage: Digital Signature, Non Repudiation, Key Encipherment</li>
+	 * <li>issuer</li>
+	 * <li>authority key identifier</li>
+	 * </ul>
+	 * @param issuer: Certificate issuer.
+	 */
+	public CertificateParams(final NharuX509Certificate issuer)
+	{
+		this();
+		setIssuer(issuer.getIssuerX500Principal().getName());
+		setAKI(issuer);
+	}
+	/**
+	 * Creates a default certificate parameters instance with specified issuer and CRL Distribution Points
+	 * <p>The following values are set:</p>
+	 * <ul>
+	 * <li>version: 2 (v(3))</li>
+	 * <li>signature algorithm: SHA256withRSA</li>
+	 * <li>validity: 3 years from now</li>
+	 * <li>key usage: Digital Signature, Non Repudiation, Key Encipherment</li>
+	 * <li>issuer</li>
+	 * <li>authority key identifier</li>
+	 * <li>CLR Distribution Points</li>
+	 * </ul>
+	 * @param issuer: Certificate issuer.
+	 * @param cdp: CLR Distribution Points URIs.
+	 */
+	public CertificateParams(final NharuX509Certificate issuer, final String cdp[])
+	{
+		this(issuer);
+		setCDP(cdp);
+	}
+
 
 	/**
 	 * Gets certificate version
@@ -582,12 +620,12 @@ public class CertificateParams
 	 * Gets certificate public key info
 	 * @return the public key
 	 */
-	public PublicKey getPublicKey() { return publicKey; }
+	public NharuRSAPublicKey getPublicKey() { return publicKey; }
 	/**
 	 * Sets certificate public key info
 	 * @param key: the public key itself
 	 */
-	public void setPublicKey(final PublicKey key) { if ((publicKey = key) == null) throw new IllegalArgumentException("Argument must not be null"); }
+	public void setPublicKey(final NharuRSAPublicKey key) { if ((publicKey = key) == null) throw new IllegalArgumentException("Argument must not be null"); }
 	/**
 	 * Sets certificate public key info
 	 * @param encoding: PublicKeyInfo DER encoding
@@ -730,6 +768,26 @@ public class CertificateParams
 	public void turnonBasicConstraints() { basicConstraints = true; }
 
 	/**
+	 * Gets Subject Key Identifier extension value
+	 * @return: extension value
+	 */
+	public byte[] getSKI() { return ski; }
+	/**
+	 * Sets Subject Key Identifier extension value
+	 * @param value: extension value
+	 */
+	public void setSKI(final byte[] value ) { if ((ski = value) == null) throw new IllegalArgumentException("Argument must not be null"); }
+	/**
+	 * Sets Subject Key Identifier extension value
+	 * @param pubkey: subject Public Key to calculate SHA-1 hash.  Must be an instance of NharuRSAPublicKey
+	 */
+	public void setSKI(final PublicKey pubkey)
+	{
+		if (!(pubkey instanceof NharuRSAPublicKey)) throw new IllegalArgumentException("Unsupported Public Key type");
+		ski = ((NharuRSAPublicKey)pubkey).getKeyIdentifier();
+	}
+
+	/**
 	 * Checks if current state conforms specified certificate profile
 	 * @param profile: required profile.
 	 * @throws CertificateProfileException if state does not match profile
@@ -750,11 +808,7 @@ public class CertificateParams
 		if (profile.issuerUniqueID && issuerUniqueID == null) throw new CertificateProfileException("Issuer Unique ID field does not match");
 		if (profile.subjectUniqueID && subjectUniqueID == null) throw new CertificateProfileException("Subject Unique ID field does not match");
 		if (profile.authorityKeyIdentifier && aki == null) throw new CertificateProfileException("Authority Key Identifier extension does not match");
-		if (profile.subjectKeyIdentifier && ski == null)
-		{
-			if (!(publicKey instanceof NharuRSAPublicKey)) throw new CertificateProfileException("Unsupported Public Key type");
-			ski = ((NharuRSAPublicKey)publicKey).getKeyIdentifier();
-		}
+		if (profile.subjectKeyIdentifier && ski == null)  throw new CertificateProfileException("Subject Key Identifier extension does not match");
 		if (profile.keyUsage && keyUsage == null) throw new CertificateProfileException("Key Usage extension does not match");
 		if (profile.certificatePolicies && certificatePolicies == null) throw new CertificateProfileException("Certificatge Policies extension does not match");
 		if (profile.policyMappings && policyMappings == null) throw new CertificateProfileException("Policy Mappings extension does not match");
@@ -792,6 +846,77 @@ public class CertificateParams
 		if (basicConstraints) builder.append(",  \"basicConstraints\": ").append(basicConstraints);
 		builder.append(" }}}");
 		return builder.toString();
+	}
+	@Override
+	public Object clone()
+	{
+		final CertificateParams ret = new CertificateParams();
+		ret.version = version;
+		if (serial != null) ret.serial = new BigInteger(serial.toByteArray());
+		if (signatureAlgorithm != null) ret.signatureAlgorithm = Arrays.copyOf(signatureAlgorithm, signatureAlgorithm.length);
+		if (issuer != null)
+		{
+			ret.issuer = new NharuX500Name[issuer.length];
+			for (int i = 0; i < issuer.length; i++) ret.issuer[i] = (NharuX500Name) issuer[i].clone();
+		}
+		if (notBefore != null) ret.notBefore = new Date(notBefore.getTime());
+		if (notAfter != null) ret.notAfter = new Date(notAfter.getTime());
+		if (subject != null)
+		{
+			ret.subject = new NharuX500Name[subject.length];
+			for (int i = 0; i < subject.length; i++) ret.subject[i] = (NharuX500Name) subject[i].clone();
+		}
+		try { if (publicKey != null) ret.publicKey = new NharuRSAPublicKey(publicKey.getEncoded()); }
+		catch (EncodingException e) { throw new RuntimeException(e); }
+		if (aki != null) ret.aki = Arrays.copyOf(aki, aki.length);
+		if (keyUsage != null) ret.keyUsage = Arrays.copyOf(keyUsage, keyUsage.length);
+		if (subjectAltName != null)
+		{
+			ret.subjectAltName = new NharuOtherName[subjectAltName.length];
+			for (int i = 0; i < subjectAltName.length; i++) ret.subjectAltName[i] = (NharuOtherName) subjectAltName[i].clone();
+		}
+		if (cdp != null)
+		{
+			ret.cdp = new String[cdp.length];
+			for (int i = 0; i < cdp.length; i++) ret.cdp[i] = new String(cdp[i]);
+		}
+		ret.basicConstraints = basicConstraints;
+		if (ski != null) ret.ski = Arrays.copyOf(ski, ski.length);
+		if (issuerUniqueID != null) ret.issuerUniqueID = Arrays.copyOf(issuerUniqueID, issuerUniqueID.length);
+		if (subjectUniqueID != null) ret.subjectUniqueID = Arrays.copyOf(subjectUniqueID, subjectUniqueID.length);
+		if (certificatePolicies != null) ret.certificatePolicies = Arrays.copyOf(certificatePolicies, certificatePolicies.length);
+		if (policyMappings != null) ret.policyMappings = Arrays.copyOf(policyMappings, policyMappings.length);
+		if (issuerAltName != null) ret.issuerAltName = Arrays.copyOf(issuerAltName, issuerAltName.length);
+		if (subjectDirectoryAttributes != null) ret.subjectDirectoryAttributes = Arrays.copyOf(subjectDirectoryAttributes, subjectDirectoryAttributes.length);
+		if (nameConstraints != null) ret.nameConstraints = Arrays.copyOf(nameConstraints, nameConstraints.length);
+		if (policyConstraints != null) ret.policyConstraints = Arrays.copyOf(policyConstraints, policyConstraints.length);
+		if (extKeyUsage != null)
+		{
+			ret.extKeyUsage = new int[extKeyUsage.length][];
+			for (int i = 0; i < extKeyUsage.length; i++) ret.extKeyUsage[i] = Arrays.copyOf(extKeyUsage[i], extKeyUsage[i].length);
+		}
+		if (inhibitAnyPolicy != null)
+		{
+			ret.inhibitAnyPolicy = new byte[inhibitAnyPolicy.length][];
+			for (int i = 0; i < inhibitAnyPolicy.length; i++) ret.inhibitAnyPolicy[i] = Arrays.copyOf(inhibitAnyPolicy[i], inhibitAnyPolicy[i].length);
+		}
+		if (freshestCRL != null)
+		{
+			ret.freshestCRL = new String[freshestCRL.length];
+			for (int i = 0; i < freshestCRL.length; i++) ret.freshestCRL[i] = new String(freshestCRL[i]);
+		}
+		if (authorityInfoAccess != null)
+		{
+			ret.authorityInfoAccess = new String[authorityInfoAccess.length];
+			for (int i = 0; i < authorityInfoAccess.length; i++) ret.authorityInfoAccess[i] = new String(authorityInfoAccess[i]);
+		}
+		if (subjectInfoAccess != null)
+		{
+			ret.subjectInfoAccess = new String[subjectInfoAccess.length];
+			for (int i = 0; i < subjectInfoAccess.length; i++) ret.subjectInfoAccess[i] = new String(subjectInfoAccess[i]);
+		}
+
+		return ret;
 	}
 
 
@@ -834,28 +959,68 @@ public class CertificateParams
 		"{ \"version\": 2, " +
 		"\"serialNumber\": \"22DE\", " +
 		"\"signature\": { \"algorithm\": [ 1, 2, 840, 113549, 1, 1, 11 ] }, " +
-		"\"issuer\": [ { \"oid\": [ 2, 5, 4, 6 ], \"value\": \"BR\" }, " +
-		"{ \"oid\": [ 2, 5, 4, 10 ], \"value\": \"PKI Brazil\" }, " +
+		"\"issuer\": [ { \"oid\": [ 2, 5, 4, 3 ], \"value\": \"Common Name for All Cats End User CA\" }, " +
 		"{ \"oid\": [ 2, 5, 4, 11 ], \"value\": \"PKI Ruler for All Cats\" }, " +
-		"{ \"oid\": [ 2, 5, 4, 3 ], \"value\": \"Common Name for All Cats End User CA\" } ], " +
+		"{ \"oid\": [ 2, 5, 4, 10 ], \"value\": \"PKI Brazil\" }, " +
+		"{ \"oid\": [ 2, 5, 4, 6 ], \"value\": \"BR\" } ], " +
 		"\"validity\": { \"notBefore\": \"20190425173943Z\", \"notAfter\": \"20220425173943Z\" }, " +
-		"\"subject\": [{ \"oid\": [ 2, 5, 4, 3 ], \"value\": \"JOAQUIM JOSE DA SILVA XAVIER\" } ], " +
+		"\"subject\": [{ \"oid\": [ 2, 5, 4, 3 ], \"value\": \"Francisvaldo Genevaldo das Torres 1554922163309\" } ], " +
 		"\"subjectPublicKeyInfo\": \"30820122300D06092A864886F70D01010105000382010F003082010A0282010100B7928BD8CD77997DF19D534FB1DBC65022D9ABD7B040A30C05D5CBBB697DA4C3DA92F1A98C06145A2EF61F4BAD709EA284E760BE83DAE00AC03CE532E9F15DB9CCBC4CA217AB8913E8168832D58FE2A362E72B1B0A12947A3AE82D8C61CEC28F42EC5820A89EE9EC8466CFD38994BBC1EBF06E27C9E9F87D9D5D53C1DA18055B7EE4BB7849ACBE57C911452332F62B7DED8BDDE182DFDCE693C856020C2F8B5563992787E4E7902AAA42EECACDCDD275799437EAF741EFF090C30A5F536730E528721648D7334992DE74C805F331360155A663522E0E12FD31BE2670133A687D5780F4A6843F0010B4092DCFC6DC6D7960A9555B1D6B4C92433090428059607D0203010001\", " +
 		"\"extensions\": { \"standard\": { " +
 		"\"authorityKeyIdentifier\": \"7626E65E348A19A34B136EA5001BBBED4BB43D55\", " +
 		"\"keyUsage\": \"05E0\", " +
-		"\"subjectAltName\": [ { \"oid\": [ 1, 3, 6, 1, 4, 1, 311, 20, 2, 3 ], \"value\": \"imyself@microsofot, com\" }, " +
+		"\"subjectAltName\": [ { \"oid\": [ 1, 3, 6, 1, 4, 1, 311, 20, 2, 3 ], \"value\": \"imyself@microsofot.com\" }, " +
 		"{ \"oid\": [ 2, 16, 76, 1, 3, 1 ], \"value\": \"000000000000000000000000000000000000000000000DETRANRJ\" }, " +
 		"{ \"oid\": [ 2, 16, 76, 1, 3, 5 ], \"value\": \"0000000000000000000Rio de Janeiro      RJ\" }, " +
 		"{ \"oid\": [ 2, 16, 76, 1, 3, 6 ], \"value\": \"000000000000\" }], " +
 		"\"cRLDistributionPoints\": [ \"http://www.caixa.gov.br/tkn/repo\" ]}}}";
 	public static void main(String[] args)
 	{
+		System.out.println("CertificateParams basic tests.");
 		try
 		{
-			CertificateParams params = new CertificateParams(PARAMS);
-			params.check(new UserProfile());
+			CertificateParams json = new CertificateParams(PARAMS);
+			System.out.print("Validating CertificateParams JSON parsing... ");
+			json.check(new UserProfile());
+			json = new CertificateParams(json.toString());
+			System.out.println("Done!");
 			
+			System.out.print("Validating CertificateParams JSON  of subject... ");
+			NharuCertificateRequest request = NharuCertificateRequest.parse(NharuCertificateRequest.CERTIFICATE_REQUEST.getBytes());
+			String[] names = request.getSubject().getName().split(",");
+			NharuX500Name[] subject = new NharuX500Name[names.length];
+			for (int i = 0; i < names.length; i++) subject[i] = new NharuX500Name(names[i]);
+			NharuX500Name[] jSubject = json.getSubject();
+			if (jSubject.length != subject.length) throw new RuntimeException("Subject validation failure");
+			for (int i = 0; i < jSubject.length; i++) if (!jSubject[i].equals(subject[i])) throw new RuntimeException("Subject validation failure");
+			System.out.println("Done!");
+
+			System.out.print("Validating CertificateParams JSON for subject public key... ");
+			if (!request.getPublicKey().equals(json.getPublicKey())) throw new RuntimeException("Subject public key validation failure");
+			System.out.println("Done!");
+
+			System.out.print("Validating CertificateParams JSON for issuer... ");
+			NharuX509Certificate caCert = new NharuX509Certificate(NharuCertificateEncoder.CA_CERT.getBytes());
+			if (!Arrays.equals(json.getAKI(), ((NharuRSAPublicKey)caCert.getPublicKey()).getKeyIdentifier())) throw new RuntimeException("Issuer validation failure");
+			names = caCert.getSubjectX500Principal().getName().split(",");
+			NharuX500Name[] issuer = new NharuX500Name[names.length];
+			for (int i = 0; i < names.length; i++) issuer[i] = new NharuX500Name(names[i]);
+			NharuX500Name[] jIssuer = json.getIssuer();
+			if (jIssuer.length != issuer.length) throw new RuntimeException("Issuer validation failure");
+			for (int i = 0; i < jIssuer.length; i++) if (!jIssuer[i].equals(issuer[i])) throw new RuntimeException("Issuer validation failure");
+			System.out.println("Done!");
+
+			System.out.print("Validating CertificateParams JSON for Subject Alternative Name... ");
+			NharuOtherName[] subjectAltName = json.getSubjectAltName();
+			if
+			(
+				!subjectAltName[0].equals(new MicrosoftUPN("imyself@microsofot.com")) ||
+				!subjectAltName[1].equals(new SubjectID("000000000000000000000000000000000000000000000DETRANRJ")) ||
+				!subjectAltName[2].equals(new SubjectTE("0000000000000000000Rio de Janeiro      RJ")) ||
+				!subjectAltName[3].equals(new SubjectCEI("000000000000"))
+			)	throw new RuntimeException("Subject Alternative Name validation failure");
+			System.out.println("Done!");
+			System.out.println("CertificateParams basic tests done!");
 		}
 		catch (Exception e) { e.printStackTrace(); }
 	}
