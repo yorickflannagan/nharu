@@ -291,7 +291,7 @@ static NH_NODE_WAY __tbscert_map[] =
 #define __NH_WELLFORMED_TBS		0x0FFF
 #define __IS_SET(_a, _b)		(((_a) & (_b)) == (_a))
 #define __PATH_TO_EXTENSIONS		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 9) << 8) | NH_SAIL_SKIP_SOUTH)
-INLINE static NH_RV __add_child(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
+static NH_RV __add_child(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
 {
 	NH_RV rv;
 	NH_ASN1_PNODE pChild;
@@ -741,7 +741,7 @@ static NH_RV __put_subject_altname(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH
 }
 static NH_RV __put_basic_constraints(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ int isCA)
 {
-	NH_RV rv;
+	NH_RV rv = NH_OK;
 	NH_ASN1_PNODE ext;
 	NH_ASN1_ENCODER_HANDLE hEncoder;
 	size_t uSize;
@@ -780,7 +780,7 @@ static NH_RV __put_basic_constraints(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ 
 }
 static NH_RV __put_extkey_usage(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OID *pValues, _IN_ size_t ulCount)
 {
-	NH_RV rv;
+	NH_RV rv = NH_OK;
 	NH_ASN1_PNODE ext;
 	NH_ASN1_ENCODER_HANDLE hEncoder;
 	size_t uSize, i = 0;

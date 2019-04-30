@@ -42,15 +42,6 @@ typedef struct JNH_CMS_ENCODING_HANDLER_STR
 
 } JNH_CMS_ENCODING_HANDLER_STR, *JNH_CMS_ENCODING_HANDLER;
 
-typedef struct JNH_RSA_CALLBACK_STR
-{
-	JNIEnv*				env;
-	jstring				algorithm;
-	jobject				iface;
-	jclass				clazz;
-
-} JNH_RSA_CALLBACK_STR, *JNH_RSA_CALLBACK;
-
 typedef struct JNH_CMSENV_PARSING_HANDLER_STR
 {
 	jbyte*		encoding;

@@ -142,7 +142,7 @@ int test_encoder()
 	NH_ASN1_ENCODER_HANDLE hHandle = NULL;
 	NH_ASN1_PARSER_HANDLE hParser = NULL;
 	NH_ASN1_PNODE node = NULL;
-	size_t len;
+	size_t len = 0;
 	char *serial = SERIAL_NUMBER;
 	unsigned char *buffer = NULL;
 

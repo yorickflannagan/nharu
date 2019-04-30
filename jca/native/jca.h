@@ -82,6 +82,9 @@
 #define J_CERTREQ_PARSE_ERROR		"Could not parse certificate request"
 #define J_PUBKEY_PARSE_ERROR		"Could not parse public key encoding"
 #define J_TBS_PUT_ERROR			"Could not set Certificate field due to encoding error"
+#define J_INVALID_ARG_ERROR		"Invalid argument"
+#define J_SIGN_CERT_ERROR		"Could not sign TBSCertificate"
+#define J_CERT_ENCODING_ERROR		"Could not encode certificate structure"
 
 #define J_NATIVE_EX			"java/lang/Error"
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
@@ -103,6 +106,7 @@
 #define J_CMS_DECRYPT_EX		"org/crypthing/security/cms/CMSDecryptException"
 #define J_CMS_ENCRYPT_EX		"org/crypthing/security/cms/CMSEncryptException"
 #define J_CERT_ENCODING_EX		"org/crypthing/security/EncodingException"
+#define J_ILLEGAL_ARG_EX		"java;lang/IllegalArgumentException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */
@@ -115,6 +119,15 @@ typedef struct JPUBKEY_HANDLER_STR
 	NHIX_PUBLIC_KEY	hPubkey;
 
 } JPUBKEY_HANDLER_STR, *JPUBKEY_HANDLER;
+typedef struct JNH_RSA_CALLBACK_STR
+{
+	JNIEnv*				env;
+	jstring				algorithm;
+	jobject				iface;
+	jclass				clazz;
+
+} JNH_RSA_CALLBACK_STR, *JNH_RSA_CALLBACK;
+
 
 
 #ifdef __cplusplus
@@ -140,6 +153,8 @@ NH_UTILITY(jbyteArray, get_node_contents)(JNIEnv*, _IN_ NH_ASN1_PNODE);
 NH_UTILITY(jbyteArray, get_node_encoding)(JNIEnv*, _IN_ NH_ASN1_PNODE);
 NH_UTILITY(jbyteArray, get_node_value)(JNIEnv*, _IN_ NH_ASN1_PNODE);
 NH_UTILITY(jbyteArray, get_node_contents)(JNIEnv*, _IN_ NH_ASN1_PNODE);
+NH_RV sign_callback(_IN_ NH_BLOB*, _IN_ CK_MECHANISM_TYPE, _IN_ void*, _OUT_ unsigned char*, _INOUT_ size_t*);
+
 
 
 /** ****************************

@@ -471,8 +471,8 @@ static unsigned char __ca_cert[] =
 };
 int test_sign_certificate()
 {
-	NH_RV rv;
-	NH_TBSCERT_ENCODER hTBSCert;
+	NH_RV rv = NH_OK;
+	NH_TBSCERT_ENCODER hTBSCert = NULL;
 	NH_CERT_ENCODER hCertificate;
 	NH_RSA_PRIVKEY_HANDLER hPrivKey;
 	unsigned char *pBuffer;

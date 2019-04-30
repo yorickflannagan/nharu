@@ -177,6 +177,59 @@ INLINE NH_UTILITY(jbyteArray, get_node_contents)(JNIEnv *env, _IN_ NH_ASN1_PNODE
 	else (*env)->SetByteArrayRegion(env, ret, 0L, node->size, (jbyte*) node->contents);
 	return ret;
 }
+NH_RV sign_callback
+(
+	_IN_ NH_BLOB *data,
+	_UNUSED_ _IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ void *params,
+	_OUT_ unsigned char *signature,
+	_INOUT_ size_t *sigSize
+)
+{
+	JNH_RSA_CALLBACK callback = (JNH_RSA_CALLBACK) params;
+	jmethodID methodID;
+	jbyteArray buffer;
+	jint size = 0;
+	jobject ret;
+	jbyte *jBuffer;
+	NH_RV rv = NH_OK;
+
+	if (!signature)
+	{
+		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "signatureLength", "(Ljava/lang/String;)I")))
+		{
+			size = (jint) (*callback->env)->CallLongMethod(callback->env, callback->iface, methodID, callback->algorithm);
+			*sigSize = size;
+		}
+		else rv = JCLASS_ACCESS_ERROR;
+	}
+	else
+	{
+		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "sign", "([BLjava/lang/String;)[B")))
+		{
+			if ((buffer = (*callback->env)->NewByteArray(callback->env, data->length)))
+			{
+				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
+				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
+				size = (*callback->env)->GetArrayLength(callback->env, ret);
+				if (*sigSize < (size_t) size) rv = NH_BUF_TOO_SMALL;
+				else
+				{
+					if ((jBuffer = (*callback->env)->GetByteArrayElements(callback->env, ret, NULL)))
+					{
+						memcpy(signature, jBuffer, size);
+						(*callback->env)->ReleaseByteArrayElements(callback->env, ret, jBuffer, JNI_ABORT);
+					}
+					else rv = JRUNTIME_ERROR;
+				}
+			}
+			else rv = JRUNTIME_ERROR;
+		}
+		else rv = JCLASS_ACCESS_ERROR;
+
+	}
+	return rv;
+}
 
 
 /** ****************************
