@@ -1,0 +1,62 @@
+#!/bin/bash
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# NHARU __LIBraries development environment configuration
+# Copyleft (C) 2015-2019 by The Crypthing Initiative
+# # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+function current_dir()
+{
+	__SOURCE="${BASH_SOURCE[0]}"
+	while [ -h "$__SOURCE" ]; do
+	  __DIR="$( cd -P "$( dirname "$__SOURCE" )" && pwd )"
+	  __SOURCE="$(readlink "$__SOURCE")"
+	  [[ $__SOURCE != /* ]] && __SOURCE="$__DIR/$__SOURCE"
+	done
+	__CUR="$( cd -P "$( dirname "$__SOURCE" )" && pwd )"
+	echo "$(__CUR)"
+}
+function jdk_7()
+{
+	local JAVA_HOME=$(update-java-alternatives --jre -l | grep java-7 | awk '{ print $3 }')
+	echo "$JAVA_HOME)"
+}
+ensure()
+{
+	local LIB
+	local INST
+	while [ -n "$1" ]; do
+		LIB=$1
+		INST=$(dpkg -l $lib 2>&1 | grep $LIB | awk '{ print $1 }')
+		if [ ! "$INST" = "ii" ]; then
+			sudo apt install $LIB
+		fi
+		shift
+	done
+}
+function libdl()
+{
+	ensure libc6-dev
+	local DLA=$(dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen))
+	echo "$(DLA)"
+}
+
+
+printf " %s\n" "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
+printf " %s\n" "Nharu development environment configuration"
+CURRENT=$(current_dir)
+PROJECT="$(dirname $CURRENT)"
+BIN_DIR="$PROJECT/bin"
+DIST_DIR="$PROJECT/dist"
+OPENSSL="$DIST_DIR/openssl"
+IDN="$DIST_DIR/libidn"
+DLA_LIB=$(libdl)
+JDK_7=$(jdk_7)
+VERSION=1.4.0
+
+if [ -z "$JDK_7" ]; then
+	printf " %s\n" "JAVA 1.7 is required to build Nharu JCA"
+	exit 3
+fi
+
+
+

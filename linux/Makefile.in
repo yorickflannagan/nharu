@@ -9,43 +9,54 @@ AR           = ar
 
 PROJECT      = /home/magut/development/nharu
 BIN_DIR      = /home/magut/development/nharu/bin
-DIST_DIR     = /home/magut/development/nharu/dist/lib
+DIST_DIR     = /home/magut/development/nharu/dist
 OPENSSL      = /home/magut/development/build/ssl/linux
 IDN          = /home/magut/development/build/idn/linux
 DLA_LIB      = /usr/lib/x86_64-linux-gnu
 JAVA_HOME    = /usr/lib/jvm/java-7-oracle
+VERSION      = 1.3.0
 
 LIB_SRCDIR   = $(PROJECT)/src
 LIB_OBJDIR   = $(BIN_DIR)/lib
 LIB_INCLUDES = -I$(LIB_SRCDIR) -I$(PROJECT)/include -I$(PROJECT) -I$(OPENSSL)/include -I$(IDN)/include
-LIB_TARGET   = $(DIST_DIR)/libnharu.a
+LIB_TARGET   = $(DIST_DIR)/lib/libnharu.a
 LIB_SRCS     = $(shell find $(LIB_SRCDIR) -name '*.c')
 LIB_OBJS     = $(patsubst $(LIB_SRCDIR)/%.c,$(LIB_OBJDIR)/%.o,$(LIB_SRCS))
 JCA_SRCDIR   = $(PROJECT)/jca/native
 JCA_OBJDIR   = $(BIN_DIR)/jca
-JCA_INCLUDES = -I$(JCA_SRCDIR) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux $(LIB_INCLUDES)
-JCA_TARGET   = $(DIST_DIR)/libnharujca.so
+JCA_INCLUDES = -I$(JCA_SRCDIR) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux
+JCA_TARGET   = $(DIST_DIR)/lib/libnharujca.so
 JCA_SRCS     = $(shell find $(JCA_SRCDIR) -name '*.c')
 JCA_OBJS     = $(patsubst $(JCA_SRCDIR)/%.c,$(JCA_OBJDIR)/%.o,$(JCA_SRCS))
 IMP_LIBS     = -lnharu -lcrypto -lidn -lpthread -ldl
-LDLIBS       = -L$(DIST_DIR) -L$(OPENSSL)/lib -L$(IDN)/lib -L$(DLA_LIB)
-VPATH        = $(LIB_SRCDIR) : $(JCA_SRCDIR)
-FILES        = $(LIB_SRCS) $(JCA_SRCS)
+LDLIBS       = -L$(DIST_DIR)/lib -L$(OPENSSL)/lib -L$(IDN)/lib -L$(DLA_LIB)
+TST_SRCDIR   = $(PROJECT)/test
+TST_OBJDIR   = $(BIN_DIR)/test
+TST_INCLUDES = -I$(TST_SRCDIR)
+TST_TARGET   = $(DIST_DIR)/ntest-app
+TST_SRCS     = $(shell find $(TST_SRCDIR) -name '*.c')
+TST_OBJS     = $(patsubst $(TST_SRCDIR)/%.c,$(TST_OBJDIR)/%.o,$(TST_SRCS))
+VPATH        = $(LIB_SRCDIR) : $(JCA_SRCDIR) : $(TST_SRCDIR)
+FILES        = $(LIB_SRCS) $(JCA_SRCS) $(TST_SRCS)
+ALL_INCLUDES = $(LIB_INCLUDES) $(JCA_INCLUDES) $(TST_INCLUDES)
+MAVEN_ARGS   = -B package
 
 CFLAGS       = -pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -pthread -fPIC
 ifeq ($(_DEBUG_),)
 CFLAGS      += -O2
+MAVEN_ARGS  += -D log.level=LOG_LEVEL_ERROR
 else
 CFLAGS      += -ggdb3 -D_DEBUG -D_DEBUG_ -O0
+MAVEN_ARGS  += -D log.level=LOG_LEVEL_TRACE
 endif
 ifneq ($(_FIPS_),)
 CFLAGS      += -D_FIPS_
 endif
 ARFLAGS      = -r -s
-LDFLAGS      = -static-libgcc -Xlinker -z -Xlinker defs -fPIC -shared
+LDFLAGS      = -static-libgcc -Xlinker -z -Xlinker defs -fPIC
 
 
-all: prepare $(LIB_TARGET) $(JCA_TARGET)
+all: prepare $(LIB_TARGET) $(JCA_TARGET) $(TST_TARGET) build-java
 
 $(LIB_TARGET): $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
@@ -54,72 +65,42 @@ $(LIB_OBJDIR)/%.o: $(LIB_SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(LIB_INCLUDES) -c $< -o $@
 
 $(JCA_TARGET): $(JCA_OBJS)
-	$(CC) $(LDFLAGS) $(LDLIBS) $(JCA_OBJS) -o $@ $(IMP_LIBS)
+	$(CC) $(LDFLAGS) -shared $(LDLIBS) $(JCA_OBJS) -o $@ $(IMP_LIBS)
 
 $(JCA_OBJDIR)/%.o: $(JCA_SRCDIR)/%.c
-	$(CC) $(CFLAGS) $(JCA_INCLUDES) -c $< -o $@
+	$(CC) $(CFLAGS) $(LIB_INCLUDES) $(JCA_INCLUDES) -c $< -o $@
+
+$(TST_TARGET): $(TST_OBJS)
+	$(CC) $(LDFLAGS) $(LDLIBS) $(TST_OBJS) -o $@ $(IMP_LIBS)
+
+$(TST_OBJDIR)/%.o: $(TST_SRCDIR)/%.c
+	$(CC) $(CFLAGS) $(LIB_INCLUDES) $(TST_INCLUDES) -c $< -o $@
 
 
-.PHONY: clean prepare
+.PHONY: clean prepare build-java test-all
 clean:
-	rm $(BIN_DIR)/files.d $(DIST_DIR) $(LIB_OBJDIR) $(JCA_OBJDIR) -Rf
+	rm $(PROJECT)/files.d $(DIST_DIR)/lib $(TST_TARGET) $(TST_OBJDIR) $(LIB_OBJDIR) $(JCA_OBJDIR) -Rf; \
+	cd ..; mvn -B clean; rmdir bin ; cd -
 
 prepare:
-	mkdir -p $(LIB_OBJDIR) $(JCA_OBJDIR) $(DIST_DIR)
+	mkdir -p $(LIB_OBJDIR) $(JCA_OBJDIR) $(TST_OBJDIR) $(DIST_DIR)/lib; \
+	$(PROJECT)/jca/mkver $(VERSION)
 
-
-$(BIN_DIR)/files.d: $(FILES)
-	cat /dev/null > $(BIN_DIR)/files.d;                        \
-	for i in $(FILES); do                                      \
-		$(CC) -MM $$i $(JCA_INCLUDES) >> $(BIN_DIR)/files.d; \
-	done;                                                      \
-	touch -m $(BIN_DIR)/files.d
-
-include $(BIN_DIR)/files.d
-
-
-SHELL = /bin/bash
-
-ifeq ($(strip $(VERSION)),)
-$(error VERSION argument required)
-endif
-JDK              = _JDK_
-OLD_PATH         = _PATH_
-export ANT_HOME  = _ANT_HOME_
-ANT_CONTRIB_LIB  = _ANT_CONTRIB_
-OUTPUT           = _OUTPUT_
-JEE_LIB          = _JEE_LIB_
-PICKETBOX        = _PICKETBOX_
-
-
-ifeq ($(strip $(JAVA_HOME)),)
-export JAVA_HOME = $(JDK)
-endif
-PATH             = $(JDK);$(OLD_PATH)
-ANT              = $(ANT_HOME)/bin/ant
-JCA_CMDLINE      = -DANT_CONTRIB_LIB=$(ANT_CONTRIB_LIB) -DVERSION=$(VERSION) -DOUTPUT=$(OUTPUT) -DDEBUG=$(DEBUG) -DJAVA_LOG_PATH=org.crypthing.security
-CRL_CMDLINE      = $(JCA_CMDLINE) -DJEE_LIB=$(JEE_LIB) -DPICKETBOX=$(PICKETBOX)
-
-
-.PHONY : all clean test-all
-all:
-	$(MAKE) -C src DEBUG=$(DEBUG) ALIGN=$(ALIGN)
-	$(ANT) -buildfile jca/build.xml $(JCA_CMDLINE)
-	jca/mkver $(VERSION)
-	$(MAKE) -C jca/native DEBUG=$(DEBUG)
-	$(ANT) -buildfile crl-service/build.xml $(CRL_CMDLINE)
-	$(MAKE) -C test DEBUG=$(DEBUG)
-
-clean:
-	$(MAKE) clean -C src DEBUG=$(DEBUG) ALIGN=$(ALIGN)
-	$(ANT) -buildfile jca/build.xml clean $(JCA_CMDLINE)
-	rm -f jca/native/version.c
-	$(MAKE) clean -C jca/native DEBUG=$(DEBUG)
-	$(ANT) -buildfile crl-service/build.xml clean $(CRL_CMDLINE)
-	$(MAKE) clean -C test DEBUG=$(DEBUG)
+build-java:
+	cd ..; mvn $(MAVEN_ARGS); cd -
 
 test-all:
-	$(JDK)/bin/java -cp $(OUTPUT)/nharujca.jar -Djava.library.path=$(OUTPUT) org.crypthing.security.provider.NharuProvider test/signer.p12
-	test/ntest-app
+	$(TST_TARGET) $(TST_SRCDIR)/repo
+	$(JAVA_HOME)/bin/java -cp $(DIST_DIR)/nharujca-$(VERSION).jar    \
+	-Dorg.crypthing.security.provider.nharulib=$(JCA_TARGET)         \
+	org.crypthing.security.provider.NharuProvider $(TST_SRCDIR)/repo/signer.p12 $(TST_SRCDIR)/repo/trust.jks
 
+$(PROJECT)/files.d: $(FILES)
+	cat /dev/null > $(PROJECT)/files.d;                        \
+	for i in $(FILES); do                                      \
+		$(CC) -MM $$i $(ALL_INCLUDES) >> $(PROJECT)/files.d; \
+	done;                                                      \
+	touch -m $(PROJECT)/files.d
+
+include $(PROJECT)/files.d
 

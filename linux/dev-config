@@ -137,8 +137,7 @@ else
 	exit 1
 fi
 printf "JDK found at directory %s\n" "$_JDK_"
-_DLA_DIR_=$(dpkg -L libc6-dev | grep libdl\\.a | 
-dirname  $(grep -v xen))
+_DLA_DIR_=$(dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen))
 if [ ! -d "$_DLA_DIR_" ]; then
 	printf "%s\n" "Could not find libdl.a"
 	exit 1

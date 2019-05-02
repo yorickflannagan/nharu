@@ -5,6 +5,9 @@ import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 
 import org.crypthing.security.EncodingException;
@@ -332,9 +335,91 @@ public class NharuCertificateEncoder
 	private static final String SUBJECT_ID = "000000000000000000000000000000000000000000000DETRANRJ";
 	private static final String SUBJECT_TE = "0000000000000000000Rio de Janeiro      RJ";
 	private static final String SUBJECT_CEI = "000000000000";
+	private static class CADemo implements SignerInterface
+	{
+		final private NharuX509Certificate caCert;
+		final private NharuRSAPrivateKey caKey;
+		final CertificateParams params;
+		final CertificateProfile profile;
+		private BigInteger serial;
+		CADemo() throws CertificateException, InvalidKeyException
+		{
+			caCert = new NharuX509Certificate(CA_CERT.getBytes());
+			caKey = new NharuRSAPrivateKey(CA_KEY);
+			params = new CertificateParams(caCert, CDP);
+			profile = new UserProfile();
+			serial = BigInteger.ZERO;
+		}
+		CertificateParams getParams() { return (CertificateParams) params.clone(); }
+		BigInteger getSerial() { return (serial = serial.add(BigInteger.ONE)); }
+		void release()
+		{
+			caCert.closeHandle();
+			caKey.releaseObject();;
+		}
+		byte[] issue(final String json) throws GeneralSecurityException
+		{
+			final NharuCertificateEncoder cert = new NharuCertificateEncoder(json, profile);
+			try
+			{
+				cert.sign("SHA256withRSA", this);
+				return cert.encode();
+			}
+			finally { cert.releaseObject(); }
+		}
+		@Override public int signatureLength(final String algorithm) { return caKey.signatureLength(algorithm); }
+		@Override public byte[] sign(final byte[] data, final String algorithm) throws GeneralSecurityException { return caKey.sign(data, algorithm); }
+	}
+	private static class ARDemo
+	{
+		final private CADemo ca;
+		ARDemo(final CADemo ca) { this.ca = ca; }
+		byte[] issue(final byte[] pkcs10) throws GeneralSecurityException
+		{
+			final NharuCertificateRequest request = NharuCertificateRequest.parse(pkcs10);
+			try
+			{
+				request.verify();
+				final CertificateParams params = ca.getParams();
+				params.setSerial(ca.getSerial());
+				params.setSubject(request.getSubject().getName());
+				params.setPublicKey(request.getPublicKey());
+				final NharuOtherName[] subjectAltName = new NharuOtherName[4];
+				subjectAltName[0] = new MicrosoftUPN(MS_UPN);
+				subjectAltName[1] = new SubjectID(SUBJECT_ID);
+				subjectAltName[2] = new SubjectTE(SUBJECT_TE);
+				subjectAltName[3] = new SubjectCEI(SUBJECT_CEI);
+				params.setSubjectAltName(subjectAltName);
+				return ca.issue(params.toString());
+			}
+			finally { request.releaseObject(); }
+		}
+	}
+	public static void throughputTest()
+	{
+		try
+		{
+			final CADemo ca = new CADemo();
+			final ARDemo ar = new ARDemo(ca);
+			final byte[] pkcs10 = NharuCertificateRequest.CERTIFICATE_REQUEST.getBytes();
+			try
+			{
+				for (int i = 0; i < 100; i++)  ar.issue(pkcs10);
+				final long t0 = System.nanoTime();
+				for (int i = 0; i < 1000; i++)  ar.issue(pkcs10);
+				final long t1 = System.nanoTime();
+				long timed = (t1 - t0);
+				double sec = timed / 1e9d;
+				System.out.println("Issue throughput: " + 1000/sec);
+			}
+			finally { ca.release(); }
+		}
+		catch (Exception e) { e.printStackTrace(); }
+	}
 	public static void main(String[] args)
 	{
 		if (args.length == 0) regressionTest();
+		else throughputTest();
 	}
 	private static void regressionTest()
 	{

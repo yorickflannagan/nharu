@@ -232,7 +232,7 @@ static jboolean __get_name(JNIEnv *env, jobject jName, NH_NAME name)
 		oidLen = (*env)->GetArrayLength(env, jOIDValue);
 		if ((jOID = (*env)->GetIntArrayElements(env, jOIDValue, NULL)))
 		{
-			if ((fid = (*env)->GetFieldID(env, classz, "value", "Ljava/lang/String")))
+			if ((fid = (*env)->GetFieldID(env, classz, "value", "Ljava/lang/String;")))
 			{
 				jValue = (jstring)(*env)->GetObjectField(env, jName, fid);
 				valueLen = (*env)->GetStringUTFLength(env, jValue);
@@ -277,6 +277,44 @@ static jboolean __get_name(JNIEnv *env, jobject jName, NH_NAME name)
 	}
 	return ret;
 }
+static void __set_names(JNIEnv *env, NH_TBSCERT_ENCODER hHandler, jobjectArray value, NH_TBS_SETNAME function)
+{
+	NH_RV rv;
+	jsize len, i = 0;
+	NH_NAME *name = NULL;
+	jboolean ok = JNI_TRUE;
+
+	len = (*env)->GetArrayLength(env, value);
+	if (NH_SUCCESS(rv = (name = (NH_NAME*) malloc(len * sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	{
+		memset(name, 0, len * sizeof(NH_NAME_STR));
+		while (NH_SUCCESS(rv) && ok && i < len)
+		{
+			if (NH_SUCCESS(rv = (name[i] = (NH_NAME) malloc(sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+			{
+				memset(name[i], 0,sizeof(NH_NAME_STR));
+				ok = __get_name(env, (*env)->GetObjectArrayElement(env, value, i), name[i]);
+				i++;
+			}
+		}
+		if (NH_SUCCESS(rv) && ok) if (NH_FAIL(rv = function(hHandler, name, len))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		for (i = 0; i < len; i++)
+		{
+			if (name[i])
+			{
+				if (name[i]->pOID)
+				{
+					if (name[i]->pOID->pIdentifier) free(name[i]->pOID->pIdentifier);
+					if (name[i]->szValue) free(name[i]->szValue);
+					free(name[i]->pOID);
+				}
+				free(name[i]);
+			}
+		}
+		free(name);
+	}
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+}
 JNIEXPORT void JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetIssuer
 (
@@ -286,21 +324,8 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetIssuer
 	jobjectArray value
 )
 {
-	NH_RV rv;
 	NH_TBSCERT_ENCODER hHandler = ((JNH_CERT_ENCODER) handle)->hTBS;
-	jsize len, i;
-	NH_NAME *name = NULL;
-	jboolean ok;
-
-	len = (*env)->GetArrayLength(env, value);
-	if (NH_SUCCESS(rv = (name = (NH_NAME*) malloc(len * sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
-	{
-		memset(name, 0, len * sizeof(NH_NAME_STR));
-		for (i = 0; i < len; i++) if (!(ok = __get_name(env, (*env)->GetObjectArrayElement(env, value, i), name[i]))) break;
-		if (ok) if (NH_FAIL(rv = hHandler->put_issuer(hHandler, name, len))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
-		free(name);
-	}
-	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	__set_names(env, hHandler, value, hHandler->put_issuer);
 }
 JNIEXPORT void JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSubject
@@ -311,21 +336,8 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSubject
 	jobjectArray value
 )
 {
-	NH_RV rv;
 	NH_TBSCERT_ENCODER hHandler = ((JNH_CERT_ENCODER) handle)->hTBS;
-	jsize len, i;
-	NH_NAME *name = NULL;
-	jboolean ok;
-
-	len = (*env)->GetArrayLength(env, value);
-	if (NH_SUCCESS(rv = (name = (NH_NAME*) malloc(len * sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
-	{
-		memset(name, 0, len * sizeof(NH_NAME_STR));
-		for (i = 0; i < len; i++) if (!(ok = __get_name(env, (*env)->GetObjectArrayElement(env, value, i), name[i]))) break;
-		if (ok) if (NH_FAIL(rv = hHandler->put_subject(hHandler, name, len))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
-		free(name);
-	}
-	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	__set_names(env, hHandler, value, hHandler->put_subject);
 }
 JNIEXPORT void JNICALL 
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetValidity
@@ -417,21 +429,8 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSubjectAltName
 	jobjectArray value
 )
 {
-	NH_RV rv;
 	NH_TBSCERT_ENCODER hHandler = ((JNH_CERT_ENCODER) handle)->hTBS;
-	jsize len, i;
-	NH_NAME *name = NULL;
-	jboolean ok;
-
-	len = (*env)->GetArrayLength(env, value);
-	if (NH_SUCCESS(rv = (name = (NH_NAME*) malloc(len * sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
-	{
-		memset(name, 0, len * sizeof(NH_NAME_STR));
-		for (i = 0; i < len; i++) if (!(ok = __get_name(env, (*env)->GetObjectArrayElement(env, value, i), name[i]))) break;
-		if (ok) if (NH_FAIL(rv = hHandler->put_subject_altname(hHandler, name, len))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
-		free(name);
-	}
-	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	__set_names(env, hHandler, value, hHandler->put_subject_altname);
 }
 JNIEXPORT void JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetCDP
@@ -460,6 +459,7 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetCDP
 	{
 		memset(szCDP, 0, size);
 		pBuffer = szCDP;
+		i = 0;
 		while (ok && i < len)
 		{
 			szURI = (jstring) (*env)->GetObjectArrayElement(env, value, i);

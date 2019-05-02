@@ -25,4 +25,7 @@ cachegrind.out.*
 *.sdf
 *suoSignerInterface
 *filters
-
+linux/openssl
+linux/libidn
+linux/gnulib
+linux/libiconv

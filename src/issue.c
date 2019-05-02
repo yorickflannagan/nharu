@@ -286,9 +286,8 @@ static NH_NODE_WAY __tbscert_map[] =
 #define __NH_AKI_SET			(__NH_VERSION_SET << 7)
 #define __NH_KEYUSAGE_SET		(__NH_VERSION_SET << 8)
 #define __NH_ALTNAME_SET		(__NH_VERSION_SET << 9)
-#define __NH_EXTKEYUSAGE_SET		(__NH_VERSION_SET << 10)
-#define __NH_CDP_SET			(__NH_VERSION_SET << 11)
-#define __NH_WELLFORMED_TBS		0x0FFF
+#define __NH_CDP_SET			(__NH_VERSION_SET << 10)
+#define __NH_WELLFORMED_TBS		0x07FF
 #define __IS_SET(_a, _b)		(((_a) & (_b)) == (_a))
 #define __PATH_TO_EXTENSIONS		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 9) << 8) | NH_SAIL_SKIP_SOUTH)
 static NH_RV __add_child(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
@@ -790,7 +789,6 @@ static NH_RV __put_extkey_usage(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OI
 
 	if
 	(
-		NH_SUCCESS(rv = !__IS_SET(__NH_EXTKEYUSAGE_SET, hTBS->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
 		NH_SUCCESS(rv = pValues && ulCount > 0 ? NH_OK : NH_INVALID_ARG) &&
 		NH_SUCCESS(rv = 	NH_new_encoder(ulCount * 3, 1024, &hEncoder))
 	)
@@ -822,7 +820,7 @@ static NH_RV __put_extkey_usage(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OI
 				{
 					extValue.data = pBuffer;
 					extValue.length = uSize;
-					if (NH_SUCCESS(rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue))) hTBS->fields |= __NH_EXTKEYUSAGE_SET;
+					rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue);
 				}
 				free(pBuffer);
 			}
