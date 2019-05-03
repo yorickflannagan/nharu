@@ -6,28 +6,31 @@
 
 function current_dir()
 {
-	__SOURCE="${BASH_SOURCE[0]}"
-	while [ -h "$__SOURCE" ]; do
-	  __DIR="$( cd -P "$( dirname "$__SOURCE" )" && pwd )"
-	  __SOURCE="$(readlink "$__SOURCE")"
-	  [[ $__SOURCE != /* ]] && __SOURCE="$__DIR/$__SOURCE"
+	local SOURCE="${BASH_SOURCE[0]}"
+	while [ -h "$SOURCE" ]; do
+	  local DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+	  SOURCE="$(readlink "$SOURCE")"
+	  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
 	done
-	__CUR="$( cd -P "$( dirname "$__SOURCE" )" && pwd )"
-	echo "$(__CUR)"
-}
-function jdk_7()
-{
-	local JAVA_HOME=$(update-java-alternatives --jre -l | grep java-7 | awk '{ print $3 }')
-	echo "$JAVA_HOME)"
+	local CUR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+	echo "$CUR"
 }
 ensure()
 {
 	local LIB
 	local INST
+	local INPUT
 	while [ -n "$1" ]; do
 		LIB=$1
-		INST=$(dpkg -l $lib 2>&1 | grep $LIB | awk '{ print $1 }')
+		INST=$(dpkg -l $LIB 2>&1 | grep $LIB | awk '{ print $1 }')
 		if [ ! "$INST" = "ii" ]; then
+			printf "\n"
+			printf "%s\n" "Required to install library $LIB"
+			read -n1 -p "Do you want to continue (y/n)?" INPUT
+			if [ "$INPUT" = "n" ]; then
+				exit 130
+			fi
+			printf "\n"
 			sudo apt install $LIB
 		fi
 		shift
@@ -37,26 +40,257 @@ function libdl()
 {
 	ensure libc6-dev
 	local DLA=$(dpkg -L libc6-dev | grep libdl\\.a | dirname  $(grep -v xen))
-	echo "$(DLA)"
+	echo "$DLA"
+}
+function jdk_7()
+{
+	local JAVA_HOME=$(update-java-alternatives --jre -l | grep java-7 | awk '{ print $3 }')
+	echo "$JAVA_HOME"
+}
+function initialize()
+{
+	TARGET=linux
+	VERSION=1.4.0
+	CURRENT=$(current_dir)
+	PROJECT="$(dirname $CURRENT)"
+	DIST_DIR="$PROJECT/dist"
+
+	local PARM=0
+	local SEP='='
+	local KEY
+	local VALUE
+	while [ $# -ne 0 ]; do
+		PARM=1
+		case $1 in
+		  (*"$sep"*)
+		    KEY=${1%%"$SEP"*}
+		    VALUE=${1#*"$SEP"}
+		    ;;
+		  (*)
+		    KEY=$1
+		    VALUE=
+		    ;;
+		esac
+		case $KEY in
+			(--target) TARGET="$VALUE"
+			;;
+			(--version) VERSION="$VALUE"
+			;;
+			(--dist) DIST_DIR="$VALUE"
+			;;
+			(--help)
+				#usage
+				exit 0
+			;;
+			(*)
+				printf "Invalid argument %s\n" "$KEY"
+				#usage
+				exit 3
+			;;
+		esac
+	    shift
+	done
+
+	JCA_BIN="$PROJECT/bin/jca"
+	JCA_DIST="$DIST_DIR/jca"
+	DIST_DIR="$DIST_DIR/$TARGET"
+	BIN_DIR="$PROJECT/bin/$TARGET"
+	OPENSSL="$DIST_DIR/openssl"
+	IDN="$DIST_DIR/libidn"
+	DLA_LIB=$(libdl)
+	JDK_7=$(jdk_7)
+}
+function clean_droid()
+{
+	export CC=
+	export LD=
+	export CPP=
+	export CXX=
+	export AR=
+	export AS=
+	export NM=
+	export STRIP=
+	export CXXCPP=
+	export RANLIB=
+	export ANDROID_PLATFORM=
+	export ANDROID_ARCH=
+	export HOST=
+	export TARGET_PLATFORM=
+	export BUILD_TARGET=
+	export LIBRARY=
+	export LDFLAGS=
+	export CFLAGS=
+	export CXXFLAGS=
+	export SYS_LIBRARY=
+}
+function check_status()
+{
+	local retVal=$?
+	if [ $retVal -ne 0 ]; then
+	    exit $retVal
+	fi
+}
+function mkopenssl()
+{
+# $1: source code directory
+# $2: prefix directory
+# $3: build target
+	local curdir=$PWD
+	local source_dir=$1
+	local prefix_dir=$2
+	local target=$3
+	local input
+	printf "\n"
+	printf " %s\n" "OpenSSL build is required with following definitions:"
+	printf " %s\n" "Source directory  = $source_dir"
+	printf " %s\n" "Install directory = $prefix_dir"
+	printf "\n"
+	read -n1 -p "Do you want to continue (y/n)?" input
+	if [ "$input" = "n" ]; then
+		exit 130
+	fi
+	printf "\n"
+	if [ ! -d "$source_dir" ]; then
+		git clone https://github.com/openssl/openssl "$source_dir"
+		check_status
+		cd "$source_dir"
+		git checkout OpenSSL_1_1_0f -b nharu_build
+		cd "$curdir"
+	fi
+	cd "$source_dir"
+	if [ ! -f include/openssl/des_old.h  ]; then
+		echo "# include <openssl/des.h>" > include/openssl/des_old.h
+	fi
+	if [ -f Makefile ]; then
+		make clean
+	fi
+	if [ "$target" = "linux" ]; then
+		./config threads no-shared -fPIC --prefix=$prefix_dir --openssldir=$prefix_dir
+	else
+		# TODO: Build for Android
+		clean_droid
+	fi
+	make -n depend
+	check_status
+	make all
+	check_status
+	make test
+	check_status
+	if [ "$target" = "linux" ]; then
+		make install
+		check_status
+	else
+		# TODO: Build for Android
+		printf "\n"
+	fi
+	cd "$curdir"
+}
+function mklibidn()
+{
+# $1: source code directory
+# $2: prefix directory
+# $3: build target
+	local curdir=$PWD
+	local source_dir=$1
+	local prefix_dir=$2
+	local target=$3
+	local input
+	printf "\n"
+	printf " %s\n" "GNU Libidn build is required with following definitions:"
+	printf " %s\n" "Source directory   = $source_dir"
+	printf " %s\n" "Install directory  = $prefix_dir"
+	printf "\n"
+	read -n1 -p "Do you want to continue (y/n)?" input
+	if [ "$input" = "n" ]; then
+		exit 130
+	fi
+	printf "\n"
+	if [ ! -d "$source_dir" ]; then
+		git clone https://git.savannah.gnu.org/git/libidn.git "$source_dir"
+		check_status
+		cd "$source_dir"
+		git checkout libidn-1-32 -b nharu_build
+		make bootstrap
+		check_status
+		cd "$curdir"
+	fi
+	cd "$source_dir"
+	if [ -f Makefile ]; then
+		make clean
+		make distclean
+	fi
+	if [ "$target" = "linux" ]; then
+		echo -n "#include <stdint.h>" > lib/idn-int.h
+		./configure --disable-silent-rules --enable-threads=posix --disable-shared --with-pic --prefix="$prefix_dir"
+	else
+		# TODO: Build android
+		clean_droid
+	fi
+	make
+	check_status
+	make install
+	check_status
 }
 
 
+clear
 printf " %s\n" "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
 printf " %s\n" "Nharu development environment configuration"
-CURRENT=$(current_dir)
-PROJECT="$(dirname $CURRENT)"
-BIN_DIR="$PROJECT/bin"
-DIST_DIR="$PROJECT/dist"
-OPENSSL="$DIST_DIR/openssl"
-IDN="$DIST_DIR/libidn"
-DLA_LIB=$(libdl)
-JDK_7=$(jdk_7)
-VERSION=1.4.0
-
+printf "\n"
+initialize
 if [ -z "$JDK_7" ]; then
 	printf " %s\n" "JAVA 1.7 is required to build Nharu JCA"
-	exit 3
+	exit 4
 fi
-
-
+if [ ! -f "$CURRENT/Makefile.in" ]; then
+	printf "Could not find file %s/Makefile.in\n" "$CUR"
+	exit 5
+fi
+ensure maven
+if [ ! -f "$OPENSSL/lib/libcrypto.a" ]; then
+	mkopenssl "$CURRENT/openssl" "$OPENSSL" $TARGET
+	printf " %s\n" "OpenSSL builded!"
+fi
+if [ ! -f "$IDN/lib/libidn.a" ]; then
+	mklibidn "$CURRENT/libidn" "$IDN" $TARGET
+	printf " %s\n" "GNU Libidn builded!"
+fi
+printf "%s\n" "# # # # # # # # # # # # # # # # # # # # # # # #">"$CURRENT/Makefile"
+printf "%s\n" "# Makefile of Nharu static library">>"$CURRENT/Makefile"
+printf "%s\n" "# Copyleft (C) 2019 by The Crypthing Initiative">>"$CURRENT/Makefile"
+printf "%s\n" "# Generated by configure. Do not edit">>"$CURRENT/Makefile"
+printf "%s\n" "# # # # # # # # # # # # # # # # # # # # # # # #">>"$CURRENT/Makefile"
+IFS=''
+while read -r line || [[ -n "$line" ]]; do
+	NEW="${line/\__PROJECT__/$PROJECT}"
+	NEW="${NEW/\__BIN_DIR__/$BIN_DIR}"
+	NEW="${NEW/\__DIST_DIR__/$DIST_DIR}"
+	NEW="${NEW/\__OPENSSL__/$OPENSSL}"
+	NEW="${NEW/\__IDN__/$IDN}"
+	NEW="${NEW/\__DLA_LIB__/$DLA_LIB}"
+	NEW="${NEW/\__JAVA_HOME__/$JAVA_HOME}"
+	NEW="${NEW/\__VERSION__/$VERSION}"
+	NEW="${NEW/\__JCA_BIN__/$JCA_BIN}"
+	NEW="${NEW/\__JCA_DIST__/$JCA_DIST}"
+	printf "%s\n" $NEW>>"$CURRENT/Makefile"
+done < "$CURRENT/Makefile.in"
+printf "\n"
+printf " %s\n" "Current configuration:"
+printf " %s\n" "Target                   = $TARGET"
+printf " %s\n" "Version                  = $VERSION"
+printf " %s\n" "Current folder           = $CURRENT"
+printf " %s\n" "Project folder           = $PROJECT"
+printf " %s\n" "Distribution folder      = $DIST_DIR"
+printf " %s\n" "Intermediate folder      = $BIN_DIR"
+printf " %s\n" "Java distribution folder = $JCA_DIST"
+printf " %s\n" "Java Intermediate folder = $JCA_BIN"
+printf " %s\n" "OpenSSL folder           = $OPENSSL"
+printf " %s\n" "GNU Libidn folder        = $IDN"
+printf " %s\n" "System folder            = $DLA_LIB"
+printf " %s\n" "Java SE 7 folder         = $JDK_7"
+printf " %s\n" "GNU Lib tool folder      = $GNULIB_TOOL"
+printf " %s\n" "Nharu libraries Makefile generated"
+printf "\n"
+printf " %s\n" "Nharu development environment configuration complete!"
+printf " %s\n" "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *"
 

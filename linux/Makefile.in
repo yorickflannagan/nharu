@@ -1,20 +1,17 @@
-# # # # # # # # # # # # # # # # # # # # # # # #
-# Makefile of Nharu static library
-# Copyleft (C) 2019 by The Crypthing Initiative
-#
-# # # # # # # # # # # # # # # # # # # # # # # #
 SHELL        = /bin/bash
 CC           = gcc
 AR           = ar
 
-PROJECT      = /home/magut/development/nharu
-BIN_DIR      = /home/magut/development/nharu/bin
-DIST_DIR     = /home/magut/development/nharu/dist
-OPENSSL      = /home/magut/development/build/ssl/linux
-IDN          = /home/magut/development/build/idn/linux
-DLA_LIB      = /usr/lib/x86_64-linux-gnu
-JAVA_HOME    = /usr/lib/jvm/java-7-oracle
-VERSION      = 1.3.0
+PROJECT      = __PROJECT__
+BIN_DIR      = __BIN_DIR__
+DIST_DIR     = __DIST_DIR__
+OPENSSL      = __OPENSSL__
+IDN          = __IDN__
+DLA_LIB      = __DLA_LIB__
+JAVA_HOME    = __JAVA_HOME__
+VERSION      = __VERSION__
+JCA_BIN      = __JCA_BIN__
+JCA_DIST     = __JCA_DIST__
 
 LIB_SRCDIR   = $(PROJECT)/src
 LIB_OBJDIR   = $(BIN_DIR)/lib
@@ -39,7 +36,7 @@ TST_OBJS     = $(patsubst $(TST_SRCDIR)/%.c,$(TST_OBJDIR)/%.o,$(TST_SRCS))
 VPATH        = $(LIB_SRCDIR) : $(JCA_SRCDIR) : $(TST_SRCDIR)
 FILES        = $(LIB_SRCS) $(JCA_SRCS) $(TST_SRCS)
 ALL_INCLUDES = $(LIB_INCLUDES) $(JCA_INCLUDES) $(TST_INCLUDES)
-MAVEN_ARGS   = -B package
+MAVEN_ARGS   = -D install.dir=$(JCA_DIST) -D bin.dir=$(JCA_BIN) -D jar.version=$(VERSION)
 
 CFLAGS       = -pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -pthread -fPIC
 ifeq ($(_DEBUG_),)
@@ -77,22 +74,23 @@ $(TST_OBJDIR)/%.o: $(TST_SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(LIB_INCLUDES) $(TST_INCLUDES) -c $< -o $@
 
 
-.PHONY: clean prepare build-java test-all
+.PHONY: clean prepare build-java test
 clean:
-	rm $(PROJECT)/files.d $(DIST_DIR)/lib $(TST_TARGET) $(TST_OBJDIR) $(LIB_OBJDIR) $(JCA_OBJDIR) -Rf; \
-	cd ..; mvn -B clean; rmdir bin ; cd -
+	cd ..; mvn -B clean $(MAVEN_ARGS); rmdir bin ; cd -; \
+	rm $(PROJECT)/files.d $(DIST_DIR)/lib $(TST_TARGET) $(TST_OBJDIR) $(LIB_OBJDIR) $(JCA_OBJDIR) -Rf
+
 
 prepare:
 	mkdir -p $(LIB_OBJDIR) $(JCA_OBJDIR) $(TST_OBJDIR) $(DIST_DIR)/lib; \
 	$(PROJECT)/jca/mkver $(VERSION)
 
 build-java:
-	cd ..; mvn $(MAVEN_ARGS); cd -
+	cd ..; mvn -B package $(MAVEN_ARGS); cd -
 
-test-all:
+test:
 	$(TST_TARGET) $(TST_SRCDIR)/repo
-	$(JAVA_HOME)/bin/java -cp $(DIST_DIR)/nharujca-$(VERSION).jar    \
-	-Dorg.crypthing.security.provider.nharulib=$(JCA_TARGET)         \
+	$(JAVA_HOME)/bin/java -cp $(JCA_DIST)/nharujca-$(VERSION).jar \
+	-Dorg.crypthing.security.provider.nharulib=$(JCA_TARGET)      \
 	org.crypthing.security.provider.NharuProvider $(TST_SRCDIR)/repo/signer.p12 $(TST_SRCDIR)/repo/trust.jks
 
 $(PROJECT)/files.d: $(FILES)
