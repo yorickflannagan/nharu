@@ -29,11 +29,9 @@ public final class CMSSignedDataBuilder
 	private static native void nhcmsAddCert(long cmsHandle, long certHandle)  throws CMSParsingException;
 	private static native void nhcmsSign(long cmsHandle, long certHandle, int mechanism, SignerInterface signer) throws GeneralSecurityException;
 	private static native byte[] nhcmsEncode(long handle) throws CMSParsingException;
+	private static native long nhcmsNewEmptySignedData();
 
-	public CMSSignedDataBuilder()
-	{
-		// TODO: Creates new constructor to carry a certificate chain
-	}
+	public CMSSignedDataBuilder() { hHandle = nhcmsNewEmptySignedData(); }
 
 	/**
 	 * Creates a new builder for this eContent.

@@ -177,6 +177,13 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcm
  * Signature: (J)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsEncode(JNIEnv *, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_cms_CMSSignedDataBuilder
+ * Method:    nhcmsNewEmptySignedData
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsNewEmptySignedData(JNIEnv*, jclass);
+
 
 
 /** ************************************

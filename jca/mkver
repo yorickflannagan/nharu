@@ -32,4 +32,8 @@ VERSION="$VER.$BUILD"
 CVERSION="${VERSION//./_}"
 printf "const char *NHARU_VERSION_%s = \"%s\";\n" "$CVERSION" "$VERSION">"$CUR/native/version.c"
 printf "const char *NHARU_getVersion() { return NHARU_VERSION_%s; }" "$CVERSION">>"$CUR/native/version.c"
+BUILD=$(($BUILD+1))
+printf "%s\n" "#Build number for Nharu JCA. Do not edit">"$CUR/build.number"
+printf "%s\n" "#$(date)">>"$CUR/build.number"
+printf "%s\n" "build.number=$BUILD">>"$CUR/build.number"
 

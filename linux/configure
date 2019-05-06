@@ -174,9 +174,9 @@ function mkopenssl()
 	check_status
 	make all
 	check_status
-	make test
-	check_status
 	if [ "$target" = "linux" ]; then
+		make test
+		check_status
 		make install
 		check_status
 	else

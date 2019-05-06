@@ -407,6 +407,25 @@ JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhc
 	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
 	return ret;
 }
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsNewEmptySignedData
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored
+)
+{
+	jlong ret = 0L;
+	NH_RV rv;
+	JNH_CMS_ENCODING_HANDLER hRet;
+	if ((hRet = (JNH_CMS_ENCODING_HANDLER) malloc(sizeof(JNH_CMS_ENCODING_HANDLER_STR))))
+	{
+		memset(hRet, 0, sizeof(JNH_CMS_ENCODING_HANDLER_STR));
+		if (NH_SUCCESS(rv = NH_cms_encode_signed_data(NULL, &hRet->hBuilder))) ret = (jlong) hRet;
+		else { free(hRet); throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv); }
+	}
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+	return ret;
+}
 
 JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsReleaseSignedDataBuilder
 (
@@ -418,8 +437,8 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcm
 	JNH_CMS_ENCODING_HANDLER hHandler = (JNH_CMS_ENCODING_HANDLER) handle;
 	if (hHandler)
 	{
-		NH_cms_release_sd_encoder(hHandler->hBuilder);
-		free(hHandler->eContent.data);
+		if (hHandler->hBuilder) NH_cms_release_sd_encoder(hHandler->hBuilder);
+		if (hHandler->eContent.data) free(hHandler->eContent.data);
 		free(hHandler);
 	}
 }
