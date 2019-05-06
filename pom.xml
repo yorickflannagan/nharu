@@ -38,7 +38,6 @@
 					<bottom>Copyleft &#169; 2019 by The Crypthing Initiative. All rights reversed.</bottom>
 					<charset>utf8</charset>
 					<doctitle>${project.name} ${project.version}</doctitle>
-					<excludePackageNames>org.crypthing.security.cms:org.crypthing.security.cert:org.crypthing.security.provider:org.crypthing.security.x509:org.crypthing.util</excludePackageNames>
 					<docencoding>UTF-8</docencoding>
 					<encoding>UTF-8</encoding>
 					<locale>en_US</locale>
