@@ -50,7 +50,7 @@ function jdk_7()
 function initialize()
 {
 	TARGET=linux
-	VERSION=1.4.0
+	VERSION=1.3.0
 	CURRENT=$(current_dir)
 	PROJECT="$(dirname $CURRENT)"
 	DIST_DIR="$PROJECT/dist"
@@ -288,7 +288,6 @@ printf " %s\n" "OpenSSL folder           = $OPENSSL"
 printf " %s\n" "GNU Libidn folder        = $IDN"
 printf " %s\n" "System folder            = $DLA_LIB"
 printf " %s\n" "Java SE 7 folder         = $JDK_7"
-printf " %s\n" "GNU Lib tool folder      = $GNULIB_TOOL"
 printf " %s\n" "Nharu libraries Makefile generated"
 printf "\n"
 printf " %s\n" "Nharu development environment configuration complete!"
