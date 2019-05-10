@@ -1,346 +1,687 @@
-' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-' Nharu Library
-' Copyleft (C) 2015 by The Crypthing Initiative
-' Environment for Windows Development
-'
-' Nharu Library is free software: you can redistribute it and/or
-' modify it under the terms of the GNU Lesser General Public License
-'    as published by the Free Software Foundation; either version 3
-'    of the License, or (at your option) any later version.
-'
-' Nharu Library is distributed in the hope that it will be useful,
-'    but WITHOUT ANY WARRANTY; without even the implied warranty of
-'    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-'    General Public License for more details.
-'
-' You should have received copies of the GNU General Public License and
-'    the GNU Lesser General Public License along with this program.  If
-'    not, see <https://www.gnu.org/licenses/lgpl.txt>. */
-'
-' -----------------------------
-' Run with cscript
-' -----------------------------
-' Possible arguments
-'	/proxy:[ip:port]: Proxy server for Internet connection, if needed
-'	/user:[proxy user]: Proxy server user for authentication, if necessary
-'	/pwd:[password]: Proxy server password
-'	/version:[ver]: Version string. Optional. Default: 1.2.13
-'	/prefix:[path]: Folder where Nharu should be installed. Optional. Default [parent of nharu_home]
-'	/debug If present, compilation is set for debug
-'
-' -----------------------------
-' Authors:
-' 		diego.sohsten@gmail.com
-' 		yorick.flannagan@gmail.com
-' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+Const HKEY_CURRENT_USER  = &H80000001
+Const HKEY_LOCAL_MACHINE = &H80000002
 
-
-' Encapsultes a proxy definition
-Class ProxyParams
-
-	Public Server, User, Pwd
-
-End Class
-
-' Encapsulates GNU WGet operation
-Class WGet
-
-	Private m_location, m_proxy
-
-	' Configures object to download
-	' Arguments:
-	'	wgetLocation: folder where wget.exe lies
-	'	prx: instance of Proxy class
-	Public Sub Configure(wgetLocation, prx)
-
-		Dim fs : Set fs = CreateObject("Scripting.FileSystemObject")
-		If Not fs.FolderExists(wgetLocation) Or Not fs.FileExists(wgetLocation & "\wget.exe") Then Err.Raise 1, "WGet.Configure", "Argument must point to an existing wget.exe"
-		m_location = """" & wgetLocation & "\wget.exe"""
-		Set m_proxy = prx
+' Visual Studio installation check facility
+Class VisualStudio
+	Private m_shell, m_vswhere, m_location
+	Private Sub Class_Initialize()
+		Const VSWHERE = "\Microsoft Visual Studio\Installer\vswhere.exe"
+		Set m_shell = CreateObject("WScript.Shell")
+		Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
+		Dim vs32 : vs32 = m_shell.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & VSWHERE
+		Dim vs64 : vs64 = m_shell.ExpandEnvironmentStrings("%ProgramFiles%") & VSWHERE
+		If fs.FileExists(vs32) Then
+			m_vswhere = vs32
+		ElseIf fs.FileExists(vs64) Then
+			m_vswhere = vs64
+		End If
 		Set fs = Nothing
-
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_shell = Nothing
 	End Sub
 
-	' Downloads a file
-	' Arguments:
-	'	name: label for feedeback
-	'	uri: resource location
-	'	target: complete path to directory where downloaded resource
-	Public Function Download(name, uri, target)
-
-		If IsEmpty(m_location) Or IsEmpty(m_proxy) Then Err.Raise 2, "WGet.Download", "Object improperly initialized"
-		Dim cmd
-		Dim shell : Set shell = Nothing
-		Dim ret
-
-		cmd = m_location
-		If Not IsEmpty(m_proxy.Server) Then
-			cmd = cmd & " -e http_proxy=" & m_proxy.Server & " -e https_proxy=" & m_proxy.Server & " --no-check-certificate"
-			If Not IsEmpty(m_proxy.User) Then
-				cmd = cmd & " --proxy-user=" & m_proxy.User
-			End If
-			If Not IsEmpty(m_proxy.Pwd) Then
-					cmd = cmd & " --proxy-password=" & m_proxy.Pwd
+	' Retrives install location
+	Public Function GetInstallLocation()
+		Const PATH_STRING = "installationPath:"
+		If IsEmpty(m_location) And Not IsEmpty(m_vswhere) Then
+			Dim ret : Set ret = m_shell.Exec(m_vswhere)
+			Do While ret.Status = 0
+	     		WScript.Sleep 100
+			Loop
+			If ret.ExitCode = 0 Then
+				Dim line
+				Do While Not ret.StdOut.AtEndOfStream
+					line = ret.StdOut.ReadLine()
+					If InStr(1, line, PATH_STRING, vbTextCompare) <> 0 Then
+						m_location = AddSlash(Trim(Mid(line, Len(PATH_STRING) + 1)))
+						Exit Do
+					End If
+				Loop
 			End If
 		End If
-		cmd = cmd & " --output-document=" & target & "\" & name & " " & uri
+		GetInstallLocation = m_location
+	End Function
 
-		Set shell = CreateObject("Wscript.Shell")
-		ret = shell.Run(cmd, 3, True)
-		If ret <> 0 Then
-			Dim fs : Set fs = Nothing
-			Set fs = CreateObject ("Scripting.FileSystemObject")
-			If fs.FileExists(target & "\" & name) Then
-				fs.DeleteFile(target & "\" & name)
+	' Retrieve Visual Studio installation folder. If does not exists, Raise an exception
+	Public Function EnsureInstall()
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) Then Err.Raise 1, "VisualStudio.EnsureInstall", "MS Visual Studio is required. Please, download and install it from https://visualstudio.microsoft.com/pt-br/downloads/, then re-run this configure"
+		EnsureInstall = value
+	End Function 
+End Class
+
+' Java installation check facility
+Class Java
+	Private m_installer, m_location
+	Private Sub Class_Initialize()
+		Set m_installer = New Installer
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_installer = Nothing
+	End Sub
+
+	' Retrives install location
+	' Arguments:
+	' 	string version: JDK version number
+	Public Function GetInstallLocation(version)
+		Const ENTRY = "Java SE Development Kit "
+		If IsEmpty(m_location) Then
+			Dim ret : ret = m_installer.GetInstallLocation(ENTRY & version)
+			If Not IsEmpty(ret) Then
+				m_location = AddSlash(ret)
+			End If
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Retrieve Java JDK installation folder. If does not exists, Raise an exception
+	' Arguments:
+	' 	string version: JDK version number
+	Public Function EnsureInstall(version)
+		Dim value : value = GetInstallLocation(version)
+		If IsEmpty(value) Then Err.Raise 1, "Java.EnsureInstall", "Java JDK version " & version & " is required. Please, download and install it from https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html, then re-run this configure"
+		EnsureInstall = value
+	End Function 
+End Class
+
+' Git installation facility
+Class GitSCM
+	Private m_registry, m_location, m_installer, m_shell
+	Private Sub Class_Initialize()
+		Set m_registry = New Registry
+		Set m_installer = New Installer
+		Set m_shell = CreateObject("Wscript.Shell")
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_registry = Nothing
+		Set m_installer = Nothing
+		Set m_shell = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		Const REGKEY = "SOFTWARE\GitForWindows"
+		Const REGVALUE = "InstallPath"
+		If IsEmpty(m_location) Then
+			Dim value : value = m_registry.GetValue(HKEY_LOCAL_MACHINE, REGKEY, REGVALUE)
+			If Not IsEmpty(value) Then
+				m_location = AddSlash(value)
+			End If
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed 
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	public Function EnsureInstall(retry)
+		Const GIT_SOURCE = "https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/Git-2.20.1-64-bit.exe"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			m_installer.Install GIT_SOURCE, ".exe"
+			value = EnsureInstall(False)
+			If IsEmpty(value) Then Err.Raise 1, "GitSCM.EnsureInstall", "GitSCM is required. Please, download and install it from " & GIT_SOURCE & ", then re-run this configure"
+		End If
+		EnsureInstall = value
+	End Function
+
+	' Use Git to clone source into target. Must be installed
+	' Arguments:
+	'	string source: source URI
+	'	string target: target directory
+	Public Sub Clone(source, target)
+		If IsEmpty(m_location) Then If ret <> 0 Then Err.Raise 1, "GitSCM.Clone", "Git not installed"
+		Dim cmd : cmd = """" & m_location & "cmd\git.exe"" clone __URI__ ""__TARGET__"""
+		Dim rv : rv = m_shell.Run(Replace(Replace(cmd, "__URI__", source), "__TARGET__", target), 1, True)
+		If rv <> 0 Then Err.Raise rv, "GitSCM.Clone", "Git clone failed"
+	End Sub
+
+	' Use Git to checkout a soufrce. Must be installed
+	' Arguments:
+	'	string source: source code folder
+	'	string tag: tag name
+	'	string branch: branch to be created
+	Public Sub Checkout(source, tag, branch)
+		If IsEmpty(m_location) Then If ret <> 0 Then Err.Raise 1, "GitSCM.Checkout", "Git not installed"
+		Dim cmd : cmd = """" & m_location & "cmd\git.exe"" checkout __TAG__ -b __BRANCH__"
+		Dim cur : cur = m_shell.CurrentDirectory
+		m_shell.CurrentDirectory = source
+		m_shell.Run Replace(Replace(cmd, "__TAG__", tag), "__BRANCH__", branch), 1, True
+		m_shell.CurrentDirectory = cur
+	End Sub
+End Class
+
+' Dr. Memory installation facility
+Class DrMemory
+	Private m_location, m_installer
+	Private Sub Class_Initialize()
+		Set m_installer = New Installer
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_installer = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		Const ENTRY = "Dr. Memory"
+		If IsEmpty(m_location) Then
+			Dim ret : ret = m_installer.GetInstallLocation(ENTRY)
+			If Not IsEmpty(ret) Then
+				m_location = AddSlash(ret)
+			End If
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed 
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	public Function EnsureInstall(retry)
+		Const DRM_SOURCE = "https://github.com/DynamoRIO/drmemory/releases/download/release_1.11.0/DrMemory-Windows-1.11.0-2.msi"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			m_installer.Install DRM_SOURCE, ".msi"
+			value = EnsureInstall(False)
+			If IsEmpty(value) Then Err.Raise 1, "DrMemory.EnsureInstall", "Dr. Memory is required. Please, download and install it from " & DRM_SOURCE & ", then re-run this configure"
+		End If
+		EnsureInstall = value
+	End Function
+End Class
+
+' NASM installation facility
+Class NetwideASM
+	Private m_registry, m_location, m_installer
+	Private Sub Class_Initialize()
+		Set m_registry = New Registry
+		Set m_installer = New Installer
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_registry = Nothing
+		Set m_installer = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		Const HKLM_KEY = "SOFTWARE\nasm"
+		Const HKCU_KEY = "Software\nasm"
+		Const REGVALUE = ""
+		If IsEmpty(m_location) Then
+			Dim value : value = m_registry.GetValue(HKEY_CURRENT_USER, HKCU_KEY, REGVALUE)
+			If IsEmpty(value) Then
+				value = m_registry.GetValue(HKEY_LOCAL_MACHINE, HKLM_KEY, REGVALUE)
+			End If
+			If Not IsEmpty(value) Then
+				m_location = AddSlash(value)
+			End If
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed 
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	public Function EnsureInstall(retry)
+		Const NASM_SOURCE = "https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/win32/nasm-2.14.02-installer-x86.exe"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			m_installer.Install NASM_SOURCE, ".exe"
+			value = EnsureInstall(False)
+			If IsEmpty(value) Then Err.Raise 1, "NetwideASM.EnsureInstall", "Netwide Assembler is required. Please, download and install it from " & NASM_SOURCE & ", then re-run this configure"
+		End If
+		EnsureInstall = value
+	End Function
+End Class
+
+' Active Perl installation facility
+Class ActivePerl
+	Private m_registry, m_location, m_installer
+	Private Sub Class_Initialize()
+		Set m_registry = New Registry
+		Set m_installer = New Installer
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_registry = Nothing
+		Set m_installer = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		Const REGKEY = "SOFTWARE\Perl"
+		Const REGVALUE = ""
+		If IsEmpty(m_location) Then
+			Dim value : value = m_registry.GetValue(HKEY_LOCAL_MACHINE, REGKEY, REGVALUE)
+			If Not IsEmpty(value) Then
+				m_location = AddSlash(value)
+			End If
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	public Function EnsureInstall(retry)
+		Const PERL_SOURCE = "https://downloads.activestate.com/ActivePerl/releases/5.26.3.2603/ActivePerl-5.26.3.2603-MSWin32-x64-a95bce075.exe"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			m_installer.Install PERL_SOURCE, ".exe"
+			value = EnsureInstall(False)
+			If IsEmpty(value) Then Err.Raise 1, "ActivePerl.EnsureInstall", "Active Perl is required. Please, download and install it from " & PERL_SOURCE & ", then re-run this configure"
+		End If
+		EnsureInstall = value
+	End Function
+End Class
+
+' OpenSSL installation facility
+Class OpenSSL
+	Private LIB, HEADER
+	Private m_location, m_fs, m_finder, m_nasm, m_perl, m_vs, m_git, m_shell
+	Private Sub Class_Initialize()
+		LIB = "libcrypto.lib"
+		HEADER = "opensslconf.h"
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
+		Set m_finder = New Finder
+		Set m_nasm = New NetwideASM
+		Set m_perl = New ActivePerl
+		Set m_vs = New VisualStudio
+		Set m_git = New GitSCM
+		Set m_shell = CreateObject("Wscript.Shell")
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_fs = Nothing
+		Set m_finder = Nothing
+		Set m_nasm = Nothing
+		Set m_perl = Nothing
+		Set m_vs = Nothing
+		Set m_git = Nothing
+		Set m_shell = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for OpenSSL libraries... "
+			Dim value : value = m_finder.Find(LIB)
+			If Not IsEmpty(value) Then
+				value = m_fs.GetParentFolderName(value)
+				If m_fs.FileExists(value & "\include\openssl\" & HEADER) Then
+					m_location = AddSlash(value)
+					stdout.WriteLine "Found!"
+				End If
 			End If
 			Set fs = Nothing
+			If IsEmpty(m_location) Then
+				stdout.WriteLine "Not found!"
+			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
-		Download = ret
-		
-		Set shell = Nothing
+		GetInstallLocation = m_location
+	End Function
 
+	' Ensures software is installed
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	'	string target: compilation type (debug or release)
+	Public Function EnsureInstall(retry, target)
+		Const SSL_URI = "https://github.com/openssl/openssl"
+		Const SSL_TAG = "OpenSSL_1_1_0f"
+		Const SSL_BRANCH = "nharu_build"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for OpenSSL pre requisites... "
+			Dim vsFolder : vsFolder = m_vs.EnsureInstall()
+			Dim nasmFolder : nasmFolder = m_nasm.EnsureInstall(True)
+			Dim perlFolder : perlFolder = m_perl.EnsureInstall(True)
+			Dim gitFolder : gitFolder = m_git.EnsureInstall(True)
+			stdout.WriteLine "Done!"
+			Dim current : current = m_fs.GetParentFolderName(WScript.ScriptFullName)
+			Dim sslFolder : sslFolder = current & "\openssl"
+			If Not m_fs.FolderExists(sslFolder) Then
+				stdout.Write "Cloning OpenSSL from repository... "
+				m_git.Clone SSL_URI, sslFolder
+				stdout.WriteLine "Done!"
+			End If
+			stdout.Write "Checking out OpenSSL tag " & SSL_TAG & "... "
+			m_git.Checkout sslFolder, SSL_TAG, SSL_BRANCH
+			stdout.WriteLine "Done!"
+			Dim bat : bat = BuildBatch(current, perlFolder, nasmFolder, vsFolder)
+			stdout.Write "Building OpenSSL from scratch... "
+			Dim rv : rv = m_shell.Run(bat & " " & target, 1, True)
+			If rv <> 0 Then Err.Raise rv, "OpenSSL.EnsureInstall", "OpenSSL build failure"
+			m_fs.DeleteFile bat
+			stdout.WriteLine "Done!"
+			value = EnsureInstall(False, target)
+			stdout.Close
+			Set stdout = Nothing
+		End If
+		EnsureInstall = value
+	End Function
+
+	Private Function BuildBatch(current, perlFolder, nasmFolder, vsFolder)
+		Dim ret : ret = current & "\" & Replace(m_fs.GetTempName(), ".tmp", ".bat")
+		Dim template : Set template = m_fs.OpenTextFile(current & "\openssl-build.template", 1)
+		Dim out : Set out = m_fs.CreateTextFile(ret, True)
+		While Not template.AtEndOfStream
+			Dim line : line = template.ReadLine()
+			line = Replace(line, "__PERL_INSTALL_PATH__", perlFolder)
+			line = Replace(line, "__NASM_INSTALL_PATH__", nasmFolder)
+			line = Replace(line, "__VS_INSTALL_PATH__",   vsFolder)
+			out.WriteLine(line)
+		Wend
+		out.Close
+		template.Close
+		Set out = Nothing
+		Set template = Nothing
+		BuildBatch = ret
+	End Function
+End Class
+
+' GNU Libidn installation facility
+Class GNULibidn
+	Private LIB, HEADER
+	Private m_location, m_fs, m_finder, m_perl, m_vs, m_git, m_shell
+	Private Sub Class_Initialize()
+		LIB = "libidn.lib"
+		HEADER = "stringprep.h"
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
+		Set m_finder = New Finder
+		Set m_perl = New ActivePerl
+		Set m_vs = New VisualStudio
+		Set m_git = New GitSCM
+		Set m_shell = CreateObject("Wscript.Shell")
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_fs = Nothing
+		Set m_finder = Nothing
+		Set m_perl = Nothing
+		Set m_vs = Nothing
+		Set m_git = Nothing
+		Set m_shell = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for GNU Libidn libraries... "
+			Dim value : value = m_finder.Find(LIB)
+			If Not IsEmpty(value) Then
+				value = m_fs.GetParentFolderName(value)
+				If m_fs.FileExists(value & "\include\" & HEADER) Then
+					m_location = AddSlash(value)
+					stdout.WriteLine "Found!"
+				End If
+			End If
+			Set fs = Nothing
+			If IsEmpty(m_location) Then
+				stdout.WriteLine "Not found!"
+			End If
+			stdout.Close
+			Set stdout = Nothing
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	'	string target: compilation type (debug or release)
+	Public Function EnsureInstall(retry, target)
+		Const IDN_URI = "https://git.savannah.gnu.org/git/libidn.git"
+		Const IDN_TAG = "libidn-1-32"
+		Const IDN_BRANCH = "nharu_build"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for GNU Libidn pre requisites... "
+			Dim vsFolder : vsFolder = m_vs.EnsureInstall()
+			Dim perlFolder : perlFolder = m_perl.EnsureInstall(True)
+			Dim gitFolder : gitFolder = m_git.EnsureInstall(True)
+			stdout.WriteLine "Done!"
+			Dim current : current = m_fs.GetParentFolderName(WScript.ScriptFullName)
+			Dim idnFolder : idnFolder = current & "\libidn"
+			If Not m_fs.FolderExists(idnFolder) Then
+				stdout.Write "Cloning GNU Libidn from repository... "
+				m_git.Clone IDN_URI, idnFolder
+				stdout.WriteLine "Done!"
+			End If
+			stdout.Write "Checking out GNU Libidn tag " & IDN_TAG & "... "
+			m_git.Checkout idnFolder, IDN_TAG, IDN_BRANCH
+			stdout.WriteLine "Done!"
+			Dim folder : Set folder = m_fs.GetFolder(idnFolder & "\doc\tld")
+			Dim f1, tlds
+			For Each f1 in folder.Files
+				If (InStr(Len(f1.Path) - 4, f1.Path, ".tld", vbTextCompare) > 0) Then tlds = tlds & " """ & f1.Path & """"
+			Next
+			Set folder = Nothing
+			Dim bat : bat = BuildBatch(current, perlFolder, vsFolder, tlds)
+			stdout.Write "Building GNU Libidn from scratch... "
+			Dim rv : rv = m_shell.Run(bat & " " & target, 1, True)
+			If rv <> 0 Then Err.Raise rv, "GNULibidn.EnsureInstall", "GNU Libidn build failure"
+			m_fs.DeleteFile bat
+			stdout.WriteLine "Done!"
+			value = EnsureInstall(False, target)
+			stdout.Close
+			Set stdout = Nothing
+		End If
+		EnsureInstall = value
+	End Function
+
+	Private Function BuildBatch(current, perlFolder, vsFolder, tlds)
+		Dim ret : ret = current & "\" & Replace(m_fs.GetTempName(), ".tmp", ".bat")
+		Dim template : Set template = m_fs.OpenTextFile(current & "\idn-build.template", 1)
+		Dim out : Set out = m_fs.CreateTextFile(ret, True)
+		While Not template.AtEndOfStream
+			Dim line : line = template.ReadLine()
+			line = Replace(line, "__PERL_INSTALL_PATH__", perlFolder)
+			line = Replace(line, "__VS_INSTALL_PATH__",   vsFolder)
+			line = Replace(line, "__LANGS__",             tlds)
+			out.WriteLine(line)
+		Wend
+		out.Close
+		template.Close
+		Set out = Nothing
+		Set template = Nothing
+		BuildBatch = ret
+	End Function
+End Class
+
+
+
+' Installation facility
+Class Installer
+	Private m_installer, m_products, m_fs, m_current, m_shell, m_app
+	Private Sub Class_Initialize()
+		Set m_installer = Wscript.CreateObject("WindowsInstaller.Installer")
+		Set m_products = m_installer.Products
+		Set m_fs = CreateObject ("Scripting.FileSystemObject")
+		m_current = m_fs.GetParentFolderName(WScript.ScriptFullName)
+		Set m_shell = CreateObject("Wscript.Shell")
+		Set m_app = CreateObject("Shell.Application")
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_products = Nothing
+		Set m_installer = Nothing
+		Set m_fs = Nothing
+		Set m_shell = Nothing
+		Set m_app = Nothing
+	End Sub
+
+	' Retrieves install location of a product from Windows Installer database
+	' string productName: product name to Windows Installer
+	Public Function GetInstallLocation(productName)
+		Dim product, value
+		For Each product In m_products
+			value = m_installer.ProductInfo(product, "ProductName")
+			If InStrRev(value, productName, -1, vbTextCompare) <> 0 Then 
+				value = m_installer.ProductInfo(product, "InstallLocation")
+				If Not IsEmpty(value) Then GetInstallLocation = AddSlash(value)
+				Exit For
+			End If 
+		Next
+	End Function
+
+	' Downloads and run installation application
+	' Arguments:
+	' 	URI source: installer location
+	' 	string extension: install application extension (.exe or .msi)
+	Public Sub Install(source, extension)
+		Dim temp : temp = Download(source, extension)
+		Dim ret : ret = m_shell.Run(temp, 0, True)
+		m_fs.DeleteFile temp
+		If ret <> 0 Then Err.Raise ret, "Installer.Install", "Installation aborted"
+	End Sub
+
+	' Dowloads and unzips specified resource
+	' Arguments:
+	'	URI source: URI where resource lies
+	'	string target: destination folder
+	Public Sub Unzip(source, target)
+		Dim temp : temp = Download(source, ".zip")
+		If Not m_fs.FolderExists(target) Then
+			m_fs.CreateFolder(target)
+		End If
+		Dim oSource : Set oSource = m_app.NameSpace(temp).Items()
+		Dim oTarget : Set oTarget = m_app.NameSpace(target)
+		oTarget.CopyHere oSource, 256
+		m_fs.DeleteFile temp
+		Set oSource = Nothing
+		Set oTarget = Nothing
+	End Sub
+
+	' Downloads specified resource
+	' Arguments:
+	'	URI source: resource location
+	'	string extension: extension resource when created on disk (.exe, .msi, .zip)
+	Private Function Download(source, extension)
+		Const PCMD = "powershell -Command ""[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Method 'GET' -Uri '__URI__' -OutFile '__TARGET__'"""
+		Dim ret : ret = m_current & "\" & Replace(m_fs.GetTempName(), ".tmp", extension)
+		Dim cmd : cmd = Replace(Replace(PCMD, "__URI__", source), "__TARGET__", ret)
+		Dim rv : rv = m_shell.Run(cmd, 1, True)
+		If rv <> 0 Then Err.Raise rv, "Installer.Install", "Invoke-WebRequest commandlet failed to download resource"
+		Download = ret
+	End Function
+End Class
+
+' Windows Registry facility
+Class Registry
+	Private m_shell
+	Private Sub Class_Initialize()
+		Set m_shell = GetObject("winmgmts:{impersonationLevel=impersonate}!\\.\root\default:StdRegProv")
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_shell = Nothing
+	End Sub
+
+	' Reads a registry entry
+	' Arguments:
+	'   number root: root entry (HKEY_CURRENT_USER or HKEY_LOCAL_MACHINE)
+	'	string path: complete registry key
+	'	string key: registry value name
+	Public Function GetValue(root, path, key)
+		Dim value, shit
+		m_shell.GetStringValue root, path, key, shit
+		If Not IsNull(shit) Then
+			value = shit
+		End If
+		GetValue = value
+	End Function
+
+	' Reads a registru entru from HKEY_LOCAL_MACHINE
+	' Arguments:
+	'	string path: complete registry key
+	'	string key: registry value name
+	Public Function GetMachineValue(path, key)
+		GetMachineValue = GetValue(HKEY_LOCAL_MACHINE, path, key)
+	End Function
+
+	' Reads a registru entru from HKEY_CURRENT_USER
+	' Arguments:
+	'	string path: complete registry key
+	'	string key: registry value name
+	Public Function GetLocalValue(path, key)
+		GetLocalValue = GetValue(HKEY_CURRENT_USER, path, key)
 	End Function
 
 End Class
 
+' Find file facility
+Class Finder
+	Private m_start, m_fs
+	Private Sub Class_Initialize()
+		Dim shell : Set shell = CreateObject("WScript.Shell")
+		m_start = shell.ExpandEnvironmentStrings("%USERPROFILE%")
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
+		Set shell = Nothing
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_fs = Nothing
+	End Sub
 
-Sub Include(fspec)
+	' Find specified file from %USERPROFILE% folder
+	' Arguments:
+	'	string fileName: file to find
+	Public Function Find(fileName)
+		Find = FindFile(m_start, fileName)
+	End Function
 
-	Dim fs : Set fs = CreateObject("Scripting.FileSystemObject")
-	Dim file : Set file = fs.OpenTextFile(fspec, 1)
-	Dim lib : lib = file.ReadAll
-	file.Close
-	Set file = Nothing : Set fs = Nothing
-	ExecuteGlobal lib
-
-End Sub
-
-
-' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-' Main program
-' -----------------------------
-' Required software
-' -----------------------------
-' MS Visual Studio Community	Required to to build native library	https://visualstudio.microsoft.com/pt-br/downloads/
-' Git							Software configuration management	https://git-scm.com/
-' Dr. Memory Debugger			Required to look for memory leaks	https://drmemory.org/
-' Netwide Assembler				Required to compile OpenSSL			https://www.nasm.us/
-' Active Perl					Required to compile OpenSSL 		http://www.activestate.com/activeperl
-' Java Development Kit 32 bits	Required to build					http://www.oracle.com/technetwork/java/javase/downloads/
-' Apache Ant					Required to build					https://ant.apache.org/
-' Ant Contrib Tasks				Required to build					http://ant-contrib.sourceforge.net/
-' Open SSL						Nharu dependency					https://github.com/openssl/openssl
-' GNU Libidn					Nharu dependency					https://git.savannah.gnu.org/git/libidn.git
-' -----------------------------
-' * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
-'
-' Globals
-' -----------------------------
-Dim PROXY : Set PROXY = Nothing
-Dim CONFIG : Set CONFIG = Nothing
-Dim IWR : Set IWR = Nothing
-Dim START, CURRENT
-Dim INSTALL : Set INSTALL = Nothing
-Dim FFINDER : Set FFINDER = Nothing
-
-Sub Initialize
-
-	Dim args : Set args = WScript.Arguments.Named
-	Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
-	CURRENT = fs.GetParentFolderName(WScript.ScriptFullName)
-	START = fs.GetParentFolderName(fs.GetParentFolderName(CURRENT))
-
-	Set PROXY = New ProxyParams
-	If args.Exists("proxy") Then
-		PROXY.Server = args.Item("proxy")
-	End If
-	If args.Exists("user") Then
-		PROXY.User = args.Item("user")
-	End If
-	If args.Exists("pwd") Then
-		PROXY.Pwd = args.Item("pwd")
-	End If
-
-	Set CONFIG = CreateObject("Scripting.Dictionary")
-	If args.Exists("prefix") Then
-		CONFIG.Add "prefix", args.Item("prefix")
-	Else
-		CONFIG.Add "prefix", START & "\3rdparty\nharu"
-	End If
-	If args.Exists("version") Then
-		CONFIG.Add "version", args.Item("version")
-	Else
-		CONFIG.Add "version", "1.2.13"
-	End If
-	If args.Exists("debug") Then
-		CONFIG.Add "debug", """DEBUG=1"""
-	Else
-		CONFIG.Add "debug", """"""
-	End If
-	Set args = Nothing
-	Set fs = Nothing
-
-	Set IWR = New WGet
-	IWR.Configure CURRENT, PROXY
-
-End Sub
-
-Sub InitLibrary
-
-	Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
-	If fs.FileExists(CURRENT & "\library.vbs") Then fs.DeleteFile CURRENT & "\library.vbs"
-	If fs.FileExists(CURRENT & "\git.template") Then fs.DeleteFile CURRENT & "\git.template"
-	Set fs = Nothing
-	Dim ret : ret = IWR.Download("library.vbs", """https://docs.google.com/uc?export=download&id=1kQVYeQiqOg50mVbeP3J9bnswBaoD0aNW""", CURRENT)
-	If ret <> 0 Then Err.Raise ret, "InitLibrary", "Failed to include library"
-	Include CURRENT & "\library.vbs"
-	ret = IWR.Download("git.template", """https://docs.google.com/uc?export=download&id=1e8CeR49WVCQ0S5kNTjKgaxytjrKYPg4U""", CURRENT)
-	If ret <> 0 Then Err.Raise ret, "InitLibrary", "Failed to download Git commands template"
-	Set INSTALL = New Installer
-	Set INSTALL.Getter = IWR
-	Set FFINDER = New Finder
-	FFINDER.StartFolder = START
-	SetFacilities INSTALL, FFINDER, PROXY
-
-End Sub
-
-Sub ShowConfig
-
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-	WScript.Echo " Nharu Library                                    "
-	WScript.Echo " Environment for Windows development configuration"
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-	WScript.Echo ""
-
-	WScript.Echo " Startup configuration:"
-	WScript.Echo " Proxy server: " & PROXY.Server
-	WScript.Echo " Proxy user: " & PROXY.User
-	WScript.Echo " Prefix directory: " & CONFIG.Item("prefix")
-	WScript.Echo " Version number: " & CONFIG.Item("version")
-	WScript.Echo " Debug flag: " & CONFIG.Item("debug")
-	WScript.Echo " Search folder: " & FFINDER.StartFolder
-	WScript.Echo ""
+	' Find specified file from specified folder
+	' Arguments:
+	'	string folderName: start folder
+	'	string fileName: file to find
+	Public Function FindFile(folderName, fileName)
 	
-End Sub
+		Dim file, folder, found
+		Dim current : Set current = m_fs.GetFolder(folderName)
+		If current.Attributes = 16 Then
+			For Each file In current.Files
+				If StrComp(file.Name, fileName, vbTextCompare) = 0 Then
+					found = current.Path
+					Exit For
+				End If
+			Next
+			If IsEmpty(found) Then
+				For Each folder In current.SubFolders
+					file = FindFile(folder.Path, fileName)
+					If Not IsEmpty(file) Then
+						found = file
+						Exit For
+					End If
+				Next
+			End If 
+			Set current = Nothing
+		End If
+		If Not IsEmpty(found) Then FindFile = found
+	End Function
+End Class
+
+
+Function AddSlash(path)
+	If InStrRev(path, "\") <> Len(path) Then
+		AddSlash = path & "\"
+	Else
+		AddSlash = path
+	End If
+End Function
+Function RemoveSlash(path)
+	If InStrRev(path, "\") = Len(path) Then
+		RemoveSlash = Mid(path, 1, Len(path) - 1)
+	Else
+		RemoveSlash = path
+	End If
+End Function 
+
 
 Sub Main
 
-	products = GetInstalledProducts()
-	GenerateDevEnv products
-	GenerateBuild CONFIG.Item("prefix"), CONFIG.Item("version"), CONFIG.Item("debug")
-
-	WScript.Echo ""
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
-	WScript.Echo " Environment for Windows development configured   "
-	WScript.Echo " Use build.bat file to build                      "
-	WScript.Echo " Use dev-env.bat file to all other operations     "
-	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * *"
+	Dim soft : Set soft = New GNULibidn
+	Dim folder : folder = soft.EnsureInstall(True, "release")
+	WScript.Echo folder
 
 End Sub
 
-' Search for installed software requirements
-Function GetInstalledProducts()
-
-	Dim ret(17)
-	ret(VS_INSTALL_PATH)	= EnsureInstallVS()
-	ret(JDK8_INSTALL_PATH)	= EnsureInstallJava(JDK8_INSTALL_PATH, "8")
-	ret(JDK7_INSTALL_PATH)	= EnsureInstallJava(JDK7_INSTALL_PATH, "7")
-	ret(GIT_INSTALL_PATH)	= EnsureInstallGit(True)
-	ret(DRMEM_INSTALL_PATH)	= EnsureInstallDrMem(True)
-	ret(NASM_INSTALL_PATH)	= EnsureInstallNASM(True)
-	ret(PERL_INSTALL_PATH)	= EnsureInstallPerl(True)
-	ret(SSL_INSTALL_PATH)	= EnsureInstallOpenSSL(ret(GIT_INSTALL_PATH), ret(NASM_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
-	ret(IDN_INSTALL_PATH)	= EnsureInstallLibidn(ret(GIT_INSTALL_PATH), ret(PERL_INSTALL_PATH), ret(VS_INSTALL_PATH), True)
-	ret(ANT_INSTALL_PATH)	= EnsureInstallAnt(True)
-	ret(ANTC_INSTALL_PATH)	= EnsureInstallAntContrib(True)
-	WScript.Echo ""
-	WScript.Echo " Support software installation paths:"
-	WScript.Echo " Microsoft Visual Studio: " & ret(VS_INSTALL_PATH)
-	WScript.Echo " Java SDK 8: " & ret(JDK8_INSTALL_PATH)
-	WScript.Echo " Java SDK 7: " & ret(JDK7_INSTALL_PATH)
-	WScript.Echo " Git SCM: " & ret(GIT_INSTALL_PATH)
-	WScript.Echo " Dr. Memory: " & ret(DRMEM_INSTALL_PATH)
-	WScript.Echo " Netwide Assembler: " & ret(NASM_INSTALL_PATH)
-	WScript.Echo " Active Perl: " & ret(PERL_INSTALL_PATH)
-	WScript.Echo " OpenSSL library: " & ret(SSL_INSTALL_PATH)
-	WScript.Echo " GNU Libidn library: " & ret(IDN_INSTALL_PATH)
-	WScript.Echo " Apache Ant: " & ret(ANT_INSTALL_PATH)
-	WScript.Echo " Ant Contrib Tasks: " & ret(ANTC_INSTALL_PATH)
-	WScript.Echo ""
-	GetInstalledProducts = ret
-
-End Function
-
-Sub GenerateDevEnv(productsPath)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim template : Set template = Nothing
-	Dim out : Set out = Nothing
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-	Set template = fs.OpenTextFile(CURRENT & "\dev-env.template", 1) : CheckError
-	Set out = fs.CreateTextFile(CURRENT & "\dev-env.bat", True) : CheckError
-	stdout.Write(" Generating configuration batch file... ")
-	While Not template.AtEndOfStream
-		Dim line, newLine
-		line = template.ReadLine()
-		newLine = Replace(line,    "__OPENSSL__",         productsPath(SSL_INSTALL_PATH))
-		newLine = Replace(newLine, "__LIBIDN__",          productsPath(IDN_INSTALL_PATH))
-		newLine = Replace(newLine, "__JAVA_HOME__",       productsPath(JDK8_INSTALL_PATH))
-		newLine = Replace(newLine, "__ANT_HOME__",        productsPath(ANT_INSTALL_PATH))
-		newLine = Replace(newLine, "__ANT_CONTRIB__",     productsPath(ANTC_INSTALL_PATH) & "ant-contrib-1.0b3.jar")
-		newLine = Replace(newLine, "__JRE_7RT__",         productsPath(JDK7_INSTALL_PATH) & "jre\lib\rt.jar")
-		newLine = Replace(newLine, "__VS_INSTALL_PATH__", productsPath(VS_INSTALL_PATH))
-		out.WriteLine(newLine)
-	Wend
-	stdout.WriteLine("Done!")
-	out.Close
-	template.Close
-	stdout.Close
-	Set fs = Nothing
-	Set stdout = Nothing
-	Set template = Nothing
-	Set out = Nothing
-
-End Sub
-
-Sub GenerateBuild(prefix, ver, debug)
-
-	Dim fs : Set fs = Nothing
-	Dim stdout : Set stdout = Nothing
-	Dim template : Set template = Nothing
-	Dim out : Set out = Nothing
-	On Error Resume Next
-
-	Set fs = CreateObject ("Scripting.FileSystemObject") : CheckError
-	Set stdout = fs.GetStandardStream(1) : CheckError
-	Set template = fs.OpenTextFile(CURRENT & "\build.template", 1) : CheckError
-	Set out = fs.CreateTextFile(CURRENT & "\build.bat", True) : CheckError
-	stdout.Write(" Generating build batch file... ")
-	While Not template.AtEndOfStream
-		Dim line, newLine
-		line = template.ReadLine()
-		newLine = Replace(line,    "__PREFIX__",  prefix)
-		newLine = Replace(newLine, "__VERSION__", ver)
-		newLine = Replace(newLine, "__DEBUG__",   debug)
-		out.WriteLine(newLine)
-	Wend
-	stdout.WriteLine("Done!")
-	out.Close
-	template.Close
-	stdout.Close
-	Set fs = Nothing
-	Set stdout = Nothing
-	Set template = Nothing
-	Set out = Nothing
-
-End Sub
-
-Initialize
-InitLibrary
-ShowConfig
 Main

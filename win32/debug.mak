@@ -5,7 +5,6 @@
 #	diego.sohsten@caixa.gov.br
 # 	yorick.flannagan@gmail.com
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-TARGET        = debug
 T_CFLAGS      = /ZI /Od /errorReport:prompt /MDd /Ob0 /FA /Fa$(OBJ)\ /Fd$(OBJ)\ 
 T_CVARS       = /D "_DEBUG" /D "_DEBUG_"
 T_LIB_LFLAGS  = 

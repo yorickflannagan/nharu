@@ -5,7 +5,6 @@
 #	diego.sohsten@caixa.gov.br
 # 	yorick.flannagan@gmail.com
 # * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-TARGET       = release
 T_CFLAGS     = /GL /Gy /errorReport:none /O2 /MD
 T_CVARS      = /D "NDEBUG"
 T_LIB_LFLAGS = /LTCG

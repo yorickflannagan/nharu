@@ -18,10 +18,11 @@ ECHO  * * * * * * * * * * * * * * * * * * * * * * * *
 ECHO.
 
 :: Required paths
+SET _CUR=%~dp0
+SET _TARGET=%~1
 FOR %%i IN ("%~dp0..") DO SET "_HOME=%%~fi"
-CALL:GET_PREFIX %_HOME%
-SET _TARGET=%_PREFIX%openssl
-SET _PREFIX=%_PREFIX%3rdparty\openssl
+SET _SOURCE=%_CUR%openssl
+SET _PREFIX=%_HOME%\dist\%_TARGET%\openssl
 
 SET _PERL_INSTALL_PATH=__PERL_INSTALL_PATH__
 SET _NASM_INSTALL_PATH=__NASM_INSTALL_PATH__
@@ -35,7 +36,7 @@ ECHO  -----------------------------------------------
 ECHO  Configuring OpenSSL
 ECHO  -----------------------------------------------
 ECHO. 
-CD "%_TARGET%"
+CD "%_SOURCE%"
 "%_PERL_INSTALL_PATH%bin\perl.exe" Configure VC-WIN32 no-shared --prefix="%_PREFIX%" --openssldir="%_PREFIX%"
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
@@ -68,21 +69,26 @@ CALL NMAKE /NOLOGO INSTALL
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
+ECHO  Clean-up OpenSSL
+ECHO  -----------------------------------------------
+ECHO. 
+CALL NMAKE /NOLOGO CLEAN
+IF %ERRORLEVEL% NEQ 0 GOTO :END
+ECHO.
+ECHO  -----------------------------------------------
 ECHO  All tasks are done
 ECHO  -----------------------------------------------
 ECHO. 
 
 GOTO:END
 
-:GET_PREFIX
-FOR %%i IN ("%~dp1") DO SET "_PREFIX=%%~fi"
-GOTO:EOF
-
 :: Clean-up
 :END
+SET _CUR=
+SET _TARGET=
 SET _HOME=
 SET _PREFIX=
 SET _PERL_INSTALL_PATH=
 SET _NASM_INSTALL_PATH=
 SET _VS_INSTALL_PATH=
-SET _TARGET=
+SET _SOURCE=

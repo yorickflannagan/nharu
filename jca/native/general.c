@@ -148,6 +148,9 @@ INLINE NH_UTILITY(jlong, java_mktime)(_IN_ NH_PTIME instant)
 	return (daysUntilNow * 86400 + instant->tm_hour * 3600 + instant->tm_min * 60 + instant->tm_sec) * 1000;
 }
 
+#if defined(_MSC_VER)
+EXTERN
+#endif
 INLINE NH_UTILITY(jbyteArray, get_node_encoding)(JNIEnv *env, _IN_ NH_ASN1_PNODE node)
 {
 	jbyteArray ret = NULL;

@@ -276,7 +276,7 @@ static NH_OID_STR pSubjectCEI_OID = { _subject_cei_id_oid, NHC_OID_COUNT(_subjec
 static char *pSubjectIdValue = "000000000000000000000000000000000000000000000DETRANRJ";
 static char *pSubjectTeValue = "0000000000000000000Rio de Janeiro      RJ";
 static char *pSubjectCeiValue = "000000000000";
-static int __create_TBS( _OUT_ NH_TBSCERT_ENCODER *hOut)
+static int create_TBS( _OUT_ NH_TBSCERT_ENCODER *hOut)
 {
 	NH_RV rv;
 	NH_TBSCERT_ENCODER hTBSCert;
@@ -366,7 +366,7 @@ static int __create_TBS( _OUT_ NH_TBSCERT_ENCODER *hOut)
 	}
 	return rv;
 }
-NH_RV __callback(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
+NH_RV signature_callback(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _IN_ void *params, _OUT_ unsigned char *signature, _INOUT_ size_t *sigSize)
 {
 	NH_RSA_PRIVKEY_HANDLER hHandler = (NH_RSA_PRIVKEY_HANDLER) params;
 	return hHandler->sign(hHandler, mechanism, data->data, data->length, signature, sigSize);
@@ -482,7 +482,7 @@ int test_sign_certificate()
 	NH_PKIBR_EXTENSION hExt = NULL;
 
 	printf("%s", "Testing certificate issuing... ");
-	if (NH_SUCCESS(__create_TBS(&hTBSCert)))
+	if (NH_SUCCESS(create_TBS(&hTBSCert)))
 	{
 		if (NH_SUCCESS(rv = NH_new_cert_encoder(&hCertificate)))
 		{
@@ -491,7 +491,7 @@ int test_sign_certificate()
 				if
 				(
 					NH_SUCCESS(rv = hPrivKey->from_privkey_info(hPrivKey, __ca_privkey, sizeof(__ca_privkey))) &&
-					NH_SUCCESS(rv = hCertificate->sign(hCertificate, hTBSCert, CKM_SHA256_RSA_PKCS, __callback, hPrivKey)) &&
+					NH_SUCCESS(rv = hCertificate->sign(hCertificate, hTBSCert, CKM_SHA256_RSA_PKCS, signature_callback, hPrivKey)) &&
 					NH_SUCCESS(rv = (uSize = hCertificate->hEncoder->encoded_size(hCertificate->hEncoder, hCertificate->hEncoder->root)) > 0 ? NH_OK : NH_ISSUE_ERROR) &&
 					NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(uSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 				)

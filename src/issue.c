@@ -1125,7 +1125,7 @@ static NH_RV __sign
 					{
 						pString.string = pSignature;
 						pString.len = uSigsize;
-						mempcpy(node->identifier, pBuffer, uSize);
+						memcpy(node->identifier, pBuffer, uSize);
 						node->size = uSize - ((pBuffer[1] & 0x80) ? ((pBuffer[1] & 0x7F) + 2) : 2);
 						node->contents = node->identifier + (uSize - node->size);
 						if

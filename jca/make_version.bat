@@ -1,11 +1,8 @@
 @ECHO OFF
-SETLOCAL EnableExtensions
 SETLOCAL EnableDelayedExpansion
 :: CREATES A VERSION FILE FOR SHARED LIBRARY
 :: %~1: VERSION NUMBER
-:: %~2: DIRECTORY WHERE TO CREATE C FILE
 :: REQUIRES AN ANT build.number FILE IN CURRENT DIRECTORY
-:: BUILD INCREMENT IS IMPLEMENTED BY ANT DUE TO ENSURE EQUALITY TO JAVA
 
 SET ME=%~n0
 SET CUR=%~dp0
@@ -22,7 +19,14 @@ IF NOT EXIST %CUR%build.number (
 FOR /F "tokens=1,2 delims==" %%a IN (%CUR%build.number) DO SET BUILD=%%b
 SET VERSION=%VER%.%BUILD%
 SET CVERSION=%VERSION:.=_%
-ECHO const char *NHARU_VERSION_%CVERSION% = "%VERSION%";>%OUTPUT%\version.c
-ECHO const char *NHARU_getVersion() { return NHARU_VERSION_%CVERSION%; }>>%OUTPUT%\version.c
+ECHO const char *NHARU_VERSION_%CVERSION% = "%VERSION%";>%CUR%native\version.c
+ECHO const char *NHARU_getVersion() { return NHARU_VERSION_%CVERSION%; }>>%CUR%native\version.c
+SET /A BUILD=%BUILD%+1
+ECHO #Build number for Nharu JCA. Do not edit>%CUR%build.number
+FOR /F "tokens=* USEBACKQ" %%F IN (`powershell -Command "Get-Date -format u"`) DO (
+	SET DAT=%%F
+)
+ECHO #%DAT%>>%CUR%build.number
+ECHO build.number=%BUILD%>>%CUR%build.number
 
 ENDLOCAL

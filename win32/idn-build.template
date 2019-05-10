@@ -20,11 +20,13 @@ ECHO.
 SET __PERL_INSTALL_PATH=__PERL_INSTALL_PATH__
 SET __VS_INSTALL_PATH=__VS_INSTALL_PATH__
 SET __LANGS=__LANGS__
-SET __HOME=__HOME__
 
-SET __TARGET=%__HOME%\libidn
-SET __OUTPUT=%__HOME%\nharu\win32
-SET __PREFIX=%__HOME%\3rdparty\idn
+SET __CUR=%~dp0
+SET __TARGET=%~1
+FOR %%i IN ("%~dp0..") DO SET "__HOME=%%~fi"
+SET __SOURCE=%__CUR%libidn
+SET __OUTPUT=%__CUR%
+SET __PREFIX=%__HOME%\dist\%__TARGET%\idn
 
 
 ECHO.
@@ -34,7 +36,7 @@ ECHO  -----------------------------------------------
 ECHO.
 ECHO  PERL INSTALL FOLDER: %__PERL_INSTALL_PATH%
 ECHO  VISUAL STUDIO INSTALL FOLDER: %__VS_INSTALL_PATH%
-ECHO  SOURCE CODE FOLDER: %__TARGET%
+ECHO  SOURCE CODE FOLDER: %__SOURCE%
 ECHO  CONFIGURED LANGUAGES: %__LANGS%
 ECHO  OUTPUT FOLDER: %__OUTPUT%
 ECHO  INSTALL FOLDER: %__PREFIX%
@@ -49,42 +51,42 @@ ECHO  Preparing GNU Libidn for compilation
 ECHO  -----------------------------------------------
 ECHO.
 :GENRFC
-CD %__TARGET%\lib
-IF NOT EXIST "%__TARGET%\lib\rfc3454.c" (
+CD %__SOURCE%\lib
+IF NOT EXIST "%__SOURCE%\lib\rfc3454.c" (
 	CALL "%__PERL_INSTALL_PATH%bin\perl.exe" gen-stringprep-tables.pl ..\doc\specifications\rfc3454.txt
 	IF %ERRORLEVEL% NEQ 0 GOTO :END
 )
 
 :GENTLD
-IF NOT EXIST "%__TARGET%\lib\tlds.c" (
-	CALL "%__PERL_INSTALL_PATH%bin\perl.exe"  gen-tld-tables.pl %__LANGS%>%__TARGET%\lib\tlds.c
+IF NOT EXIST "%__SOURCE%\lib\tlds.c" (
+	CALL "%__PERL_INSTALL_PATH%bin\perl.exe"  gen-tld-tables.pl %__LANGS%>%__SOURCE%\lib\tlds.c
 	IF %ERRORLEVEL% NEQ 0 GOTO :END
 )
 
 :ADJUST
-IF NOT EXIST "%__TARGET%\lib\gl\unistr.h" (
-	COPY %__TARGET%\lib\gl\unistr.in.h %__TARGET%\lib\gl\unistr.h
+IF NOT EXIST "%__SOURCE%\lib\gl\unistr.h" (
+	COPY %__SOURCE%\lib\gl\unistr.in.h %__SOURCE%\lib\gl\unistr.h
 )
-IF NOT EXIST "%__TARGET%\lib\gl\unitypes.h" (
-	COPY %__TARGET%\lib\gl\unitypes.in.h %__TARGET%\lib\gl\unitypes.h
+IF NOT EXIST "%__SOURCE%\lib\gl\unitypes.h" (
+	COPY %__SOURCE%\lib\gl\unitypes.in.h %__SOURCE%\lib\gl\unitypes.h
 )
-IF NOT EXIST "%__TARGET%\lib\gl\unused-parameter.h" (
-	COPY %__TARGET%\build-aux\snippet\unused-parameter.h %__TARGET%\lib\gl\unused-parameter.h
+IF NOT EXIST "%__SOURCE%\lib\gl\unused-parameter.h" (
+	COPY %__SOURCE%\build-aux\snippet\unused-parameter.h %__SOURCE%\lib\gl\unused-parameter.h
 )
-ECHO #ifndef _AC_STDINT_H>%__TARGET%\windows\include\ac-stdint.h
-ECHO #define _AC_STDINT_H 1>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #ifndef _GENERATED_STDINT_H>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #define _GENERATED_STDINT_H>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #include ^<stdint.h^>>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #define IDNAPI __declspec(dllexport)>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #define gint16     int16_t>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #ifdef  _WIN64>>%__TARGET%\windows\include\ac-stdint.h
-ECHO typedef __int64    ssize_t;>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #else>>%__TARGET%\windows\include\ac-stdint.h
-ECHO typedef _W64 int	ssize_t;>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #endif>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #endif>>%__TARGET%\windows\include\ac-stdint.h
-ECHO #endif>>%__TARGET%\windows\include\ac-stdint.h
+ECHO #ifndef _AC_STDINT_H>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #define _AC_STDINT_H 1>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #ifndef _GENERATED_STDINT_H>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #define _GENERATED_STDINT_H>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #include ^<stdint.h^>>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #define IDNAPI __declspec(dllexport)>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #define gint16     int16_t>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #ifdef  _WIN64>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO typedef __int64    ssize_t;>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #else>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO typedef _W64 int	ssize_t;>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #endif>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #endif>>%__SOURCE%\windows\include\ac-stdint.h
+ECHO #endif>>%__SOURCE%\windows\include\ac-stdint.h
 
 ECHO.
 ECHO  -----------------------------------------------
@@ -92,7 +94,7 @@ ECHO  Building and installing GNU Libidn
 ECHO  -----------------------------------------------
 ECHO.
 :MAKEENV
-SET PACKAGE=%__TARGET%
+SET PACKAGE=%__SOURCE%
 SET OUTPUT=%__OUTPUT%
 SET PREFIX=%__PREFIX%
 CD %__OUTPUT%
@@ -116,9 +118,11 @@ SET __PERL_INSTALL_PATH=
 SET __VS_INSTALL_PATH=
 SET __LANGS=
 SET __HOME=
-SET __TARGET=
+SET __SOURCE=
 SET __OUTPUT=
 SET __PREFIX=
 SET PACKAGE=
 SET OUTPUT=
 SET PREFIX=
+SET __CUR=
+SET __TARGET=
