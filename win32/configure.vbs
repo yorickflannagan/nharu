@@ -3,19 +3,18 @@ Const HKEY_LOCAL_MACHINE = &H80000002
 
 ' Visual Studio installation check facility
 Class VisualStudio
-	Private m_shell, m_vswhere, m_location
+	Private m_shell, m_vswhere, m_location, m_fs
 	Private Sub Class_Initialize()
 		Const VSWHERE = "\Microsoft Visual Studio\Installer\vswhere.exe"
 		Set m_shell = CreateObject("WScript.Shell")
-		Dim fs : Set fs = CreateObject ("Scripting.FileSystemObject")
+		Set m_fs = CreateObject ("Scripting.FileSystemObject")
 		Dim vs32 : vs32 = m_shell.ExpandEnvironmentStrings("%ProgramFiles(x86)%") & VSWHERE
 		Dim vs64 : vs64 = m_shell.ExpandEnvironmentStrings("%ProgramFiles%") & VSWHERE
-		If fs.FileExists(vs32) Then
+		If m_fs.FileExists(vs32) Then
 			m_vswhere = vs32
-		ElseIf fs.FileExists(vs64) Then
+		ElseIf m_fs.FileExists(vs64) Then
 			m_vswhere = vs64
 		End If
-		Set fs = Nothing
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_shell = Nothing
@@ -25,6 +24,8 @@ Class VisualStudio
 	Public Function GetInstallLocation()
 		Const PATH_STRING = "installationPath:"
 		If IsEmpty(m_location) And Not IsEmpty(m_vswhere) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for Microsoft Visual Studio... "
 			Dim ret : Set ret = m_shell.Exec(m_vswhere)
 			Do While ret.Status = 0
 	     		WScript.Sleep 100
@@ -35,10 +36,13 @@ Class VisualStudio
 					line = ret.StdOut.ReadLine()
 					If InStr(1, line, PATH_STRING, vbTextCompare) <> 0 Then
 						m_location = AddSlash(Trim(Mid(line, Len(PATH_STRING) + 1)))
+						stdout.WriteLine "Found!"
 						Exit Do
 					End If
 				Loop
 			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
 		GetInstallLocation = m_location
 	End Function
@@ -53,12 +57,14 @@ End Class
 
 ' Java installation check facility
 Class Java
-	Private m_installer, m_location
+	Private m_installer, m_location, m_fs
 	Private Sub Class_Initialize()
 		Set m_installer = New Installer
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_installer = Nothing
+		Set m_fs = Nothing
 	End Sub
 
 	' Retrives install location
@@ -67,10 +73,17 @@ Class Java
 	Public Function GetInstallLocation(version)
 		Const ENTRY = "Java SE Development Kit "
 		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for " & ENTRY & "... "
 			Dim ret : ret = m_installer.GetInstallLocation(ENTRY & version)
 			If Not IsEmpty(ret) Then
 				m_location = AddSlash(ret)
+				stdout.WriteLine "Found!"
+			Else
+				stdout.WriteLine "Not found!"
 			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
 		GetInstallLocation = m_location
 	End Function
@@ -87,16 +100,18 @@ End Class
 
 ' Git installation facility
 Class GitSCM
-	Private m_registry, m_location, m_installer, m_shell
+	Private m_registry, m_location, m_installer, m_shell, m_fs
 	Private Sub Class_Initialize()
 		Set m_registry = New Registry
 		Set m_installer = New Installer
 		Set m_shell = CreateObject("Wscript.Shell")
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_registry = Nothing
 		Set m_installer = Nothing
 		Set m_shell = Nothing
+		Set m_fs = Nothing
 	End Sub
 
 	' Retrieves install location
@@ -104,10 +119,17 @@ Class GitSCM
 		Const REGKEY = "SOFTWARE\GitForWindows"
 		Const REGVALUE = "InstallPath"
 		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for Git SCM... "
 			Dim value : value = m_registry.GetValue(HKEY_LOCAL_MACHINE, REGKEY, REGVALUE)
 			If Not IsEmpty(value) Then
 				m_location = AddSlash(value)
+				stdout.WriteLine "Found!"
+			Else
+				stdout.WriteLine "Not found!"
 			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
 		GetInstallLocation = m_location
 	End Function
@@ -154,22 +176,31 @@ End Class
 
 ' Dr. Memory installation facility
 Class DrMemory
-	Private m_location, m_installer
+	Private m_location, m_installer, m_fs
 	Private Sub Class_Initialize()
 		Set m_installer = New Installer
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_installer = Nothing
+		Set m_fs = Nothing
 	End Sub
 
 	' Retrieves install location
 	Public Function GetInstallLocation()
 		Const ENTRY = "Dr. Memory"
 		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for Dr. Memory... "
 			Dim ret : ret = m_installer.GetInstallLocation(ENTRY)
 			If Not IsEmpty(ret) Then
 				m_location = AddSlash(ret)
+				stdout.WriteLine "Found!"
+			Else
+				stdout.WriteLine "Not found!"
 			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
 		GetInstallLocation = m_location
 	End Function
@@ -191,14 +222,16 @@ End Class
 
 ' NASM installation facility
 Class NetwideASM
-	Private m_registry, m_location, m_installer
+	Private m_registry, m_location, m_installer, m_fs
 	Private Sub Class_Initialize()
 		Set m_registry = New Registry
 		Set m_installer = New Installer
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_registry = Nothing
 		Set m_installer = Nothing
+		Set m_fs = Nothing
 	End Sub
 
 	' Retrieves install location
@@ -207,13 +240,20 @@ Class NetwideASM
 		Const HKCU_KEY = "Software\nasm"
 		Const REGVALUE = ""
 		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for Netwide Assembler... "
 			Dim value : value = m_registry.GetValue(HKEY_CURRENT_USER, HKCU_KEY, REGVALUE)
 			If IsEmpty(value) Then
 				value = m_registry.GetValue(HKEY_LOCAL_MACHINE, HKLM_KEY, REGVALUE)
 			End If
 			If Not IsEmpty(value) Then
 				m_location = AddSlash(value)
+				stdout.WriteLine "Found!"
+			Else
+				stdout.WriteLine "Not found!"
 			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
 		GetInstallLocation = m_location
 	End Function
@@ -235,14 +275,16 @@ End Class
 
 ' Active Perl installation facility
 Class ActivePerl
-	Private m_registry, m_location, m_installer
+	Private m_registry, m_location, m_installer, m_fs
 	Private Sub Class_Initialize()
 		Set m_registry = New Registry
 		Set m_installer = New Installer
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_registry = Nothing
 		Set m_installer = Nothing
+		Set m_fs = Nothing
 	End Sub
 
 	' Retrieves install location
@@ -250,10 +292,17 @@ Class ActivePerl
 		Const REGKEY = "SOFTWARE\Perl"
 		Const REGVALUE = ""
 		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for Active Perl... "
 			Dim value : value = m_registry.GetValue(HKEY_LOCAL_MACHINE, REGKEY, REGVALUE)
 			If Not IsEmpty(value) Then
 				m_location = AddSlash(value)
+				stdout.WriteLine "Found!"
+			Else
+				stdout.WriteLine "Not found!"
 			End If
+			stdout.Close
+			Set stdout = Nothing
 		End If
 		GetInstallLocation = m_location
 	End Function
@@ -311,7 +360,6 @@ Class OpenSSL
 					stdout.WriteLine "Found!"
 				End If
 			End If
-			Set fs = Nothing
 			If IsEmpty(m_location) Then
 				stdout.WriteLine "Not found!"
 			End If
@@ -332,12 +380,12 @@ Class OpenSSL
 		Dim value : value = GetInstallLocation()
 		If IsEmpty(value) And retry Then
 			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
-			stdout.Write "Looking for OpenSSL pre requisites... "
+			stdout.WriteLine "Looking for OpenSSL pre requisites... "
 			Dim vsFolder : vsFolder = m_vs.EnsureInstall()
 			Dim nasmFolder : nasmFolder = m_nasm.EnsureInstall(True)
 			Dim perlFolder : perlFolder = m_perl.EnsureInstall(True)
 			Dim gitFolder : gitFolder = m_git.EnsureInstall(True)
-			stdout.WriteLine "Done!"
+			stdout.WriteLine "OpenSSL pre requisites satisfied!"
 			Dim current : current = m_fs.GetParentFolderName(WScript.ScriptFullName)
 			Dim sslFolder : sslFolder = current & "\openssl"
 			If Not m_fs.FolderExists(sslFolder) Then
@@ -416,7 +464,6 @@ Class GNULibidn
 					stdout.WriteLine "Found!"
 				End If
 			End If
-			Set fs = Nothing
 			If IsEmpty(m_location) Then
 				stdout.WriteLine "Not found!"
 			End If
@@ -437,11 +484,11 @@ Class GNULibidn
 		Dim value : value = GetInstallLocation()
 		If IsEmpty(value) And retry Then
 			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
-			stdout.Write "Looking for GNU Libidn pre requisites... "
+			stdout.WriteLine "Looking for GNU Libidn pre requisites... "
 			Dim vsFolder : vsFolder = m_vs.EnsureInstall()
 			Dim perlFolder : perlFolder = m_perl.EnsureInstall(True)
 			Dim gitFolder : gitFolder = m_git.EnsureInstall(True)
-			stdout.WriteLine "Done!"
+			stdout.WriteLine "GNU Libidn pre requisitesn satisfied!"
 			Dim current : current = m_fs.GetParentFolderName(WScript.ScriptFullName)
 			Dim idnFolder : idnFolder = current & "\libidn"
 			If Not m_fs.FolderExists(idnFolder) Then
@@ -487,6 +534,221 @@ Class GNULibidn
 		Set out = Nothing
 		Set template = Nothing
 		BuildBatch = ret
+	End Function
+End Class
+
+' Apache Maven installation facility
+Class Maven
+	Private m_location, m_finder, m_installer
+	Private Sub Class_Initialize()
+		Set m_finder = New Finder
+		Set m_installer = New Installer
+	End Sub
+	Private Sub Class_Terminate()
+		Set m_finder = Nothing
+		Set m_installer = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		Const CMD = "mvn.cmd"
+		If IsEmpty(m_location) Then
+			Set fs = CreateObject("Scripting.FileSystemObject")
+			Dim stdout : Set stdout = fs.GetStandardStream(1)
+			stdout.Write "Looking for Apache Maven... "
+			Dim value : value = m_finder.Find(CMD)
+			If Not IsEmpty(value) Then
+				m_location = AddSlash(fs.GetParentFolderName(value))
+				stdout.WriteLine "Found!"
+			Else
+				stdout.WriteLine "Not found!"
+			End If
+			stdout.Close
+			Set stdout = Nothing
+			Set fs = Nothing
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	Public Function EnsureInstall(retry)
+		Const MAVEN_URI = "http://ftp.unicamp.br/pub/apache/maven/maven-3/3.6.1/binaries/apache-maven-3.6.1-bin.zip"
+		Dim value : value = GetInstallLocation()
+		If IsEmpty(value) And retry Then
+			Set shell = CreateObject("WScript.Shell")
+			Dim target : target = shell.ExpandEnvironmentStrings("%LOCALAPPDATA%") & "\Programs"
+			Set shell = Nothing
+			m_installer.Unzip MAVEN_URI, target
+			value = EnsureInstall(False)
+		End If
+		EnsureInstall = value
+	End Function
+
+End Class
+
+' Nharu Library installation facility
+Class Nharu
+	Private REG_KEY, REG_VALUE
+	Private m_location, m_current, m_vsis, m_jdkil, m_gitil, m_drmil, m_sslidl, m_idnil, m_vnil
+	Private m_fs, m_vs, m_jdk, m_git, m_drm, m_ssl, m_idn, m_vn, m_reg, m_installer, m_shell
+	Private Sub Class_Initialize()
+		REG_KEY = "Software\Microsoft\Command Processor"
+		REG_VALUE = "AutoRun"
+		Set m_fs = CreateObject("Scripting.FileSystemObject")
+		Set m_vs = New VisualStudio
+		Set m_jdk = New Java
+		Set m_git = New GitSCM
+		Set m_drm = New DrMemory
+		Set m_ssl = New OpenSSL
+		Set m_idn = New GNULibidn
+		Set m_vn = New Maven
+		Set m_reg = New Registry
+		Set m_installer = New Installer
+		Set m_shell = CreateObject("Wscript.Shell")
+		m_current = m_fs.GetParentFolderName(WScript.ScriptFullName)
+	End Sub
+	Private Sub Class_Terminate()
+			Set m_fs = Nothing
+			Set m_vs = Nothing
+			Set m_jdk = Nothing
+			Set m_git = Nothing
+			Set m_drm = Nothing
+			Set m_ssl = Nothing
+			Set m_idn = Nothing
+			Set m_vn = Nothing
+			Set m_reg = Nothing
+			Set m_installer = Nothing
+			Set m_shell = Nothing
+	End Sub
+
+	' Retrieves install location
+	Public Function GetInstallLocation()
+		Const LIB = "nharu.lib"
+		Const DLL = "nharujca.dll"
+		Const HEADER = "pki-issue.h"
+		If IsEmpty(m_location) Then
+			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+			stdout.Write "Looking for Nharu libraries... "
+			Dim value : value = m_finder.Find(LIB)
+			If Not IsEmpty(value) Then
+				value = m_fs.GetParentFolderName(value)
+				If m_fs.FileExists(value & "\include\" & HEADER) And m_fs.FileExists(value & "\libs\" & DLL) Then
+					m_location = AddSlash(value)
+					stdout.WriteLine "Found!"
+				End If
+			End If
+			If IsEmpty(m_location) Then
+				stdout.WriteLine "Not found!"
+			End If
+			stdout.Close
+			Set stdout = Nothing
+		End If
+		GetInstallLocation = m_location
+	End Function
+
+	' Ensures software is installed
+	' Arguments:
+	'	boolean retry: if true, tries to download and install it, if it does not exist
+	Public Function EnsureInstall(retry)
+	End Function
+
+	Public Sub Build(version, prefix, target)
+		EnsurePreRequisites target
+		Dim exec : exec = m_current & "\dev-env.cmd"
+		If Not m_fs.FileExists(exec) Then Err.Raise 1, "Nharu.AddAutoRun", "Must run Nharu.Configure() first"
+		Dim path : path = RequiredPath()
+		Dim arg : arg = " --build"
+		If version <> Null Then
+			arg = arg & " --version=" & version
+		End If
+		If prefix <> Null Then
+			arg = arg & " --prefix" & prefix
+		End If
+		If path <> "" Then
+			arg = arg & " --add-path=" & path
+		End If
+		Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+		stdout.Write "Building Nharu libraries from scratch... "
+		Dim ret : ret = m_shell.Run(exec & arg, 1, True)
+		If ret <> 0 Then Err.Raise ret, "Nharu.Build", "Nharu library build failed"
+		stdout.WriteLine "Done!"
+		stdout.Close
+		Set stdout = Nothing
+	End Sub
+	
+
+	' Create configuration file
+	' Arguments:
+	'	string version: Nharu version. Optional. Default: 1.3.0
+	'	string prefix: installation directory. Optional. Default: [nharu path]\dist
+	Public Sub Configure(version, prefix, target)
+		EnsurePreRequisites target
+		Dim stdout : Set stdout = m_fs.GetStandardStream(1)
+		stdout.Write "Creating configuration script... "
+		Dim template : Set template = m_fs.OpenTextFile(m_current & "\dev-env.template", 1)
+		Dim out : Set out = m_fs.CreateTextFile(m_current & "\dev-env.cmd")
+		While Not template.AtEndOfStream
+			Dim line : line = template.ReadLine()
+			line = Replace(line, "__JAVA_HOME__", RemoveSlash(m_jdkil))
+			line = Replace(line, "__VS_INSTALL_PATH__", RemoveSlash(m_vsis))
+			line = Replace(line, "__ADD_PATH__", RequiredPath())
+			If version <> Null Then
+				line = Replace(line, "SET _VERSION=1.3.0", "SET _VERSION=" & version)
+			End If
+			If prefix <> Null Then
+				line = Replace(line, "SET _PREFIX=%_HOME%dist", "SET _PREFIX=" & prefix)
+			End If
+			out.WriteLine(line)
+		Wend
+		stdout.WriteLine "Done!"
+		template.Close
+		Set template = Nothing
+		out.Close
+		Set out = Nothing
+		stdout.Close
+		Set stdout = Nothing
+	End Sub
+
+	Public Sub AddAutoRun()
+		If Not m_fs.FileExists(m_current & "\dev-env.cmd") Then Err.Raise 1, "Nharu.AddAutoRun", "Must run Nharu.Configure() first"
+		Dim rv : rv = m_reg.SetStringValue(HKEY_CURRENT_USER, REG_KEY, REG_VALUE, m_current & "\dev-env.cmd")
+		If rv <> 0 Then err.Raise rv, "Nharu.AddAutoRun", "Registry write failure"
+	End Sub
+
+	Public Sub RemoveAutoRun()
+		Dim rv : rv = m_reg.DeleteValue(HKEY_CURRENT_USER, REG_KEY, REG_VALUE)
+		If rv <> 0 Then err.Raise rv, "Nharu.RemoveAutoRun", "Registry write failure"
+	End Sub
+
+	Private Sub EnsurePreRequisites(target)
+		Dim tg : tg = "release"
+		If target <> Null Then
+			tg = target
+		End If
+		If IsEmpty(m_vsis) Then
+			m_vsis = m_vs.EnsureInstall()
+			m_jdkil = m_jdk.EnsureInstall("7")
+			m_gitil = m_git.EnsureInstall(True)
+			m_drmil = m_drm.EnsureInstall(True)
+			m_sslidl = m_ssl.EnsureInstall(True, tg)
+			m_idnil = m_idn.EnsureInstall(True, tg)
+			m_vnil = m_vn.EnsureInstall(True)
+		End If
+	End Sub
+	Private Function RequiredPath()
+		Dim ret : ret = ""
+		If Not m_installer.IsInPath("git.exe") Then
+			ret = reg & m_gitil & "cmd;"
+		End if
+		If Not m_installer.IsInPath("drmemory.exe") Then
+			ret = reg & m_drmil & "bin;"
+		End if
+		If Not m_installer.IsInPath("mvn.cmd") Then
+			ret = reg & m_vnil & "bin"
+		End If
+		RequiredPath = ret
 	End Function
 End Class
 
@@ -536,6 +798,19 @@ Class Installer
 		If ret <> 0 Then Err.Raise ret, "Installer.Install", "Installation aborted"
 	End Sub
 
+	' Check if specified application is in PATH environment variable
+	' Arguments:
+	'	string app: executable name
+	Public Function IsInPath(app)
+		Const CMD = "WHERE /Q "
+		Dim ret : ret = m_shell.Run(CMD & app, 0, True)
+		If ret = 0 Then
+			IsInPath = True
+		Else
+			IsInPath = False
+		End If
+	End Function
+
 	' Dowloads and unzips specified resource
 	' Arguments:
 	'	URI source: URI where resource lies
@@ -543,7 +818,7 @@ Class Installer
 	Public Sub Unzip(source, target)
 		Dim temp : temp = Download(source, ".zip")
 		If Not m_fs.FolderExists(target) Then
-			m_fs.CreateFolder(target)
+			m_fs.CreateFolder target
 		End If
 		Dim oSource : Set oSource = m_app.NameSpace(temp).Items()
 		Dim oTarget : Set oTarget = m_app.NameSpace(target)
@@ -607,6 +882,14 @@ Class Registry
 		GetLocalValue = GetValue(HKEY_CURRENT_USER, path, key)
 	End Function
 
+	Public Function SetStringValue(root, path, key, value)
+		SetStringValue = m_shell.SetStringValue(root, path, key, value)
+	End Function
+
+	Public Function DeleteValue(root, path, key)
+		DeleteValue = m_shell.DeleteValue(root, path, key)
+	End Function
+
 End Class
 
 ' Find file facility
@@ -637,7 +920,18 @@ Class Finder
 	
 		Dim file, folder, found
 		Dim current : Set current = m_fs.GetFolder(folderName)
-		If current.Attributes = 16 Then
+		Dim alias, compressed
+		If current.Attributes And 1024 Then
+			alias = True
+		Else
+			alias = False
+		End If
+		If current.Attributes And 2048 Then
+			compressed = true
+		Else
+			compressed = false
+		End If
+		If Not alias And Not compressed Then
 			For Each file In current.Files
 				If StrComp(file.Name, fileName, vbTextCompare) = 0 Then
 					found = current.Path
@@ -677,11 +971,9 @@ End Function
 
 
 Sub Main
-
-	Dim soft : Set soft = New GNULibidn
-	Dim folder : folder = soft.EnsureInstall(True, "release")
-	WScript.Echo folder
-
+	Dim soft : Set soft = New Nharu
+	soft.Configure Null, Null, Null
+	soft.Build Null, Null, Null
 End Sub
 
 Main

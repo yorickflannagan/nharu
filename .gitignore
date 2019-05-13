@@ -26,3 +26,4 @@ linux/gnulib
 linux/libiconv
 win32/openssl
 win32/libidn
+win32/dev-env.cmd
