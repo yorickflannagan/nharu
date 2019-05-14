@@ -970,6 +970,11 @@ End Function
 '	/prefix: Library installation folder. Optional. Default: [path to Nharu]\dist\[target]
 '	/target: Compilation target. Optional. Default: release
 Sub Main
+	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
+	WScript.Echo " Nharu Library"
+	WScript.Echo " Environment for Windows Development"
+	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
+	WScript.Echo ""
 	Dim args : Set args = WScript.Arguments.Named
 	Dim version, prefix, target
 	If args.Exists("version") Then
@@ -994,6 +999,7 @@ Sub Main
 	Dim cfg : Set cfg = New Nharu
 	cfg.Configure version, prefix, target
 	Set cfg = Nothing
+	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo " Nharu Library"
 	WScript.Echo " Environment for Windows Development"
