@@ -142,6 +142,7 @@ Class GitSCM
 		Dim value : value = GetInstallLocation()
 		If IsEmpty(value) And retry Then
 			m_installer.Install GIT_SOURCE, ".exe"
+			WScript.Sleep 3000
 			value = EnsureInstall(False)
 			If IsEmpty(value) Then Err.Raise 1, "GitSCM.EnsureInstall", "GitSCM is required. Please, download and install it from " & GIT_SOURCE & ", then re-run this configure"
 		End If
@@ -213,6 +214,7 @@ Class DrMemory
 		Dim value : value = GetInstallLocation()
 		If IsEmpty(value) And retry Then
 			m_installer.Install DRM_SOURCE, ".msi"
+			WScript.Sleep 3000
 			value = EnsureInstall(False)
 			If IsEmpty(value) Then Err.Raise 1, "DrMemory.EnsureInstall", "Dr. Memory is required. Please, download and install it from " & DRM_SOURCE & ", then re-run this configure"
 		End If
@@ -266,6 +268,7 @@ Class NetwideASM
 		Dim value : value = GetInstallLocation()
 		If IsEmpty(value) And retry Then
 			m_installer.Install NASM_SOURCE, ".exe"
+			WScript.Sleep 3000
 			value = EnsureInstall(False)
 			If IsEmpty(value) Then Err.Raise 1, "NetwideASM.EnsureInstall", "Netwide Assembler is required. Please, download and install it from " & NASM_SOURCE & ", then re-run this configure"
 		End If
@@ -315,6 +318,7 @@ Class ActivePerl
 		Dim value : value = GetInstallLocation()
 		If IsEmpty(value) And retry Then
 			m_installer.Install PERL_SOURCE, ".exe"
+			WScript.Sleep 3000
 			value = EnsureInstall(False)
 			If IsEmpty(value) Then Err.Raise 1, "ActivePerl.EnsureInstall", "Active Perl is required. Please, download and install it from " & PERL_SOURCE & ", then re-run this configure"
 		End If
@@ -592,7 +596,7 @@ End Class
 Class Nharu
 	Private REG_KEY, REG_VALUE
 	Private m_location, m_current, m_vsis, m_jdkil, m_gitil, m_drmil, m_sslidl, m_idnil, m_vnil
-	Private m_fs, m_vs, m_jdk, m_git, m_drm, m_ssl, m_idn, m_vn, m_reg, m_installer, m_shell
+	Private m_fs, m_vs, m_jdk, m_git, m_drm, m_ssl, m_idn, m_vn, m_installer, m_shell
 	Private Sub Class_Initialize()
 		REG_KEY = "Software\Microsoft\Command Processor"
 		REG_VALUE = "AutoRun"
@@ -604,7 +608,6 @@ Class Nharu
 		Set m_ssl = New OpenSSL
 		Set m_idn = New GNULibidn
 		Set m_vn = New Maven
-		Set m_reg = New Registry
 		Set m_installer = New Installer
 		Set m_shell = CreateObject("Wscript.Shell")
 		m_current = m_fs.GetParentFolderName(WScript.ScriptFullName)
@@ -618,7 +621,6 @@ Class Nharu
 			Set m_ssl = Nothing
 			Set m_idn = Nothing
 			Set m_vn = Nothing
-			Set m_reg = Nothing
 			Set m_installer = Nothing
 			Set m_shell = Nothing
 	End Sub
@@ -709,17 +711,6 @@ Class Nharu
 		Set out = Nothing
 		stdout.Close
 		Set stdout = Nothing
-	End Sub
-
-	Public Sub AddAutoRun()
-		If Not m_fs.FileExists(m_current & "\dev-env.cmd") Then Err.Raise 1, "Nharu.AddAutoRun", "Must run Nharu.Configure() first"
-		Dim rv : rv = m_reg.SetStringValue(HKEY_CURRENT_USER, REG_KEY, REG_VALUE, m_current & "\dev-env.cmd")
-		If rv <> 0 Then err.Raise rv, "Nharu.AddAutoRun", "Registry write failure"
-	End Sub
-
-	Public Sub RemoveAutoRun()
-		Dim rv : rv = m_reg.DeleteValue(HKEY_CURRENT_USER, REG_KEY, REG_VALUE)
-		If rv <> 0 Then err.Raise rv, "Nharu.RemoveAutoRun", "Registry write failure"
 	End Sub
 
 	Private Sub EnsurePreRequisites(target)
@@ -890,6 +881,10 @@ Class Registry
 		DeleteValue = m_shell.DeleteValue(root, path, key)
 	End Function
 
+	Public Function CreateKey(root, path)
+		CreateKey = m_shell.CreateKey(root, path)
+	End Function
+
 End Class
 
 ' Find file facility
@@ -970,10 +965,48 @@ Function RemoveSlash(path)
 End Function 
 
 
+' Command line arguments
+'	/version: Library version. Optional. Deefault: 1.3.0
+'	/prefix: Library installation folder. Optional. Default: [path to Nharu]\dist\[target]
+'	/target: Compilation target. Optional. Default: release
 Sub Main
-	Dim soft : Set soft = New Nharu
-	soft.Configure Null, Null, Null
-	soft.Build Null, Null, Null
+	Dim args : Set args = WScript.Arguments.Named
+	Dim version, prefix, target
+	If args.Exists("version") Then
+		version = args.Item("version")
+	Else
+		version = Null
+	End If
+	If args.Exists("prefix") Then
+		prefix = args.Item("prefix")
+	Else
+		prefix = Null
+	End If
+	If args.Exists("target") Then
+		target = args.Item("target")
+	Else
+		target = Null
+	End If
+	Set args = Nothing
+	dim fs : Set fs = CreateObject("Scripting.FileSystemObject")
+	Dim path : path = fs.GetParentFolderName(WScript.ScriptFullName)
+	Set fs = Nothing
+	Dim cfg : Set cfg = New Nharu
+	cfg.Configure version, prefix, target
+	Set cfg = Nothing
+	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
+	WScript.Echo " Nharu Library"
+	WScript.Echo " Environment for Windows Development"
+	WScript.Echo " --------------------------------------------------"
+	WScript.Echo " Copyleft (C) 2015/2019 by The Crypthing Initiative"
+	WScript.Echo " Authors:"
+	WScript.Echo "   diego.sohsten@caixa.gov.br"
+	WScript.Echo "   yorick.flannagan@gmail.com"
+	WScript.Echo " --------------------------------------------------"
+	WScript.Echo " Use " & path & "\dev-env.cmd"
+	WScript.Echo " as your command line environment"
+	WScript.Echo ""
+	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 End Sub
 
 Main
