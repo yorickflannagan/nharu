@@ -755,7 +755,7 @@ NH_UTILITY(NH_RV, NH_chart_from)
 		if (NH_FAIL(rv = self->pave(self, current, encyclopedia[i].path, &next))) return rv;
 		if (!next) return NH_CANNOT_SAIL;
 		if (ASN_IS_ON(NH_ASN1_TWIN_BIT, encyclopedia[i].knowledge)) next->parent->child = NULL;
-		else if (encyclopedia[i].detour)
+		else if (encyclopedia[i].detour && !ASN_IS_ON(NH_ASN1_PORTOLANI_BIT, encyclopedia[i].knowledge))
 		{
 			if (NH_FAIL(rv = self->chart_from(self, next, encyclopedia[i].detour, encyclopedia[i].count))) return rv;
 		}

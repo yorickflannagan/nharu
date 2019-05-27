@@ -70,19 +70,104 @@ typedef NH_CREQUEST_PARSER_STR				*NH_CREQUEST_PARSER;
 /** @brief An Object Identifier */
 typedef struct NH_OID_STR
 {
-	unsigned int*	pIdentifier;			/**< OID itself */
-	size_t		uCount;				/**< OID count */
+	unsigned int*		pIdentifier;		/**< OID itself */
+	size_t			uCount;			/**< OID count */
 
 } NH_OID_STR, *NH_OID;
 /** @brief X.500 Name */
 typedef struct NH_NAME_STR
 {
-	NH_OID		pOID;					/**< Object identifier */
-	char*			szValue;				/**< Object value (must be NULL terminated) */
+	NH_OID			pOID;				/**< Object identifier */
+	char*				szValue;			/**< Object value (must be NULL terminated) */
 
 } NH_NAME_STR, *NH_NAME;
 typedef struct NH_BLOB						NH_OCTET_SRING;	/**< ASN.1 OCTET STRING type alias */
 typedef struct NH_NAME_STR*					NH_OTHER_NAME;	/**< General Name Other Name */
+
+
+typedef struct NH_CREQUEST_ENCODER_STR			NH_CREQUEST_ENCODER_STR;
+typedef NH_METHOD(NH_RV, NH_CR_SETVER)(_INOUT_ NH_CREQUEST_ENCODER_STR*, _IN_ unsigned int);
+typedef NH_METHOD(NH_RV, NH_CR_SETNAME)(_INOUT_ NH_CREQUEST_ENCODER_STR*, _IN_ NH_NAME*, _IN_ size_t);
+typedef NH_METHOD(NH_RV, NH_CR_SETPUBKEY)(_INOUT_ NH_CREQUEST_ENCODER_STR*, _IN_ NH_RSA_PUBKEY_HANDLER);
+typedef NH_METHOD(NH_RV, NH_CR_SIGN)(_INOUT_ NH_CREQUEST_ENCODER_STR*, _IN_ CK_MECHANISM_TYPE, _IN_ NH_CMS_SIGN_FUNCTION, _IN_ void*);
+typedef NH_METHOD(NH_RV, NH_CR_ENCODE)(_IN_ NH_CREQUEST_ENCODER_STR*, _OUT_ unsigned char*, _INOUT_ size_t*);
+/**
+ * @brief Certificate request encoder
+ * <em>Warning: encoder is not thread safe</em>
+ * @see https://tools.ietf.org/html/rfc2986
+ * 
+ */
+struct NH_CREQUEST_ENCODER_STR
+{
+	NH_ASN1_ENCODER_HANDLE	hRequestInfo;	/**< ASN.1 CertificationRequestInfo encoder */
+	NH_ASN1_ENCODER_HANDLE	hRequest;		/**< ASN.1 CertificationRequest encoder */
+	int				fields;		/**< Well formed request flag */
+	/**
+	 * @brief Sets certificate request version
+	 * @param NH_CREQUEST_ENCODER_STR hEncoder: handler to encoder
+	 * @param unsigned int c: version number { v1(0) } (v1,...)
+	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
+	 */
+	NH_CR_SETVER		put_version;
+	/**
+	 * @brief Sets certificate request suject distinguished name
+	 * @param NH_CREQUEST_ENCODER_STR *hEncoder: handler to encoder
+	 * @param NH_NAME *pSubject: subject distinguished name
+	 * @param size_t ulCount: pSubject count
+	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
+	 */
+	NH_CR_SETNAME		put_subject;
+	/**
+	 * @brief Sets certificate request subject public key info
+	 * @param NH_CREQUEST_ENCODER_STR *hEncoder: handler to encoder
+	 * @param NH_RSA_PUBKEY_HANDLER pPubkey: RSA public key handler
+	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
+	 */
+	NH_CR_SETPUBKEY		put_pubkey;
+	/**
+	 * @brief Signs a certificate request info
+	 * @param NH_CREQUEST_ENCODER_STR *hEncoder: handler to encoder
+	 * @param CK_MECHANISM_TYPE mechanism: PKCS#11 signature mechanism constant
+	 * @param NH_CMS_SIGN_FUNCTION callback: signature callback function
+	 * @param void *pParams: parameters to callback function.
+	 * @return
+	 * 	NH_UNSUPPORTED_MECH_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_CANNOT_SAIL
+	 * 	encoding type errors
+	 */
+	NH_CR_SIGN			sign;
+	/**
+	 * @brief Encodes this signed certificate request
+	 * @param NH_CREQUEST_ENCODER_STR *hEncoder: handler to encoder
+	 * @param unsigned char *pBuffer: output buffer
+	 * @param size_t *ulSize: size of pBuffer; if pBuffer is NULL, returns required buffer size;
+	 * @return
+	 * 	NH_ISSUE_INCOMPLETEOB_ERROR
+	 * 	NH_BUF_TOO_SMALL
+	 * 	NH_INVALID_DER_TYPE
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_UNEXPECTED_ENCODING
+	 */
+	NH_CR_ENCODE		encode;
+};
+typedef struct NH_CREQUEST_ENCODER_STR			*NH_CREQUEST_ENCODER;
+
 
 
 typedef struct  NH_TBSCERT_ENCODER_STR			NH_TBSCERT_ENCODER_STR;
@@ -348,6 +433,7 @@ extern "C" {
  * @param size_t ulBuflen: size of buffer
  * @param NH_CREQUEST_PARSER *hHandle: handler to certificate request parser
  * @return
+ * 	NH_OUT_OF_MEMORY_ERROR
  */
 NH_FUNCTION(NH_RV, NH_parse_cert_request)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NH_CREQUEST_PARSER*);
 
@@ -356,6 +442,22 @@ NH_FUNCTION(NH_RV, NH_parse_cert_request)(_IN_ unsigned char*, _IN_ size_t, _OUT
  * @param NH_CREQUEST_PARSER *hHandle: handler to certificate request parser
  */
 NH_FUNCTION(void, NH_release_cert_request)(_INOUT_ NH_CREQUEST_PARSER);
+
+/**
+ * @brief Creates a new certificate request encoder
+ * @param NH_CREQUEST_ENCODER *hEncoder: the encoder handler
+ * @return
+ * 	NH_OUT_OF_MEMORY_ERROR
+ * 
+ */
+NH_FUNCTION(NH_RV, NH_new_certificate_request)(_OUT_ NH_CREQUEST_ENCODER*);
+
+/**
+ * @brief Releases certificate request encoder
+ * @param NH_CREQUEST_ENCODER hEncoder: the encoder handler
+ * 
+ */
+NH_FUNCTION(void, NH_delete_certificate_request)(_INOUT_ NH_CREQUEST_ENCODER);
 
 /**
  * @brief Creates a new TBSCertificate encoder

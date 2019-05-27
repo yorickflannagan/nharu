@@ -1068,6 +1068,7 @@ struct NH_RSA_PUBKEY_HANDLER_STR
 	NH_PUBK_VFY_FUNCTION	verify;		/* Verifies specified signature */
 	NH_PUBK_CIP_FUNCTION	encrypt;		/* Encrypts (generally wraps a key) specified contens */
 	NH_PUBK_ECD_FUNCTION	encode;		/* Encodes this key to DER format */
+	NH_PUBK_ECD_FUNCTION	encode_info;
 	NH_PUBK_DCD_FUNCTION	decode;		/* Decodes this key from DER format */
 	NH_PUBK_IMP_FUNCTION	create;		/* Imports an RSA publick key */
 	NH_PUBK_CLO_FUNCTION	clone;		/* Clones this object */
@@ -1833,6 +1834,10 @@ EXTERN unsigned int aes192_cbc_oid[];
 EXTERN unsigned int aes256_cbc_oid[];
 #define AES256_CBC_OID_COUNT			9
 
+EXTERN NH_NODE_WAY pkix_pubkey_map[];
+#define PKIX_PUBKEY_MAP_COUT			3
+EXTERN NH_NODE_WAY pkix_rsa_pubkey[];
+#define PKIX_RSAPUBKEY_MAP_COUNT		3
 
 /* Unsupported. Used only for Java compatibility */
 EXTERN unsigned int dsa_oid[];

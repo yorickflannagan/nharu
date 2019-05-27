@@ -21,6 +21,33 @@
 #include <openssl/bn.h>
 
 
+NH_NODE_WAY pkix_pubkey_map[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* algorithm */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_SEQUENCE,
+		pkix_algid_map,
+		PKIX_ALGID_COUNT
+	},
+	{	/* subjectPublicKey */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_BIT_STRING,
+		NULL,
+		0
+	}
+};
+NH_NODE_WAY pkix_rsa_pubkey[] =
+{
+	{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 },
+	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT, NULL, 0 },
+	{ NH_SAIL_SKIP_EAST, NH_ASN1_INTEGER, NULL, 0 }
+};
 
 /*
  * AlgorithmIdentifier ::= SEQUENCE  {
@@ -1252,16 +1279,84 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encode)
 	if (NH_FAIL(rv = hEncoder->chart_from(hEncoder, node, rsa_pubkey_map, ASN_NODE_WAY_COUNT(rsa_pubkey_map)))) return rv;
 	if (!(node = node->child)) return NH_UNEXPECTED_ENCODING;
 
-    #if OPENSSL_VERSION_NUMBER >= 0x10100001L
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
 	RSA_get0_key((const RSA *)hHandler->key, (const BIGNUM **)&n, (const BIGNUM **)&e, NULL);
-    #else
+#else
 	n=hHandler->key->n;
 	e=hHandler->key->e;
-    #endif
+#endif
 	if (NH_FAIL(rv = encode_bignum(hEncoder, node, n))) return rv;
 	if (!(node = node->next)) return NH_UNEXPECTED_ENCODING;
 	return encode_bignum(hEncoder, node, e);
 }
+
+/**
+ * @brief Encodes RSA public key according RFC 8017 and 2986
+ * 
+ * @param NH_RSA_PUBKEY_HANDLER_STR *hHandler: the handler itself
+ * @param NH_ASN1_ENCODER_HANDLE hEncoder: target ASN.1 encoder
+ * @param unsigned int path: path to target node
+ * @return NH_RV
+ * 	NH_INVALID_STATE_ERROR
+ * 	NH_INVALID_ARG
+ * 	NH_CANNOT_SAIL
+ * 	NH_UNEXPECTED_ENCODING
+ */
+static NH_RV __rsa_pubkey_encodeinfo
+(
+	_IN_ NH_RSA_PUBKEY_HANDLER_STR *hHandler,
+	_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder,
+	_IN_ unsigned int path
+)
+{
+	NH_RV rv;
+	NH_ASN1_ENCODER_HANDLE hKey;
+	NH_ASN1_PNODE node;
+	BIGNUM *e;
+	BIGNUM *n;
+	NH_BITSTRING_VALUE_STR pString = { 0, NULL, 0 };
+
+	if
+	(
+		NH_SUCCESS(rv = hHandler->key ? NH_OK : NH_INVALID_STATE_ERROR) &&
+		NH_SUCCESS(rv = hEncoder ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = NH_new_encoder(4, 4096, &hKey))
+	)
+	{
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+		RSA_get0_key((const RSA *) hHandler->key, (const BIGNUM **) &n, (const BIGNUM **) &e, NULL);
+#else
+		n = hHandler->key->n;
+		e = hHandler->key->e;
+#endif
+		if
+		(
+			NH_SUCCESS(rv = hKey->chart(hKey, pkix_rsa_pubkey, PKIX_RSAPUBKEY_MAP_COUNT, &node)) &&
+			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, n)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, e)) &&
+			NH_SUCCESS(rv = (pString.len = hKey->encoded_size(hKey, hKey->root)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+			NH_SUCCESS(rv = (pString.string = (unsigned char*) malloc(pString.len)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if
+			(
+				NH_SUCCESS(rv = hKey->encode(hKey, hKey->root, pString.string)) &&
+				NH_SUCCESS(rv = (node = hEncoder->sail(hEncoder->root, path)) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, pkix_pubkey_map, PKIX_PUBKEY_MAP_COUT)) &&
+				NH_SUCCESS(rv = (node = hEncoder->sail(node, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->put_objectid(hEncoder, node, rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT, FALSE)) &&
+				NH_SUCCESS(rv = (node = hEncoder->sail(node, (NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL)
+			)	rv = hEncoder->put_bitstring(hEncoder, node, &pString);
+			free(pString.string);
+		}
+		NH_release_encoder(hKey);
+	}
+	return rv;
+}
+
+
 
 NH_UTILITY(NH_RV, decode_bignum)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _INOUT_ NH_ASN1_PNODE node, _OUT_ NH_BIG_INTEGER *n)
 {
@@ -1407,6 +1502,7 @@ static const NH_RSA_PUBKEY_HANDLER_STR defRSAPubKeyHandler =
 	NH_RSA_pubkey_verify,
 	NH_RSA_pubkey_encrypt,
 	NH_RSA_pubkey_encode,
+	__rsa_pubkey_encodeinfo,
 	NH_RSA_pubkey_decode,
 	NH_RSA_pubkey_create,
 	NH_RSA_pubkey_clone,

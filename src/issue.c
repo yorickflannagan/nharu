@@ -1,6 +1,92 @@
 #include "pki-issue.h"
 #include <string.h>
 
+static NH_RV __add_child(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE pChild;
+	
+	if
+	(
+		NH_SUCCESS(rv = (pChild = hEncoder->add_child(hEncoder->container, pCurrent)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
+		NH_SUCCESS(rv = hEncoder->container->bite_chunk(hEncoder->container, sizeof(unsigned char*), (void*) &pChild->identifier))
+	)
+	{
+		*pChild->identifier = tag;
+		pChild->knowledge = tag;
+	}
+	return rv;
+}
+INLINE static NH_RV __add_next(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE pNext;
+	
+	if
+	(
+		NH_SUCCESS(rv = (pNext = hEncoder->add_next(hEncoder->container, pCurrent)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
+		NH_SUCCESS(rv = hEncoder->container->bite_chunk(hEncoder->container, sizeof(unsigned char*), (void*) &pNext->identifier))
+	)
+	{
+		*pNext->identifier = tag;
+		pNext->knowledge = tag;
+	}
+	return rv;
+}
+static NH_NODE_WAY __x509_name[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SET | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_OBJECT_ID | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_PRINTABLE_STRING,
+		NULL,
+		0
+	}
+};
+static NH_RV __put_name(_INOUT_ NH_ASN1_ENCODER_HANDLE hHandler, _IN_ unsigned int uPath, _IN_ NH_NAME *pName, _IN_ size_t ulCount)
+{
+	NH_RV rv;
+	NH_ASN1_PNODE node, name;
+	size_t i;
+
+	if
+	(
+		NH_SUCCESS(rv = pName && ulCount > 0 ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = (name = hHandler->sail(hHandler->root, uPath)) ? NH_OK : NH_CANNOT_SAIL)
+	)	i = 0;
+	while (NH_SUCCESS(rv) && i < ulCount)
+	{
+		if
+		(
+			NH_SUCCESS(rv = (node = hHandler->add_to_set(hHandler->container, name)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
+			NH_SUCCESS(rv = hHandler->chart_from(hHandler, node, __x509_name, ASN_NODE_WAY_COUNT(__x509_name))) &&
+			NH_SUCCESS(rv = (node = hHandler->sail(node, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hHandler->put_objectid(hHandler, node, pName[i]->pOID->pIdentifier, pName[i]->pOID->uCount, FALSE)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hHandler->put_printable_string(hHandler, node, pName[i]->szValue, strlen(pName[i]->szValue)))
+		)	i++;
+	}
+	return rv;
+}
+
+
 
 static NH_RV __verify(_IN_ NH_CREQUEST_PARSER_STR *hHandler)
 {
@@ -61,34 +147,16 @@ static NH_RV __verify(_IN_ NH_CREQUEST_PARSER_STR *hHandler)
  *  }
  * </pre>
  */
-static NH_NODE_WAY __cert_request_map[] =
+static NH_NODE_WAY __cert_request_info_map[] =
 {
-	{	/* CertificationRequest */
-		NH_PARSE_ROOT,
-		NH_ASN1_SEQUENCE,
-		NULL,
-		0
-	},
 	{	/* CertificationRequestInfo */
-		NH_SAIL_SKIP_SOUTH,
+		NH_PARSE_ROOT,
 		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
-		NULL,
-		0
-	},
-	{	/* signatureAlgorithm */
-		NH_SAIL_SKIP_EAST,
-		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
-		pkix_algid_map,
-		PKIX_ALGID_COUNT
-	},
-	{	/* signature */
-		NH_SAIL_SKIP_EAST,
-		NH_ASN1_BIT_STRING,
 		NULL,
 		0
 	},
 	{	/* version */
-		((NH_PARSE_WEST | 2) << 8) | NH_SAIL_SKIP_SOUTH,
+		NH_SAIL_SKIP_SOUTH,
 		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
 		NULL,
 		0
@@ -126,6 +194,33 @@ static NH_NODE_WAY __cert_request_map[] =
 	{	/* attributes */
 		(NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST,
 		NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_SET,
+		NULL,
+		0
+	}
+};
+static NH_NODE_WAY __cert_request_map[] =
+{
+	{	/* CertificationRequest */
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* CertificationRequestInfo */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_PORTOLANI_BIT,
+		__cert_request_info_map,
+		ASN_NODE_WAY_COUNT(__cert_request_info_map)
+	},
+	{	/* signatureAlgorithm */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
+		pkix_algid_map,
+		PKIX_ALGID_COUNT
+	},
+	{	/* signature */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_BIT_STRING,
 		NULL,
 		0
 	}
@@ -180,6 +275,221 @@ NH_FUNCTION(void, NH_release_cert_request)(_INOUT_ NH_CREQUEST_PARSER hHandle)
 }
 
 
+#define __IS_SET(_a, _b)		(((_a) & (_b)) == (_a))
+#define __NH_CRVERSION_SET		1
+#define __NH_CRSUBJECT_SET		(__NH_CRVERSION_SET << 1)
+#define __NH_CRPUBKEY_SET		(__NH_CRVERSION_SET << 2)
+#define __NH_CRSDIGN_SET		(__NH_CRVERSION_SET << 3)
+#define __NH_READY_TO_SIGN		0x07
+#define __NH_WELLFORMED_REQUEST	0x0F
+static NH_RV __request_put_version(_INOUT_ NH_CREQUEST_ENCODER_STR *hEncoder, _IN_ unsigned int uVersion)
+{
+	NH_RV rv = NH_OK;
+	NH_ASN1_PNODE node;
+
+	if
+	(
+		NH_SUCCESS(rv = !__IS_SET(__NH_CRVERSION_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
+		uVersion > 0 &&
+		NH_SUCCESS(rv = (node = hEncoder->hRequestInfo->root->child) ? NH_OK : NH_CANNOT_SAIL)
+	)
+	{
+		*node->identifier = NH_asn_get_tag(node->knowledge);
+		if
+		(
+			NH_SUCCESS(rv = __add_child(hEncoder->hRequestInfo, node, NH_ASN1_INTEGER)) &&
+			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
+		)	rv = hEncoder->hRequestInfo->put_little_integer(hEncoder->hRequestInfo, node, uVersion);
+	}
+	if (NH_SUCCESS(rv)) hEncoder->fields |= __NH_CRVERSION_SET;
+	return rv;
+
+}
+static NH_RV __request_put_subject(_INOUT_ NH_CREQUEST_ENCODER_STR *hEncoder, _IN_ NH_NAME *pSubject, _IN_ size_t ulCount)
+{
+	NH_RV rv;
+
+	if
+	(
+		NH_SUCCESS(rv = !__IS_SET(__NH_CRSUBJECT_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
+		NH_SUCCESS(rv = __put_name(hEncoder->hRequestInfo, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST, pSubject, ulCount))
+	)	hEncoder->fields |= __NH_CRSUBJECT_SET;
+	return rv;
+}
+static NH_RV __request_put_pubkey(_INOUT_ NH_CREQUEST_ENCODER_STR *hEncoder, _IN_ NH_RSA_PUBKEY_HANDLER hPubKey)
+{
+	NH_RV rv;
+
+	if
+	(
+		NH_SUCCESS(rv = !__IS_SET(__NH_CRPUBKEY_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
+		NH_SUCCESS(rv = hPubKey->encode_info(hPubKey, hEncoder->hRequestInfo, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2)))
+	)	hEncoder->fields |= __NH_CRPUBKEY_SET;
+	return rv;	
+}
+static NH_RV __request_sign
+(
+	_INOUT_ NH_CREQUEST_ENCODER_STR *hEncoder,
+	_IN_ CK_MECHANISM_TYPE mechanism,
+	_IN_ NH_CMS_SIGN_FUNCTION callback,
+	_IN_ void *pParams
+)
+{
+	CK_MECHANISM_TYPE hashAlg;
+	const unsigned int *sigOID;
+	size_t sigOIDCount;
+	NH_RV rv;
+	NH_BLOB requestInfo = { NULL, 0 }, hash = { NULL, 0 };
+	NH_HASH_HANDLER hHash;
+	NH_BITSTRING_VALUE_STR pString = { 0, NULL, 0 };
+	NH_ASN1_PNODE node;
+
+	switch (mechanism)
+	{
+	case CKM_SHA1_RSA_PKCS:
+		hashAlg = CKM_SHA_1;
+		sigOID = sha1WithRSAEncryption;
+		sigOIDCount = NHC_SHA1_WITH_RSA_OID_COUNT;
+		break;
+	case CKM_SHA256_RSA_PKCS:
+		hashAlg = CKM_SHA256;
+		sigOID = sha256WithRSAEncryption;
+		sigOIDCount = NHC_SHA256_WITH_RSA_OID_COUNT;
+		break;
+	case CKM_SHA384_RSA_PKCS:
+		hashAlg = CKM_SHA384;
+		sigOID = sha384WithRSAEncryption;
+		sigOIDCount = NHC_SHA384_WITH_RSA_OID_COUNT;
+		break;
+	case CKM_SHA512_RSA_PKCS:
+		hashAlg = CKM_SHA512;
+		sigOID = sha512WithRSAEncryption;
+		sigOIDCount = NHC_SHA512_WITH_RSA_OID_COUNT;
+		break;
+	case CKM_MD5_RSA_PKCS:
+		hashAlg = CKM_MD5;
+		sigOID = md5WithRSA_oid;
+		sigOIDCount = NHC_MD5_WITH_RSA_OID_COUNT;
+		break;
+	default: return NH_UNSUPPORTED_MECH_ERROR;
+	}
+	if
+	(
+		NH_SUCCESS(rv = !__IS_SET(__NH_CRSDIGN_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
+		NH_SUCCESS(rv = hEncoder->fields == __NH_READY_TO_SIGN ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = (requestInfo.length = hEncoder->hRequestInfo->encoded_size(hEncoder->hRequestInfo, hEncoder->hRequestInfo->root)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+		NH_SUCCESS(rv = (requestInfo.data = (unsigned char*) malloc(requestInfo.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+	)
+	{
+		if
+		(
+			NH_SUCCESS(rv = hEncoder->hRequestInfo->encode(hEncoder->hRequestInfo, hEncoder->hRequestInfo->root, requestInfo.data)) &&
+			NH_SUCCESS(rv = NH_new_hash(&hHash))
+		)
+		{
+			if
+			(
+				NH_SUCCESS(rv = hHash->init(hHash, hashAlg)) &&
+				NH_SUCCESS(rv = hHash->update(hHash, requestInfo.data, requestInfo.length)) &&
+				NH_SUCCESS(rv = hHash->finish(hHash, NULL, &hash.length)) &&
+				NH_SUCCESS(rv = (hash.data = (unsigned char*) malloc(hash.length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				if
+				(
+					NH_SUCCESS(hHash->finish(hHash, hash.data, &hash.length)) &&
+					NH_SUCCESS(rv = callback(&hash, mechanism, pParams, NULL, &pString.len)) &&
+					NH_SUCCESS(rv = (pString.string = (unsigned char*) malloc(pString.len)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				)
+				{
+					if
+					(
+						NH_SUCCESS(rv = callback(&hash, mechanism, pParams, pString.string, &pString.len)) &&
+						NH_SUCCESS(rv = (node = hEncoder->hRequest->root->child) ? NH_OK : NH_CANNOT_SAIL) &&
+						NH_SUCCESS(rv = hEncoder->hRequest->container->bite_chunk(hEncoder->hRequest->container, requestInfo.length, (void*) &node->identifier))
+					)
+					{
+						memcpy(node->identifier, requestInfo.data, requestInfo.length);
+						node->size = requestInfo.length - ((requestInfo.data[1] & 0x80) ? ((requestInfo.data[1] & 0x7F) + 2) : 2);
+						node->contents = node->identifier + (requestInfo.length - node->size);
+						if
+						(
+							NH_SUCCESS(rv = (node = hEncoder->hRequest->sail(node,  (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_CANNOT_SAIL) &&
+							NH_SUCCESS(rv = hEncoder->hRequest->put_objectid(hEncoder->hRequest, node, sigOID, sigOIDCount, FALSE)) &&
+							NH_SUCCESS(rv = (node = hEncoder->hRequest->sail(node, (NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL) &&
+							NH_SUCCESS(rv = hEncoder->hRequest->put_bitstring(hEncoder->hRequest, node, &pString))
+						)	hEncoder->fields |= __NH_CRSDIGN_SET;
+					}
+					free(pString.string);
+				}
+				free(hash.data);
+			}
+			NH_release_hash(hHash);
+		}
+		free(requestInfo.data);
+	}
+	return rv;
+}
+static NH_RV __request_encode(_IN_ NH_CREQUEST_ENCODER_STR *hEncoder, _OUT_ unsigned char *pBuffer, _INOUT_ size_t *ulSize)
+{
+	NH_RV rv;
+	size_t size;
+
+	if
+	(
+		NH_SUCCESS(rv = hEncoder->fields == __NH_WELLFORMED_REQUEST ? NH_OK : NH_ISSUE_INCOMPLETEOB_ERROR) &&
+		NH_SUCCESS(rv = (size = hEncoder->hRequest->encoded_size(hEncoder->hRequest, hEncoder->hRequest->root)) > 0 ? NH_OK : NH_INVALID_DER_TYPE)
+	)
+	{
+		if (!pBuffer) *ulSize = size;
+		else if (NH_SUCCESS(rv = *ulSize >= size ? NH_OK : NH_BUF_TOO_SMALL)) rv = hEncoder->hRequest->encode(hEncoder->hRequest, hEncoder->hRequest->root, pBuffer);
+	}
+	return rv;
+}
+static NH_CREQUEST_ENCODER_STR __hCertRequest =
+{
+	NULL,
+	NULL,
+	0,
+	__request_put_version,
+	__request_put_subject,
+	__request_put_pubkey,
+	__request_sign,
+	__request_encode
+};
+NH_FUNCTION(NH_RV, NH_new_certificate_request)(_OUT_ NH_CREQUEST_ENCODER *hEncoder)
+{
+	NH_RV rv;
+	NH_CREQUEST_ENCODER hOut = NULL;
+
+	if (NH_SUCCESS(rv = (hOut = (NH_CREQUEST_ENCODER) malloc(sizeof(NH_CREQUEST_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	{
+		memset(hOut, 0, sizeof(NH_CREQUEST_ENCODER_STR));
+		memcpy(hOut, &__hCertRequest, sizeof(__hCertRequest));
+		if
+		(
+			NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hOut->hRequestInfo)) &&
+			NH_SUCCESS(rv = NH_new_encoder(8, 4096, &hOut->hRequest))
+		)	*hEncoder = hOut;
+		if (NH_FAIL(rv)) NH_delete_certificate_request(hOut);
+	}
+	return rv;
+}
+NH_FUNCTION(void, NH_delete_certificate_request)(_INOUT_ NH_CREQUEST_ENCODER hEncoder)
+{
+	if (hEncoder)
+	{
+		if (hEncoder->hRequestInfo) NH_release_encoder(hEncoder->hRequestInfo);
+		if (hEncoder->hRequest) NH_release_encoder(hEncoder->hRequest);
+		free(hEncoder);
+	}
+}
+
+
+/* * * * * * * * * * * * * * * * * * * * *
+ * X.509 Certificate encoding
+ * * * * * * * * * * * * * * * * * * * * *
+ */
 static NH_NODE_WAY __time_map[] =
 {
 	{	/* utcTime */
@@ -288,40 +598,7 @@ static NH_NODE_WAY __tbscert_map[] =
 #define __NH_ALTNAME_SET		(__NH_VERSION_SET << 9)
 #define __NH_CDP_SET			(__NH_VERSION_SET << 10)
 #define __NH_WELLFORMED_TBS		0x07FF
-#define __IS_SET(_a, _b)		(((_a) & (_b)) == (_a))
 #define __PATH_TO_EXTENSIONS		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 9) << 8) | NH_SAIL_SKIP_SOUTH)
-static NH_RV __add_child(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
-{
-	NH_RV rv;
-	NH_ASN1_PNODE pChild;
-	
-	if
-	(
-		NH_SUCCESS(rv = (pChild = hEncoder->add_child(hEncoder->container, pCurrent)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
-		NH_SUCCESS(rv = hEncoder->container->bite_chunk(hEncoder->container, sizeof(unsigned char*), (void*) &pChild->identifier))
-	)
-	{
-		*pChild->identifier = tag;
-		pChild->knowledge = tag;
-	}
-	return rv;
-}
-INLINE static NH_RV __add_next(_IN_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN_ NH_ASN1_PNODE pCurrent, _IN_ unsigned char tag)
-{
-	NH_RV rv;
-	NH_ASN1_PNODE pNext;
-	
-	if
-	(
-		NH_SUCCESS(rv = (pNext = hEncoder->add_next(hEncoder->container, pCurrent)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
-		NH_SUCCESS(rv = hEncoder->container->bite_chunk(hEncoder->container, sizeof(unsigned char*), (void*) &pNext->identifier))
-	)
-	{
-		*pNext->identifier = tag;
-		pNext->knowledge = tag;
-	}
-	return rv;
-}
 static NH_RV __put_version(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ unsigned int uVersion)
 {
 	NH_RV rv = NH_OK;
@@ -372,58 +649,6 @@ static NH_RV __put_sign_alg(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ NH_OI
 	)	hEncoder->fields |= __NH_SIGN_ALG_SET;
 	return rv;
 }
-static NH_NODE_WAY __x509_name[] =
-{
-	{
-		NH_PARSE_ROOT,
-		NH_ASN1_SET | NH_ASN1_HAS_NEXT_BIT,
-		NULL,
-		0
-	},
-	{
-		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_SEQUENCE,
-		NULL,
-		0
-	},
-	{
-		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_OBJECT_ID | NH_ASN1_HAS_NEXT_BIT,
-		NULL,
-		0
-	},
-	{
-		NH_SAIL_SKIP_EAST,
-		NH_ASN1_PRINTABLE_STRING,
-		NULL,
-		0
-	}
-};
-static NH_RV __put_name(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ unsigned int uPath, _IN_ NH_NAME *pName, _IN_ size_t ulCount)
-{
-	NH_RV rv;
-	NH_ASN1_PNODE node, name;
-	size_t i;
-
-	if
-	(
-		NH_SUCCESS(rv = pName && ulCount > 0 ? NH_OK : NH_INVALID_ARG) &&
-		NH_SUCCESS(rv = (name = hEncoder->hHandler->sail(hEncoder->hHandler->root, uPath)) ? NH_OK : NH_CANNOT_SAIL)
-	)	i = 0;
-	while (NH_SUCCESS(rv) && i < ulCount)
-	{
-		if
-		(
-			NH_SUCCESS(rv = (node = hEncoder->hHandler->add_to_set(hEncoder->hHandler->container, name)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
-			NH_SUCCESS(rv = hEncoder->hHandler->chart_from(hEncoder->hHandler, node, __x509_name, ASN_NODE_WAY_COUNT(__x509_name))) &&
-			NH_SUCCESS(rv = (node = hEncoder->hHandler->sail(node, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL) &&
-			NH_SUCCESS(rv = hEncoder->hHandler->put_objectid(hEncoder->hHandler, node, pName[i]->pOID->pIdentifier, pName[i]->pOID->uCount, FALSE)) &&
-			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
-			NH_SUCCESS(rv = hEncoder->hHandler->put_printable_string(hEncoder->hHandler, node, pName[i]->szValue, strlen(pName[i]->szValue)))
-		)	i++;
-	}
-	return rv;
-}
 static NH_RV __put_issuer(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ NH_NAME *pIssuer, _IN_ size_t ulCount)
 {
 	NH_RV rv;
@@ -431,7 +656,7 @@ static NH_RV __put_issuer(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ NH_NAME
 	if
 	(
 		NH_SUCCESS(rv = !__IS_SET(__NH_ISSUER_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
-		NH_SUCCESS(rv = __put_name(hEncoder, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3), pIssuer, ulCount))
+		NH_SUCCESS(rv = __put_name(hEncoder->hHandler, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3), pIssuer, ulCount))
 	)	hEncoder->fields |= __NH_ISSUER_SET;
 	return rv;
 }
@@ -442,7 +667,7 @@ static NH_RV __put_subject(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ NH_NAM
 	if
 	(
 		NH_SUCCESS(rv = !__IS_SET(__NH_SUBJECT_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
-		NH_SUCCESS(rv = __put_name(hEncoder, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5), pSubject, ulCount))
+		NH_SUCCESS(rv = __put_name(hEncoder->hHandler, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5), pSubject, ulCount))
 	)	hEncoder->fields |= __NH_SUBJECT_SET;
 	return rv;
 }
