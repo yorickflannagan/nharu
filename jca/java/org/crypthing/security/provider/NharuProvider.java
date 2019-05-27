@@ -315,8 +315,6 @@ public final class NharuProvider extends Provider
 		System.out.println("====================================================================");
 		CertificateParams.main(new String[0]);
 		System.out.println("====================================================================");
-		NharuCertificateRequest.main(new String[0]);
-		System.out.println("====================================================================");
 		NharuCertificateEncoder.main(new String[0]);
 		System.out.println("====================================================================");
 		org.crypthing.security.x509.CacheCleaner.debugShutDown();

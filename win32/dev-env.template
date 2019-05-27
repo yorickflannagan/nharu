@@ -17,50 +17,65 @@ ECHO.
 ECHO  * * * * * * * * * * * * * * * * * * * * * * * *
 ECHO.
 
-:: Required paths
-FOR %%i IN ("%~dp0..") DO SET "_HOME=%%~fi"
-CALL:GET_PREFIX %_HOME%
-SET _PREFIX=%_PREFIX%3rdparty\nharu
-SET _VERSION=1.1.10
-SET _OPENSSL=__OPENSSL__
-SET _LIBIDN=__LIBIDN__
+:: Set by configure.vbs
 SET _JAVA_HOME=__JAVA_HOME__
-SET _ANT_HOME=__ANT_HOME__
-SET _ANT_CONTRIB=__ANT_CONTRIB__
-SET _JRE_7RT=__JRE_7RT__
 SET _VS_INSTALL_PATH=__VS_INSTALL_PATH__
+SET _ADD_PATH=__ADD_PATH__
 
+:: Required paths
+SET _CUR=%CD%
+FOR %%i IN ("%~dp0..") DO SET "_HOME=%%~fi"
+SET _PREFIX=%_HOME%\dist
+SET _VERSION=1.3.0
+SET _BUILD=0
 
 :: Check arguments
 FOR %%a IN (%*) DO (
     CALL:GET_ARGS "--","%%a" 
 )
 VERIFY >NUL
-IF DEFINED --version (
-	SET _VERSION=%--version%
-)
 IF DEFINED --prefix (
 	SET _PREFIX=%--prefix%
 )
+IF DEFINED --version (
+	SET _VERSION=%--version%
+)
+IF DEFINED --add-path (
+	SET _ADD_PATH=%--add-path%
+)
+IF DEFINED --build (
+	SET _BUILD=1
+)
 
 :: MS NMAKE environment
-CALL "%_VS_INSTALL_PATH%VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+CALL "%_VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
+IF "%_ADD_PATH%" NEQ "" (
+	SET "PATH=%PATH%;%_ADD_PATH%"
+)
 
 :: Nharu environment
-SET OPENSSL=%_OPENSSL:~0,-1%
-SET LIBIDN=%_LIBIDN:~0,-1%
 SET HOME=%_HOME%
-SET JAVA_HOME=%_JAVA_HOME:~0,-1%
-SET ANT_HOME=%_ANT_HOME:~0,-1%
-SET ANT_CONTRIB=%_ANT_CONTRIB%
-SET JRE_7=%_JRE_7RT%
-SET VERSION=%_VERSION%
 SET PREFIX=%_PREFIX%
+SET JAVA_HOME=%_JAVA_HOME%
+SET VERSION=%_VERSION%
+
+:: Build (if required)
+IF %_BUILD% EQU 1 (
+	CD %_HOME%\win32
+	NMAKE /F Makefile.mak
+	IF %ERRORLEVEL% EQU 0 (
+		NMAKE /F Makefile.mak TEST
+		IF %ERRORLEVEL% EQU 0 (
+			NMAKE /F Makefile.mak INSTALL
+			IF %ERRORLEVEL% EQU 0 (
+				NMAKE /F Makefile.mak CLEAN
+			)
+		)
+	)
+	CD %_CUR%
+)
 GOTO:END
 
-:GET_PREFIX
-FOR %%i IN ("%~dp1") DO SET "_PREFIX=%%~fi"
-GOTO:EOF
 
 :GET_ARGS
 :: PROCESS COMAND LINE ARGUMENT OF TYPE --arg=value
@@ -86,16 +101,13 @@ GOTO:EOF
 
 :: Clean-up
 :END
-SET _HOME=
-SET _OPENSSL=
-SET _LIBIDN=
-SET _JAVA_HOME=
-SET _ANT_HOME=
-SET _ANT_CONTRIB=
-SET _JRE_7RT=
-SET _VS_INSTALL_PATH=
-SET _VERSION=
 SET _PREFIX=
+SET _VERSION=
+SET _ADD_PATH=
+SET _BUILD=
+SET _HOME=
+SET _JAVA_HOME=
+SET _VS_INSTALL_PATH=
 SET __KEY=
 SET __VALUE=
-IF ERRORLEVEL NEQ 0 DO ( PAUSE )
+SET _CUR=

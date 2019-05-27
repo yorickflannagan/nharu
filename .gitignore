@@ -7,11 +7,6 @@ Version.java
 LogDevice.java
 Makefile
 .project
-win32/.wget-hsts
-win32/library.vbs
-win32/dev-env.bat
-win32/build.bat
-win32/git.template
 docs/
 bin/
 dist/
@@ -29,3 +24,6 @@ linux/openssl
 linux/libidn
 linux/gnulib
 linux/libiconv
+win32/openssl
+win32/libidn
+win32/dev-env.cmd

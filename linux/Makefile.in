@@ -76,7 +76,7 @@ $(TST_OBJDIR)/%.o: $(TST_SRCDIR)/%.c
 
 .PHONY: clean prepare build-java test
 clean:
-	cd ..; mvn -B clean $(MAVEN_ARGS); rmdir bin ; cd -; \
+	cd ..; mvn -B clean $(MAVEN_ARGS); cd -; \
 	rm $(PROJECT)/files.d $(DIST_DIR)/lib $(TST_TARGET) $(TST_OBJDIR) $(LIB_OBJDIR) $(JCA_OBJDIR) -Rf
 
 
