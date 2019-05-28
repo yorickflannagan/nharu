@@ -290,19 +290,9 @@ static NH_RV __request_put_version(_INOUT_ NH_CREQUEST_ENCODER_STR *hEncoder, _I
 	if
 	(
 		NH_SUCCESS(rv = !__IS_SET(__NH_CRVERSION_SET, hEncoder->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
-		uVersion > 0 &&
-		NH_SUCCESS(rv = (node = hEncoder->hRequestInfo->root->child) ? NH_OK : NH_CANNOT_SAIL)
-	)
-	{
-		*node->identifier = NH_asn_get_tag(node->knowledge);
-		if
-		(
-			NH_SUCCESS(rv = __add_child(hEncoder->hRequestInfo, node, NH_ASN1_INTEGER)) &&
-			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
-		)	rv = hEncoder->hRequestInfo->put_little_integer(hEncoder->hRequestInfo, node, uVersion);
-	}
-	if (NH_SUCCESS(rv)) hEncoder->fields |= __NH_CRVERSION_SET;
-	return rv;
+		NH_SUCCESS(rv = (node = hEncoder->hRequestInfo->root->child) ? NH_OK : NH_CANNOT_SAIL) &&
+		NH_SUCCESS(rv = hEncoder->hRequestInfo->put_little_integer(hEncoder->hRequestInfo, node, uVersion))
+	)	hEncoder->fields |= __NH_CRVERSION_SET;	return rv;
 
 }
 static NH_RV __request_put_subject(_INOUT_ NH_CREQUEST_ENCODER_STR *hEncoder, _IN_ NH_NAME *pSubject, _IN_ size_t ulCount)
@@ -460,7 +450,8 @@ static NH_CREQUEST_ENCODER_STR __hCertRequest =
 NH_FUNCTION(NH_RV, NH_new_certificate_request)(_OUT_ NH_CREQUEST_ENCODER *hEncoder)
 {
 	NH_RV rv;
-	NH_CREQUEST_ENCODER hOut = NULL;
+	NH_CREQUEST_ENCODER hOut;
+	NH_ASN1_PNODE node;
 
 	if (NH_SUCCESS(rv = (hOut = (NH_CREQUEST_ENCODER) malloc(sizeof(NH_CREQUEST_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 	{
@@ -469,7 +460,9 @@ NH_FUNCTION(NH_RV, NH_new_certificate_request)(_OUT_ NH_CREQUEST_ENCODER *hEncod
 		if
 		(
 			NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hOut->hRequestInfo)) &&
-			NH_SUCCESS(rv = NH_new_encoder(8, 4096, &hOut->hRequest))
+			NH_SUCCESS(rv = NH_new_encoder(8, 4096, &hOut->hRequest)) &&
+			NH_SUCCESS(rv = hOut->hRequestInfo->chart(hOut->hRequestInfo, __cert_request_info_map, ASN_NODE_WAY_COUNT(__cert_request_info_map), &node)) &&
+			NH_SUCCESS(rv = hOut->hRequest->chart(hOut->hRequest, __cert_request_map, ASN_NODE_WAY_COUNT(__cert_request_map), &node))
 		)	*hEncoder = hOut;
 		if (NH_FAIL(rv)) NH_delete_certificate_request(hOut);
 	}

@@ -152,7 +152,8 @@ public class NharuCertificateEncoder
 		+ "aC42Wz8pxODn2go2FjsAoEywhQSBmOAL1tCOYLzaTzdY43CAhYxzLlh6Ykl+ug/S\n"
 		+ "TshTApAu53e+NnC5d6pmGsEwGbyh+oYVo1zahUS9iwtb0K9nvnk3NZti7HMgxq1r\n"
 		+ "HNfej9EFvlm9TfktaaQOnTEhRHPDLmb5FuGFmZkaQWkDrUU/ikT3J+vCmRCV+Fl4\n"
-		+ "fASwi3itqEIwQES/JyJTTAiEToGPf7j5bWbrPy1yZNh0iA==\n" + "-----END CERTIFICATE-----";
+		+ "fASwi3itqEIwQES/JyJTTAiEToGPf7j5bWbrPy1yZNh0iA==\n" 
+		+ "-----END CERTIFICATE-----";
 	static final byte[] CA_KEY =
 	{
 		(byte) 0x30, (byte) 0x82, (byte) 0x04, (byte) 0xbd, (byte) 0x02, (byte) 0x01,

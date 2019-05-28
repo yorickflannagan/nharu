@@ -283,10 +283,6 @@ mknharu()
 	if [ "$6" == "debug" ]; then
 		export TYPE="_DEBUG_=1"
 		export ANT_DEBUG="-DDEBUG=1"
-	else
-		if [ "$6" == "fips" ]; then
-			export TYPE="_FIPS_=1"
-		fi
 	fi
 
 	make -C src clean $TYPE

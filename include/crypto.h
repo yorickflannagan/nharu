@@ -1336,6 +1336,7 @@ typedef NH_METHOD(size_t, NH_PRVK_SIZ_FUNCTION)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR*
  */
 typedef NH_METHOD(NH_RV, NH_PRVK_P8_FUNCTION)(_INOUT_ NH_RSA_PRIVKEY_HANDLER_STR*, _IN_ unsigned char*, _IN_ size_t);
 
+typedef NH_METHOD(NH_RV, NH_PRVK_TOP8_FUNCTION)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR*, _INOUT_ NH_ASN1_ENCODER_HANDLE, _IN_ unsigned int);
 
 /*
  ****s* Crypto/NH_RSA_PRIVKEY_HANDLER
@@ -1359,6 +1360,7 @@ struct NH_RSA_PRIVKEY_HANDLER_STR
 	NH_PRVK_CLO_FUNCTION	clone;		/* Clones this object */
 	NH_PRVK_SIZ_FUNCTION	obj_size;		/* Gets this object size */
 	NH_PRVK_P8_FUNCTION	from_privkey_info;/* Imports an RSA private key from a DER encoded PrivateKeyInfo */
+	NH_PRVK_TOP8_FUNCTION	to_privkey_info;
 };
 typedef NH_RSA_PRIVKEY_HANDLER_STR*			NH_RSA_PRIVKEY_HANDLER;
 /* ****** */

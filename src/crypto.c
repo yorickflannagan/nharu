@@ -6,11 +6,7 @@
 #ifdef UNIX_IMPL
 #include <stdio.h>
 #include <errno.h>
-#if defined(_FIPS_)
 #define RND_SOURCE			"/dev/random"
-#else
-#define RND_SOURCE			"/dev/urandom"
-#endif
 #else
 #include <windows.h>
 #include <wincrypt.h>
@@ -1312,8 +1308,8 @@ static NH_RV __rsa_pubkey_encodeinfo
 	NH_RV rv;
 	NH_ASN1_ENCODER_HANDLE hKey;
 	NH_ASN1_PNODE node;
-	BIGNUM *e;
 	BIGNUM *n;
+	BIGNUM *e;
 	NH_BITSTRING_VALUE_STR pString = { 0, NULL, 0 };
 
 	if
@@ -2233,6 +2229,98 @@ const static NH_NODE_WAY rsa_privkey_pkcs_map[] =
 		0
 	}
 };
+/**
+ * @brief Encode RSA private key according to RFC 5208 and 8017
+ * 
+ * @param NH_RSA_PRIVKEY_HANDLER_STR hHandler: RSA private key handler
+ * @param NH_ASN1_ENCODER_HANDLE hEncoder: ASN.1 encoder handler
+ * @param unsigned int path: path to PrivateKeyInfo  node (from hEncoder->root)
+ * @return NH_RV 
+ */
+static NH_RV __to_privkey_info
+(
+	_IN_ NH_RSA_PRIVKEY_HANDLER_STR *hHandler,
+	_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder,
+	_IN_ unsigned int path
+)
+{
+	NH_RV rv;
+	NH_ASN1_ENCODER_HANDLE hKey;
+	BIGNUM *n;
+	BIGNUM *e;
+	BIGNUM *d;
+	BIGNUM *p;
+	BIGNUM *q;
+	BIGNUM *dmp1;
+	BIGNUM *dmq1;
+	BIGNUM *iqmp;
+	NH_ASN1_PNODE node;
+	size_t ulKeySize;
+	unsigned char *pKey;
+
+	if
+	(
+		NH_SUCCESS(rv = hHandler->key ? NH_OK : NH_INVALID_STATE_ERROR) &&
+		NH_SUCCESS(rv = hEncoder ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hKey))
+	)
+	{
+#if OPENSSL_VERSION_NUMBER >= 0x10100001L
+		RSA_get0_key((const RSA *) hHandler->key,(const BIGNUM **) &n,(const BIGNUM **) &e,(const BIGNUM **) &d);
+		RSA_get0_factors((const RSA *) hHandler->key,(const BIGNUM **) &p,(const BIGNUM **) &q);
+		RSA_get0_crt_params((const RSA *) hHandler->key,(const BIGNUM **) &dmp1,(const BIGNUM **) &dmq1,(const BIGNUM **) &iqmp);
+#else
+		n = hHandler->key->n;
+		e = hHandler->key->e;
+		d = hHandler->key->d;
+		p = hHandler->key->p;
+		q = hHandler->key->q;
+		dmp1 =hHandler->key->dmp1;
+		dmq1 = hHandler->key->dmq1;
+		iqmp = hHandler->key->iqmp;
+#endif
+		if
+		(
+			NH_SUCCESS(rv = hKey->chart(hKey, rsa_privkey_pkcs_map, ASN_NODE_WAY_COUNT(rsa_privkey_pkcs_map), &node)) &&
+			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hKey->put_little_integer(hKey, node, 0)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, n)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, e)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, d)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, p)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, q)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, dmp1)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, dmq1)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = encode_bignum(hKey, node, iqmp)) &&
+			NH_SUCCESS(rv = (ulKeySize = hKey->encoded_size(hKey, hKey->root)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+			NH_SUCCESS(rv = (pKey = (unsigned char*) malloc(ulKeySize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if
+			(
+				NH_SUCCESS(rv = hKey->encode(hKey, hKey->root, pKey)) &&
+				NH_SUCCESS(rv = (node = hEncoder->sail(hEncoder->root, path)) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->chart_from(hEncoder, node, privkey_info_map, ASN_NODE_WAY_COUNT(privkey_info_map))) &&
+				NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->put_little_integer(hEncoder, node, 0)) &&
+				NH_SUCCESS(rv = (node = hEncoder->sail(node, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = hEncoder->put_objectid(hEncoder, node, rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT, FALSE)) &&
+				NH_SUCCESS(rv = (node = hEncoder->sail(node, (NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL)
+			)	rv = hEncoder->put_octet_string(hEncoder, node, pKey, ulKeySize);
+			free(pKey);
+		}
+		NH_release_encoder(hKey);
+	}
+	return rv;
+}
 NH_UTILITY(NH_RV, NH_RSA_from_privkey_info)(_INOUT_ NH_RSA_PRIVKEY_HANDLER_STR *hHandler, _IN_ unsigned char *encoding, _IN_ size_t size)
 {
 	NH_RV rv;
@@ -2393,7 +2481,8 @@ static const NH_RSA_PRIVKEY_HANDLER_STR defRSAPrivKeyHandler =
 	NH_RSA_privkey_create,
 	NH_RSA_privkey_clone,
 	NH_rsa_privkey_size,
-	NH_RSA_from_privkey_info
+	NH_RSA_from_privkey_info,
+	__to_privkey_info
 };
 
 NH_FUNCTION(NH_RV, NH_new_RSA_privkey_handler)(_OUT_ NH_RSA_PRIVKEY_HANDLER *hHandler)

@@ -22,5 +22,9 @@ int test_cadest();
 int test_parse_request();
 int test_parse_pubkey();
 int test_sign_certificate();
+int test_create_request();
+
+
+int test_encode_p8();
 
 #endif

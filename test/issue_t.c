@@ -534,3 +534,74 @@ int test_sign_certificate()
 	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
+
+int test_create_request()
+{
+	NH_RV rv;
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+	NH_CREQUEST_ENCODER hEncoder;
+	NH_NAME_STR pCN = { &pCN_OID, "Subject distinguished name" };
+	NH_NAME pSubject[1];
+	unsigned char *pBuffer;
+	size_t ulSize;
+	NH_CREQUEST_PARSER hParser;
+
+	printf("%s", "Testing certificate request signing... ");
+	pSubject[0] = &pCN;
+	if (NH_SUCCESS(rv = NH_generate_RSA_keys(2048, 65537, &hPubKey, &hPrivKey)))
+	{
+		if (NH_SUCCESS(rv = NH_new_certificate_request(&hEncoder)))
+		{
+			if
+			(
+				NH_SUCCESS(rv = hEncoder->put_version(hEncoder, 0)) &&
+				NH_SUCCESS(rv = hEncoder->put_subject(hEncoder, pSubject, 1)) &&
+				NH_SUCCESS(rv = hEncoder->put_pubkey(hEncoder, hPubKey)) &&
+				NH_SUCCESS(rv = hEncoder->sign(hEncoder, CKM_SHA256_RSA_PKCS, signature_callback, hPrivKey)) &&
+				NH_SUCCESS(rv = hEncoder->encode(hEncoder, NULL, &ulSize)) &&
+				NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(ulSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				if
+				(
+					NH_SUCCESS(rv = hEncoder->encode(hEncoder, pBuffer, &ulSize)) &&
+					NH_SUCCESS(rv = NH_parse_cert_request(pBuffer, ulSize, &hParser))
+				)
+				{
+					rv = hParser->verify(hParser);
+					NH_release_cert_request(hParser);
+				}
+				free(pBuffer);
+			}
+			NH_delete_certificate_request(hEncoder);
+		}
+		NH_release_RSA_pubkey_handler(hPubKey);
+		NH_release_RSA_privkey_handler(hPrivKey);
+	}
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+	return rv;
+}
+
+static NH_NODE_WAY __p8_map[] = {{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 }};
+int test_encode_p8()
+{
+	NH_RV rv;
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	NH_ASN1_PNODE node;
+	if (NH_SUCCESS(rv = NH_generate_RSA_keys(2048, 65537, &hPubKey, &hPrivKey)))
+	{
+		if (NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hEncoder)))
+		{
+			rv = hEncoder->chart(hEncoder, __p8_map, 1, &node);
+			rv = hPrivKey->to_privkey_info(hPrivKey, hEncoder, NH_PARSE_ROOT);
+			NH_release_encoder(hEncoder);
+		}
+		NH_release_RSA_pubkey_handler(hPubKey);
+		NH_release_RSA_privkey_handler(hPrivKey);
+	}
+	return rv;
+}

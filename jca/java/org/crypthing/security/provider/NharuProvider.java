@@ -39,62 +39,91 @@ public final class NharuProvider extends Provider
 	private static native void nharuInitPRNG();
 	private static native void leakageStop();
 
+	private static final Object FLEECE = new Object();
+	private static boolean RAND_INITED = false;
+	private static final class Jason implements Runnable
+	{
+		@Override public void run()
+		{
+			nharuInitPRNG();
+			synchronized (FLEECE)
+			{
+				RAND_INITED = true;
+				FLEECE.notifyAll();
+			}
+		}
+	}
 	static
 	{
 		if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Nharu JAR version : " + Version.getVersion() +  " started loading.");
 		File libFile = null;
 		try {
-				if(System.getProperty(LIB_KEY) != null)
+			if(System.getProperty(LIB_KEY) != null)
+			{
+				libFile = new File(System.getProperty(LIB_KEY));
+			}
+			else
+			{
+				String lib = "libnharujca.so";
+				if (System.getProperty("os.name", "").toLowerCase().indexOf("win") >= 0) lib = "nharujca.dll";
+				libFile = File.createTempFile("nharujca", ".lib");
+				libFile.deleteOnExit();
+				final OutputStream out = new FileOutputStream(libFile);
+				try
 				{
-					libFile = new File(System.getProperty(LIB_KEY));
-				}
-				else{
-					String lib = "libnharujca.so";
-					if (System.getProperty("os.name", "").toLowerCase().indexOf("win") >= 0) lib = "nharujca.dll";
-					libFile = File.createTempFile("nharujca", ".lib");
-					libFile.deleteOnExit();
-					final OutputStream out = new FileOutputStream(libFile);
+					final InputStream in = NharuProvider.class.getResourceAsStream("/" + lib);
+					if (in == null)
+					{
+						if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_SO_NOT_FOUND);
+						throw new UnsatisfiedLinkError(ERROR_SO_NOT_FOUND);
+					}
 					try
 					{
-						final InputStream in = NharuProvider.class.getResourceAsStream("/" + lib);
-						if (in == null)
-						{
-							if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_SO_NOT_FOUND);
-							throw new UnsatisfiedLinkError(ERROR_SO_NOT_FOUND);
-						}
-						try
-						{
-							final byte[] buffer = new byte[4096];
-							int i;
-							while ((i = in.read(buffer)) != -1) out.write(buffer, 0, i);
-						}
-						finally { in.close(); }
+						final byte[] buffer = new byte[4096];
+						int i;
+						while ((i = in.read(buffer)) != -1) out.write(buffer, 0, i);
 					}
-					finally { out.close(); }
-					if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Loading library from: [" + libFile.getAbsolutePath()+ "]");
+					finally { in.close(); }
 				}
-				System.load(libFile.getAbsolutePath());
-				NHARU_VERSION = Version.getVersion();
-				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Nharu library version : " + Version.getNativeVersion() +  " loaded with sucess.");
-				if (LOG_LEVEL < LOG_LEVEL_NONE && (!Version.getNativeVersion().equals(Version.getVersion())))
+				finally { out.close(); }
+				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Loading library from: [" + libFile.getAbsolutePath()+ "]");
+			}
+			System.load(libFile.getAbsolutePath());
+			NHARU_VERSION = Version.getVersion();
+			if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal("Nharu library version : " + Version.getNativeVersion() +  " loaded with sucess.");
+			if (LOG_LEVEL < LOG_LEVEL_NONE && (!Version.getNativeVersion().equals(Version.getVersion())))
+			{
+				LOG.fatal("WARN: Nharu library version diferent from JAR version.");
+			}
+		}
+		catch (final Exception f)
+		{
+			if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_LOAD_SO, f);
+			UnsatisfiedLinkError g = new UnsatisfiedLinkError(ERROR_LOAD_SO + f.getMessage());
+			g.initCause(f);
+			throw g;
+		}
+		catch(final UnsatisfiedLinkError f)
+		{
+			if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_LOAD_SO, f);
+			throw f;
+		}
+		new Thread(new Jason()).start();
+	}
+	public static boolean mayGenerateRandom()
+	{
+		if (!RAND_INITED)
+		{
+			synchronized(FLEECE)
+			{
+				while (!RAND_INITED)
 				{
-					LOG.fatal("WARN: Nharu library version diferent from JAR version.");
+					try { FLEECE.wait(); }
+					catch (InterruptedException e) {}
 				}
 			}
-			catch (final Exception f)
-			{
-				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_LOAD_SO, f);
-				UnsatisfiedLinkError g = new UnsatisfiedLinkError(ERROR_LOAD_SO + f.getMessage());
-				g.initCause(f);
-				throw g;
-			}
-			catch(final UnsatisfiedLinkError f)
-			{
-				if (LOG_LEVEL < LOG_LEVEL_NONE) LOG.fatal(ERROR_LOAD_SO, f);
-				throw f;
-			}
-			// TODO: Must refactor this initialization
-		nharuInitPRNG();
+		}
+		return RAND_INITED;
 	}
 	public static boolean isLoaded() { return true; }
 
