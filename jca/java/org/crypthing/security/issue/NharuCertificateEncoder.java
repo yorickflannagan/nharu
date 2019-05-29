@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 
@@ -103,12 +102,12 @@ public class NharuCertificateEncoder
 	 */
 	public void releaseObject()
 	{
-		if (hHandle != 0) nhceReleaseCertificageEncoder(hHandle);
+		if (hHandle != 0) nhceReleaseCertificateEncoder(hHandle);
 		hHandle = 0;
 	}
 
 	private static native long nhceNewCertificateEncoder();
-	private static native void nhceReleaseCertificageEncoder(long handle);
+	private static native void nhceReleaseCertificateEncoder(long handle);
 	private static native void nhceSetVersion(long handle, int value) throws ParameterException;
 	private static native void nhceSetSerial(long handle, byte[] value) throws ParameterException;
 	private static native void nhceSetSignatureAlgorithm(long handle, int[] value) throws ParameterException;

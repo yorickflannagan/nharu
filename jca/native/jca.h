@@ -84,7 +84,8 @@
 #define J_TBS_PUT_ERROR			"Could not set Certificate field due to encoding error"
 #define J_INVALID_ARG_ERROR		"Invalid argument"
 #define J_SIGN_CERT_ERROR		"Could not sign TBSCertificate"
-#define J_CERT_ENCODING_ERROR		"Could not encode certificate structure"
+#define J_CERT_ENCODING_ERROR		"Could not encode X.509 structure"
+#define J_KEY_GEN_ERROR			"Could not generate RSA key pair"
 
 #define J_NATIVE_EX			"java/lang/Error"
 #define J_RUNTIME_EX			"java/lang/RuntimeException"
@@ -106,7 +107,8 @@
 #define J_CMS_DECRYPT_EX		"org/crypthing/security/cms/CMSDecryptException"
 #define J_CMS_ENCRYPT_EX		"org/crypthing/security/cms/CMSEncryptException"
 #define J_CERT_ENCODING_EX		"org/crypthing/security/EncodingException"
-#define J_ILLEGAL_ARG_EX		"java;lang/IllegalArgumentException"
+#define J_ILLEGAL_ARG_EX		"java/lang/IllegalArgumentException"
+#define J_GENERAL_SECURITY_EX		"java/security/GeneralSecurityException"
 
 
 #define JRUNTIME_ERROR			(NH_VENDOR_DEFINED_ERROR + 1)	/* NH_RV that means could not instantiate Java object */
@@ -127,6 +129,13 @@ typedef struct JNH_RSA_CALLBACK_STR
 	jclass				clazz;
 
 } JNH_RSA_CALLBACK_STR, *JNH_RSA_CALLBACK;
+
+typedef struct JRSA_KEYPAIR_HANDLER_STR
+{
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+
+} JRSA_KEYPAIR_HANDLER_STR, *JRSA_KEYPAIR_HANDLER;
 
 
 
@@ -290,6 +299,37 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_leakageStop(JNIEnv *, jclass);
+
+/*
+ * Class:     org_crypthing_security_NharuRSAKeyPairGenerator
+ * Method:    nharuSeedPRNG
+ * Signature: ([B)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuSeedPRNG(JNIEnv*, jclass, jbyteArray);
+/*
+ * Class:     org_crypthing_security_NharuRSAKeyPairGenerator
+ * Method:    nharuGenerateRSAKeys
+ * Signature: (IJ)J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGenerateRSAKeys(JNIEnv*, jclass, jint, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAKeyPairGenerator
+ * Method:    nharuReleaseRSAKeys
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuReleaseRSAKeys(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAKeyPairGenerator
+ * Method:    nharuGetPrivateKey
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGetPrivateKey(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_NharuRSAKeyPairGenerator
+ * Method:    nharuGetPublicKey
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGetPublicKey(JNIEnv*, jclass, jlong);
 
 
 #ifdef __cplusplus

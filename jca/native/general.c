@@ -679,3 +679,126 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_provider_NharuProvider_leakag
 	printf("Debug stop only\n");
 #endif
 }
+
+
+/** ****************************
+ *  RSA key pair operations
+ *  ****************************/
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuSeedPRNG(JNIEnv *env, _UNUSED_ jclass ignored, jbyteArray seed)
+{
+	jsize len;
+	jbyte *buffer;
+	NH_RV rv;
+	NH_NOISE_HANDLER hNoise;
+
+	len = (*env)->GetArrayLength(env, seed);
+	if ((buffer = (*env)->GetByteArrayElements(env, seed, NULL)))
+	{
+		if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise)))
+		{
+			hNoise->seed((unsigned char*) buffer, len);
+			NH_release_noise_device(hNoise);
+		}
+		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+		(*env)->ReleaseByteArrayElements(env, seed, buffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGenerateRSAKeys(JNIEnv *env, _UNUSED_ jclass ignored, jint bits, jlong e)
+{
+	jlong ret = 0L;
+	NH_RV rv;
+	JRSA_KEYPAIR_HANDLER hHandler;
+
+	if ((hHandler = (JRSA_KEYPAIR_HANDLER) malloc(sizeof(JRSA_KEYPAIR_HANDLER_STR))))
+	{
+		if (NH_SUCCESS(rv = NH_generate_RSA_keys(bits, e, &hHandler->hPubKey, &hHandler->hPrivKey))) ret = (jlong) hHandler;
+		else { free(hHandler); throw_new(env, J_GENERAL_SECURITY_EX, J_KEY_GEN_ERROR, rv); }
+	}
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
+	return ret;
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuReleaseRSAKeys(_UNUSED_ JNIEnv *env, _UNUSED_ jclass ignored, jlong handle)
+{
+	JRSA_KEYPAIR_HANDLER hHandler = (JRSA_KEYPAIR_HANDLER) handle;
+	if (hHandler)
+	{
+		NH_release_RSA_pubkey_handler(hHandler->hPubKey);
+		NH_release_RSA_privkey_handler(hHandler->hPrivKey);
+		free(hHandler);
+	}
+}
+static NH_NODE_WAY __root_map[] = {{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 }};
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGetPrivateKey(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle)
+{
+	jbyteArray ret = NULL;
+	NH_RV rv;
+	JRSA_KEYPAIR_HANDLER hHandler = (JRSA_KEYPAIR_HANDLER) handle;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	NH_ASN1_PNODE node;
+	size_t ulKeySize;
+	unsigned char *pKey;
+
+	if (NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hEncoder)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hEncoder->chart(hEncoder, __root_map, 1, &node)) &&
+			NH_SUCCESS(rv = hHandler->hPrivKey->to_privkey_info(hHandler->hPrivKey, hEncoder, NH_PARSE_ROOT)) &&
+			NH_SUCCESS(rv = (ulKeySize = hEncoder->encoded_size(hEncoder, hEncoder->root)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+			NH_SUCCESS(rv = (pKey = (unsigned char*) malloc(ulKeySize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pKey)))
+			{
+				if (!(ret = (*env)->NewByteArray(env, ulKeySize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, ulKeySize, (jbyte*) pKey);
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+			free(pKey);
+		}
+		else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+		NH_release_encoder(hEncoder);
+	}
+	else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+	return ret;
+}
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGetPublicKey(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle)
+{
+	jbyteArray ret = NULL;
+	NH_RV rv;
+	JRSA_KEYPAIR_HANDLER hHandler = (JRSA_KEYPAIR_HANDLER) handle;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	NH_ASN1_PNODE node;
+	size_t ulKeySize;
+	unsigned char *pKey;
+
+	if (NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hEncoder)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hEncoder->chart(hEncoder, __root_map, 1, &node)) &&
+			NH_SUCCESS(rv = hHandler->hPubKey->encode_info(hHandler->hPubKey, hEncoder, NH_PARSE_ROOT)) &&
+			NH_SUCCESS(rv = (ulKeySize = hEncoder->encoded_size(hEncoder, hEncoder->root)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+			NH_SUCCESS(rv = (pKey = (unsigned char*) malloc(ulKeySize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pKey)))
+			{
+				if (!(ret = (*env)->NewByteArray(env, ulKeySize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, ulKeySize, (jbyte*) pKey);
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+			free(pKey);
+		}
+		else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+		NH_release_encoder(hEncoder);
+	}
+	else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+	return ret;
+}

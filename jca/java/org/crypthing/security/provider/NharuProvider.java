@@ -165,6 +165,9 @@ public final class NharuProvider extends Provider
 		put("MessageDigest.SHA-384", "org.crypthing.security.provider.NharuDigest$SHA384");
 		put("MessageDigest.SHA-512", "org.crypthing.security.provider.NharuDigest$SHA512");
 
+		put("KeyPairGenerator.RSA", "org.crypthing.security.NharuRSAKeyPairGenerator");
+		put("Alg.Alias.KeyPairGenerator.1.2.840.113549.1.1", "RSA");
+		put("Alg.Alias.KeyPairGenerator.OID.1.2.840.113549.1.1", "RSA");
 	}
 
 
@@ -248,9 +251,6 @@ public final class NharuProvider extends Provider
       put("KeyFactory.RSA", "sun.security.rsa.RSAKeyFactory");
       put("Alg.Alias.KeyFactory.1.2.840.113549.1.1", "RSA");
       put("Alg.Alias.KeyFactory.OID.1.2.840.113549.1.1", "RSA");
-      put("KeyPairGenerator.RSA", "sun.security.rsa.RSAKeyPairGenerator");
-      put("Alg.Alias.KeyPairGenerator.1.2.840.113549.1.1", "RSA");
-      put("Alg.Alias.KeyPairGenerator.OID.1.2.840.113549.1.1", "RSA");
 
       put("Signature.MD2withRSA", "sun.security.rsa.RSASignature$MD2withRSA");
       put("Alg.Alias.Signature.1.2.840.113549.1.1.2", "MD2withRSA");

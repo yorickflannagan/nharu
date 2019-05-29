@@ -22,10 +22,18 @@ typedef struct JCERT_REQUEST_HANDLER_STR
 
 } JCERT_REQUEST_HANDLER_STR, *JCERT_REQUEST_HANDLER;
 
+typedef struct JNH_CERT_ENCODER_STR
+{
+	NH_TBSCERT_ENCODER	hTBS;
+	NH_CERT_ENCODER		hCert;
+
+} JNH_CERT_ENCODER_STR, *JNH_CERT_ENCODER;
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 /*
  * Class:     org_crypthing_security_issue_NharuCertificateRequest
  * Method:    nhCertParseRequest
@@ -58,27 +66,18 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCertificateR
  */
 JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest_nhCertVerify(JNIEnv*, jclass, jlong);
 
-
-
-typedef struct JNH_CERT_ENCODER_STR
-{
-	NH_TBSCERT_ENCODER	hTBS;
-	NH_CERT_ENCODER		hCert;
-
-} JNH_CERT_ENCODER_STR, *JNH_CERT_ENCODER;
 /*
  * Class:     org_crypthing_security_issue_NharuCertificateEncoder
  * Method:    nhceNewCertificateEncoder
  * Signature: ()J
  */
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceNewCertificateEncoder(JNIEnv*, jclass);
-
 /*
  * Class:     org_crypthing_security_issue_NharuCertificateEncoder
- * Method:    nhceReleaseCertificageEncoder
+ * Method:    nhceReleaseCertificateEncoder
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceReleaseCertificageEncoder(JNIEnv*, jclass, jlong);
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceReleaseCertificateEncoder(JNIEnv*, jclass, jlong);
 /*
  * Class:     org_crypthing_security_issue_NharuCertificateEncoder
  * Method:    nhceSetVersion
@@ -169,6 +168,32 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateEncoder
  * Signature: (J)[B
  */
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceEncode(JNIEnv*, jclass, jlong);
+
+
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequestBuilder
+ * Method:    nhceNewRequestBuilder
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceNewRequestBuilder(JNIEnv*, jclass);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequestBuilder
+ * Method:    nhceReleaseRequestBuilder
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceReleaseRequestBuilder(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequestBuilder
+ * Method:    nhceSetSubject
+ * Signature: (J[Lorg/crypthing/security/NharuX500Name;)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSetSubject(JNIEnv*, jclass, jlong, jobjectArray);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequestBuilder
+ * Method:    nhceSetPubKey
+ * Signature: (J[B)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSetPubKey(JNIEnv*, jclass, jlong, jbyteArray);
 
 
 #ifdef __cplusplus

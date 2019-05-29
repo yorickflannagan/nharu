@@ -60,10 +60,8 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_parse_pubkey();
 	if (NH_SUCCESS(rv)) rv = test_sign_certificate();
 	if (NH_SUCCESS(rv)) rv = test_create_request();
-
-	test_encode_p8();
+	if (NH_SUCCESS(rv)) rv = test_encode_p8();
 	printf("%s\n", "Test done");
-
 	return rv;
 }
 

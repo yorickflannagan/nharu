@@ -589,19 +589,75 @@ int test_encode_p8()
 {
 	NH_RV rv;
 	NH_RSA_PUBKEY_HANDLER hPubKey;
-	NH_RSA_PRIVKEY_HANDLER hPrivKey;
+	NH_RSA_PRIVKEY_HANDLER hPrivKey, hKey;
 	NH_ASN1_ENCODER_HANDLE hEncoder;
 	NH_ASN1_PNODE node;
+	size_t ulKeySize, ulRequestSize;
+	unsigned char *pKey, *pRequest;
+	NH_CREQUEST_ENCODER hRequest;
+	NH_NAME pSubject[1];
+	NH_NAME_STR pCN = { &pCN_OID, "Subject distinguished name" };
+	NH_CREQUEST_PARSER hParser;
+
+	printf("%s", "Testing certificate request signing and PKCS#8 encoding... ");
+	pSubject[0] = &pCN;
 	if (NH_SUCCESS(rv = NH_generate_RSA_keys(2048, 65537, &hPubKey, &hPrivKey)))
 	{
 		if (NH_SUCCESS(rv = NH_new_encoder(16, 4096, &hEncoder)))
 		{
-			rv = hEncoder->chart(hEncoder, __p8_map, 1, &node);
-			rv = hPrivKey->to_privkey_info(hPrivKey, hEncoder, NH_PARSE_ROOT);
+			if
+			(
+				NH_SUCCESS(rv = hEncoder->chart(hEncoder, __p8_map, 1, &node)) &&
+				NH_SUCCESS(rv = hPrivKey->to_privkey_info(hPrivKey, hEncoder, NH_PARSE_ROOT)) &&
+				NH_SUCCESS(rv = (ulKeySize = hEncoder->encoded_size(hEncoder, hEncoder->root)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+				NH_SUCCESS(rv = (pKey = (unsigned char*) malloc(ulKeySize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				if
+				(
+					NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pKey)) &&
+					NH_SUCCESS(rv = NH_new_RSA_privkey_handler(&hKey))
+				)
+				{
+					if
+					(
+						NH_SUCCESS(rv = hKey->from_privkey_info(hKey, pKey, ulKeySize)) &&
+						NH_SUCCESS(rv = NH_new_certificate_request(&hRequest))
+					)
+					{
+						if
+						(
+							NH_SUCCESS(rv = hRequest->put_version(hRequest, 0)) &&
+							NH_SUCCESS(rv = hRequest->put_subject(hRequest, pSubject, 1)) &&
+							NH_SUCCESS(rv = hRequest->put_pubkey(hRequest, hPubKey)) &&
+							NH_SUCCESS(rv = hRequest->sign(hRequest, CKM_SHA256_RSA_PKCS, signature_callback, hKey)) &&
+							NH_SUCCESS(rv = hRequest->encode(hRequest, NULL, &ulRequestSize)) &&
+							NH_SUCCESS(rv = (pRequest = (unsigned char*) malloc(ulRequestSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+						)
+						{
+							if
+							(
+								NH_SUCCESS(rv = hRequest->encode(hRequest, pRequest, &ulRequestSize)) &&
+								NH_SUCCESS(rv = NH_parse_cert_request(pRequest, ulRequestSize, &hParser))
+							)
+							{
+								rv = hParser->verify(hParser);
+								NH_release_cert_request(hParser);
+							}
+							free(pRequest);
+						}
+						NH_delete_certificate_request(hRequest);
+					}
+					NH_release_RSA_privkey_handler(hKey);
+				}
+				free(pKey);
+			}
 			NH_release_encoder(hEncoder);
 		}
 		NH_release_RSA_pubkey_handler(hPubKey);
 		NH_release_RSA_privkey_handler(hPrivKey);
 	}
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
