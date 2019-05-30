@@ -46,9 +46,6 @@ else
 CFLAGS      += -ggdb3 -D_DEBUG -D_DEBUG_ -O0
 MAVEN_ARGS  += -D log.level=LOG_LEVEL_TRACE
 endif
-ifneq ($(_FIPS_),)
-CFLAGS      += -D_FIPS_
-endif
 ARFLAGS      = -r -s
 LDFLAGS      = -static-libgcc -Xlinker -z -Xlinker defs -fPIC
 

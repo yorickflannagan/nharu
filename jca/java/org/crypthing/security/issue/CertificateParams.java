@@ -934,7 +934,7 @@ public class CertificateParams
 		for (int i = 0; i < hex.length(); i += 2) out[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
 		return out;
 	}
-	private NharuX500Name[] parseName(final String name)
+	static NharuX500Name[] parseName(final String name)
 	{
 		if (name == null) throw new NullPointerException();
 		final String[] parts = name.split(",");

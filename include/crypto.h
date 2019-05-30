@@ -1068,6 +1068,7 @@ struct NH_RSA_PUBKEY_HANDLER_STR
 	NH_PUBK_VFY_FUNCTION	verify;		/* Verifies specified signature */
 	NH_PUBK_CIP_FUNCTION	encrypt;		/* Encrypts (generally wraps a key) specified contens */
 	NH_PUBK_ECD_FUNCTION	encode;		/* Encodes this key to DER format */
+	NH_PUBK_ECD_FUNCTION	encode_info;
 	NH_PUBK_DCD_FUNCTION	decode;		/* Decodes this key from DER format */
 	NH_PUBK_IMP_FUNCTION	create;		/* Imports an RSA publick key */
 	NH_PUBK_CLO_FUNCTION	clone;		/* Clones this object */
@@ -1335,6 +1336,7 @@ typedef NH_METHOD(size_t, NH_PRVK_SIZ_FUNCTION)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR*
  */
 typedef NH_METHOD(NH_RV, NH_PRVK_P8_FUNCTION)(_INOUT_ NH_RSA_PRIVKEY_HANDLER_STR*, _IN_ unsigned char*, _IN_ size_t);
 
+typedef NH_METHOD(NH_RV, NH_PRVK_TOP8_FUNCTION)(_IN_ NH_RSA_PRIVKEY_HANDLER_STR*, _INOUT_ NH_ASN1_ENCODER_HANDLE, _IN_ unsigned int);
 
 /*
  ****s* Crypto/NH_RSA_PRIVKEY_HANDLER
@@ -1358,6 +1360,7 @@ struct NH_RSA_PRIVKEY_HANDLER_STR
 	NH_PRVK_CLO_FUNCTION	clone;		/* Clones this object */
 	NH_PRVK_SIZ_FUNCTION	obj_size;		/* Gets this object size */
 	NH_PRVK_P8_FUNCTION	from_privkey_info;/* Imports an RSA private key from a DER encoded PrivateKeyInfo */
+	NH_PRVK_TOP8_FUNCTION	to_privkey_info;
 };
 typedef NH_RSA_PRIVKEY_HANDLER_STR*			NH_RSA_PRIVKEY_HANDLER;
 /* ****** */
@@ -1833,6 +1836,10 @@ EXTERN unsigned int aes192_cbc_oid[];
 EXTERN unsigned int aes256_cbc_oid[];
 #define AES256_CBC_OID_COUNT			9
 
+EXTERN NH_NODE_WAY pkix_pubkey_map[];
+#define PKIX_PUBKEY_MAP_COUT			3
+EXTERN NH_NODE_WAY pkix_rsa_pubkey[];
+#define PKIX_RSAPUBKEY_MAP_COUNT		3
 
 /* Unsupported. Used only for Java compatibility */
 EXTERN unsigned int dsa_oid[];

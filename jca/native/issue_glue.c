@@ -138,7 +138,7 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceNewCertificateEnco
 	return ret;
 }
 JNIEXPORT void JNICALL
-Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceReleaseCertificageEncoder
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceReleaseCertificateEncoder
 (
 	_UNUSED_ JNIEnv *env,
 	_UNUSED_ jclass ignored,
@@ -277,12 +277,18 @@ static jboolean __get_name(JNIEnv *env, jobject jName, NH_NAME name)
 	}
 	return ret;
 }
-static void __set_names(JNIEnv *env, NH_TBSCERT_ENCODER hHandler, jobjectArray value, NH_TBS_SETNAME function)
+#define CERT_PUT_ISSUER			1
+#define CERT_PUT_SUBJECT		2
+#define REQUEST_PUT_SUBJECT		3
+#define CERT_SUBJECT_ALT_NAME		4
+static void __put_names(JNIEnv *env, jobjectArray value, void *__handler, int __type)
 {
 	NH_RV rv;
 	jsize len, i = 0;
 	NH_NAME *name = NULL;
 	jboolean ok = JNI_TRUE;
+
+	
 
 	len = (*env)->GetArrayLength(env, value);
 	if (NH_SUCCESS(rv = (name = (NH_NAME*) malloc(len * sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
@@ -292,12 +298,31 @@ static void __set_names(JNIEnv *env, NH_TBSCERT_ENCODER hHandler, jobjectArray v
 		{
 			if (NH_SUCCESS(rv = (name[i] = (NH_NAME) malloc(sizeof(NH_NAME_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 			{
-				memset(name[i], 0,sizeof(NH_NAME_STR));
+				memset(name[i], 0, sizeof(NH_NAME_STR));
 				ok = __get_name(env, (*env)->GetObjectArrayElement(env, value, i), name[i]);
 				i++;
 			}
 		}
-		if (NH_SUCCESS(rv) && ok) if (NH_FAIL(rv = function(hHandler, name, len))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		if (NH_SUCCESS(rv) && ok)
+		{
+			switch (__type)
+			{
+			case CERT_PUT_ISSUER:
+				rv = ((NH_TBSCERT_ENCODER) __handler)->put_issuer((NH_TBSCERT_ENCODER) __handler, name, len);
+				break;
+			case CERT_PUT_SUBJECT:
+				rv = ((NH_TBSCERT_ENCODER) __handler)->put_subject((NH_TBSCERT_ENCODER) __handler, name, len);
+				break;
+			case REQUEST_PUT_SUBJECT:
+				rv = ((NH_CREQUEST_ENCODER) __handler)->put_subject((NH_CREQUEST_ENCODER) __handler, name, len);
+				break;
+			case CERT_SUBJECT_ALT_NAME:
+				rv = ((NH_TBSCERT_ENCODER) __handler)->put_subject_altname((NH_TBSCERT_ENCODER) __handler, name, len);
+				break;
+			default: rv = NH_INVALID_ARG;
+			}
+			if (NH_FAIL(rv)) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		}
 		for (i = 0; i < len; i++)
 		{
 			if (name[i])
@@ -324,8 +349,7 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetIssuer
 	jobjectArray value
 )
 {
-	NH_TBSCERT_ENCODER hHandler = ((JNH_CERT_ENCODER) handle)->hTBS;
-	__set_names(env, hHandler, value, hHandler->put_issuer);
+	__put_names(env, value, ((JNH_CERT_ENCODER) handle)->hTBS, CERT_PUT_ISSUER);
 }
 JNIEXPORT void JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSubject
@@ -336,8 +360,7 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSubject
 	jobjectArray value
 )
 {
-	NH_TBSCERT_ENCODER hHandler = ((JNH_CERT_ENCODER) handle)->hTBS;
-	__set_names(env, hHandler, value, hHandler->put_subject);
+	__put_names(env, value, ((JNH_CERT_ENCODER) handle)->hTBS, CERT_PUT_SUBJECT);
 }
 JNIEXPORT void JNICALL 
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetValidity
@@ -429,8 +452,7 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSubjectAltName
 	jobjectArray value
 )
 {
-	NH_TBSCERT_ENCODER hHandler = ((JNH_CERT_ENCODER) handle)->hTBS;
-	__set_names(env, hHandler, value, hHandler->put_subject_altname);
+	__put_names(env, value, ((JNH_CERT_ENCODER) handle)->hTBS, CERT_SUBJECT_ALT_NAME);
 }
 JNIEXPORT void JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetCDP
@@ -502,20 +524,13 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSKI
 {
 	__set_octets(env, handle, value, ((JNH_CERT_ENCODER) handle)->hTBS->put_ski);
 }
-JNIEXPORT void JNICALL
-Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSign
-(
-	JNIEnv *env,
-	_UNUSED_ jclass ignored,
-	jlong handle,
-	jint mechanism,
-	jobject signer
-)
+#define SIGN_CERTIFICATE			1
+#define SIGN_REQUEST				2
+static void __sign(JNIEnv *env, jint mechanism, jobject signer, void *__handler, int __type)
 {
 	NH_RV rv;
 	const char *algorithm;
 	JNH_RSA_CALLBACK_STR params;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
 
 	switch (mechanism)
 	{
@@ -546,10 +561,57 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSign
 	{
 		params.env = env;
 		params.iface = signer;
-		rv = hHandler->hCert->sign(hHandler->hCert, hHandler->hTBS, mechanism, sign_callback, &params);
+		switch (__type)
+		{
+		case SIGN_CERTIFICATE:
+			rv = ((JNH_CERT_ENCODER) __handler)->hCert->sign(((JNH_CERT_ENCODER) __handler)->hCert, ((JNH_CERT_ENCODER) __handler)->hTBS, mechanism, sign_callback, &params);
+			break;
+		case SIGN_REQUEST:
+			rv = ((NH_CREQUEST_ENCODER) __handler)->sign((NH_CREQUEST_ENCODER) __handler, mechanism, sign_callback, &params);
+			break;
+		default: rv = NH_INVALID_ARG;
+		}
 		if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGN_CERT_ERROR, rv);
 	}
 	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+}
+
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSign
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jint mechanism,
+	jobject signer
+)
+{
+	__sign(env, mechanism, signer, (JNH_CERT_ENCODER) handle, SIGN_CERTIFICATE);
+}
+
+static jbyteArray __encode(JNIEnv *env, NH_ASN1_ENCODER_HANDLE hEncoder)
+{
+	NH_RV rv;
+	size_t size;
+	unsigned char *pBuffer;
+	jbyteArray ret = NULL;
+
+	if ((size = hEncoder->encoded_size(hEncoder, hEncoder->root)))
+	{
+		if (NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+		{
+			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pBuffer)))
+			{
+				if (!(ret = (*env)->NewByteArray(env, size))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) pBuffer);
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+			free(pBuffer);
+		}
+		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	}
+	else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, 0);
+	return ret;
 }
 JNIEXPORT jbyteArray JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceEncode
@@ -559,23 +621,110 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceEncode
 	jlong handle
 )
 {
+	return __encode(env, ((JNH_CERT_ENCODER) handle)->hCert->hEncoder);
+}
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceNewRequestBuilder(JNIEnv *env, _UNUSED_ jclass ignored)
+{
+	jlong ret = 0L;
 	NH_RV rv;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-	size_t size;
-	unsigned char *pBuffer;
-	jbyteArray ret = NULL;
+	NH_CREQUEST_ENCODER hRequest;
 
-	size = hHandler->hCert->hEncoder->encoded_size(hHandler->hCert->hEncoder, hHandler->hCert->hEncoder->root);
-	if (NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	if (NH_SUCCESS(rv = NH_new_certificate_request(&hRequest)))
 	{
-		if
-		(
-			NH_SUCCESS(rv = hHandler->hCert->hEncoder->encode(hHandler->hCert->hEncoder, hHandler->hCert->hEncoder->root, pBuffer)) &&
-			NH_SUCCESS(rv = (ret = (*env)->NewByteArray(env, size)) ? NH_OK : JRUNTIME_ERROR)
-		)	(*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) pBuffer);
-		else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
-		free(pBuffer);
+		if (NH_SUCCESS(rv = hRequest->put_version(hRequest, 0))) ret = (jlong) hRequest;
+		else { NH_delete_certificate_request(hRequest); throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv); }
 	}
 	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
 	return ret;
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceReleaseRequestBuilder
+(
+	_UNUSED_ JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	NH_delete_certificate_request((NH_CREQUEST_ENCODER) handle);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSetSubject
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jobjectArray name
+)
+{
+	__put_names(env, name, (NH_CREQUEST_ENCODER) handle, REQUEST_PUT_SUBJECT);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSetPubKey
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jbyteArray encoding
+)
+{
+	NH_RV rv;
+	NH_CREQUEST_ENCODER hRequest = (NH_CREQUEST_ENCODER) handle;
+
+	jsize len;
+	jbyte *jbuffer;
+	NHIX_PUBLIC_KEY hPubKeyInfo;
+	NH_ASN1_PNODE nNode, eNode;
+	NH_BIG_INTEGER n = { NULL, 0 }, e = { NULL, 0 };
+	NH_RSA_PUBKEY_HANDLER hPubKey;
+
+	len = (*env)->GetArrayLength(env, encoding);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, encoding, NULL)))
+	{
+		if (NH_SUCCESS(rv = NHIX_pubkey_parser((unsigned char*) jbuffer, len, &hPubKeyInfo)))
+		{
+			if
+			(
+				(nNode = hPubKeyInfo->hParser->sail(hPubKeyInfo->pubkey, NH_PARSE_SOUTH | 2)) &&
+				(eNode = hPubKeyInfo->hParser->sail(hPubKeyInfo->pubkey, ((NH_PARSE_SOUTH | 2) << 8) | NH_SAIL_SKIP_EAST)) &&
+				NH_SUCCESS(rv = NH_new_RSA_pubkey_handler(&hPubKey))
+			)
+			{
+				n.data = nNode->value;
+				n.length = nNode->valuelen;
+				e.data = eNode->value;
+				e.length = eNode->valuelen;
+				if (NH_SUCCESS(rv = hPubKey->create(hPubKey, &n, &e))) rv = hRequest->put_pubkey(hRequest, hPubKey);
+				if (NH_FAIL(rv)) throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, 0);
+				NH_release_RSA_pubkey_handler(hPubKey);
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, 0);
+			NHIX_release_pubkey(hPubKeyInfo);
+		}
+		else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSignRequest
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jint mechanism,
+	jobject signer
+)
+{
+	__sign(env, mechanism, signer, (NH_CREQUEST_ENCODER) handle, SIGN_REQUEST);
+}
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceEncodeRequest
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	return __encode(env, ((NH_CREQUEST_ENCODER) handle)->hRequest);
 }

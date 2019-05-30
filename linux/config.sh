@@ -34,7 +34,6 @@
 #	if [ -d "$(BUILD_TARGET)/include/pkcs11" ]; then rm -f -R "$(BUILD_TARGET)/include/pkcs11"; fi;      \
 #	if [ -d "$(BUILD_TARGET)/lib" ]; then rm -f -R "$(BUILD_TARGET)/lib"; fi;                            \
 #	Warn: under debug must specify -D_DEBUG_
-#	Warn: under fips must specify -D_FIPS_
 
 isContained() { [ -z "${2##*$1*}" ]; }
 error() { printf "%s\n" "$1"; exit 1; }

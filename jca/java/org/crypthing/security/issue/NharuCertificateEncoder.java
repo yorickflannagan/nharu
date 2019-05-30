@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
-import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
 
@@ -103,12 +102,12 @@ public class NharuCertificateEncoder
 	 */
 	public void releaseObject()
 	{
-		if (hHandle != 0) nhceReleaseCertificageEncoder(hHandle);
+		if (hHandle != 0) nhceReleaseCertificateEncoder(hHandle);
 		hHandle = 0;
 	}
 
 	private static native long nhceNewCertificateEncoder();
-	private static native void nhceReleaseCertificageEncoder(long handle);
+	private static native void nhceReleaseCertificateEncoder(long handle);
 	private static native void nhceSetVersion(long handle, int value) throws ParameterException;
 	private static native void nhceSetSerial(long handle, byte[] value) throws ParameterException;
 	private static native void nhceSetSignatureAlgorithm(long handle, int[] value) throws ParameterException;
@@ -152,7 +151,8 @@ public class NharuCertificateEncoder
 		+ "aC42Wz8pxODn2go2FjsAoEywhQSBmOAL1tCOYLzaTzdY43CAhYxzLlh6Ykl+ug/S\n"
 		+ "TshTApAu53e+NnC5d6pmGsEwGbyh+oYVo1zahUS9iwtb0K9nvnk3NZti7HMgxq1r\n"
 		+ "HNfej9EFvlm9TfktaaQOnTEhRHPDLmb5FuGFmZkaQWkDrUU/ikT3J+vCmRCV+Fl4\n"
-		+ "fASwi3itqEIwQES/JyJTTAiEToGPf7j5bWbrPy1yZNh0iA==\n" + "-----END CERTIFICATE-----";
+		+ "fASwi3itqEIwQES/JyJTTAiEToGPf7j5bWbrPy1yZNh0iA==\n" 
+		+ "-----END CERTIFICATE-----";
 	static final byte[] CA_KEY =
 	{
 		(byte) 0x30, (byte) 0x82, (byte) 0x04, (byte) 0xbd, (byte) 0x02, (byte) 0x01,

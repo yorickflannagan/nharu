@@ -329,12 +329,6 @@ INLINE NH_UTILITY(NH_RV, NHIX_parse_general_names)(_IN_ NH_ASN1_PARSER_HANDLE hP
 }
 
 
-static NH_NODE_WAY pkix_rsa_pubkey[] =
-{
-	{ NH_PARSE_ROOT, NH_ASN1_SEQUENCE, NULL, 0 },
-	{ NH_SAIL_SKIP_SOUTH, NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT, NULL, 0 },
-	{ NH_SAIL_SKIP_EAST, NH_ASN1_INTEGER, NULL, 0 }
-};
 #if defined(_MSC_VER)
 EXTERN
 #endif
@@ -356,7 +350,7 @@ INLINE NH_UTILITY(NH_RV, NHIX_parse_pubkey)(_IN_ NH_ASN1_PARSER_HANDLE hParser, 
 	switch (key)
 	{
 	case CKM_RSA_PKCS_KEY_PAIR_GEN:
-		if (NH_FAIL(rv = hParser->map_from(hParser, keynode, pkix_rsa_pubkey, ASN_NODE_WAY_COUNT(pkix_rsa_pubkey)))) return rv;
+		if (NH_FAIL(rv = hParser->map_from(hParser, keynode, pkix_rsa_pubkey, PKIX_RSAPUBKEY_MAP_COUNT))) return rv;
 		if (!(node = keynode->child)) return NH_CANNOT_SAIL;
 		if (NH_FAIL(rv = hParser->parse_integer(node))) return rv;
 		if (!(node = node->next)) return NH_CANNOT_SAIL;
@@ -489,27 +483,6 @@ NH_UTILITY(NH_RV, NHIX_verify_signature)
  * @brief Public Key Parsing
  * 
  */
-NH_NODE_WAY __pubkey_map[] =
-{
-	{
-		NH_PARSE_ROOT,
-		NH_ASN1_SEQUENCE,
-		NULL,
-		0
-	},
-	{	/* algorithm */
-		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_SEQUENCE,
-		pkix_algid_map,
-		PKIX_ALGID_COUNT
-	},
-	{	/* subjectPublicKey */
-		NH_SAIL_SKIP_EAST,
-		NH_ASN1_BIT_STRING,
-		NULL,
-		0
-	}
-};
 NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char *pBuffer, _IN_ size_t ulBuflen, _OUT_ NHIX_PUBLIC_KEY *hHandler)
 {
 	NH_RV rv;
@@ -518,7 +491,7 @@ NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char *pBuffer, _IN_ size_t 
 	NHIX_PUBLIC_KEY hOut;
 
 	if (NH_FAIL(rv = NH_new_parser(pBuffer, ulBuflen, 12, 1024, &hParser))) return rv;
-	rv = hParser->map(hParser, __pubkey_map, ASN_NODE_WAY_COUNT(__pubkey_map));
+	rv = hParser->map(hParser, pkix_pubkey_map, PKIX_PUBKEY_MAP_COUT);
 	if (NH_SUCCESS(rv)) rv = NHIX_parse_pubkey(hParser, hParser->root);
 	if (NH_SUCCESS(rv)) rv = (algorithm = hParser->sail(hParser->root, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL;
 	if (NH_SUCCESS(rv)) rv = (pubkey  = hParser->sail(hParser->root, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL;

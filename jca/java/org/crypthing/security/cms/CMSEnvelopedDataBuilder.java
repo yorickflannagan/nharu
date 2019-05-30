@@ -51,7 +51,7 @@ public final class CMSEnvelopedDataBuilder
 	public void encrypt(final String keyGenAlgortihm, final int keySize, final String cipherAlgorithm) throws CMSEncryptException, NoSuchAlgorithmException
 	{
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
-		nhcmsEncrypt(hHandle, NharuCommon.getAlgorithmConstant(keyGenAlgortihm), keySize, NharuCommon.getAlgorithmConstant(cipherAlgorithm));
+		if (NharuProvider.mayGenerateRandom()) nhcmsEncrypt(hHandle, NharuCommon.getAlgorithmConstant(keyGenAlgortihm), keySize, NharuCommon.getAlgorithmConstant(cipherAlgorithm));
 	}
 
 	/**
