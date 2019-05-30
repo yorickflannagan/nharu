@@ -50,7 +50,7 @@ IF DEFINED --build (
 :: MS NMAKE environment
 CALL "%_VS_INSTALL_PATH%\VC\Auxiliary\Build\vcvarsamd64_x86.bat"
 IF "%_ADD_PATH%" NEQ "" (
-	SET "PATH=%PATH%;%_ADD_PATH%"
+	SET "PATH=%_ADD_PATH%;%PATH%"
 )
 
 :: Nharu environment
