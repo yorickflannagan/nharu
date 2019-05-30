@@ -9,7 +9,7 @@ OPENSSL      = __OPENSSL__
 IDN          = __IDN__
 DLA_LIB      = __DLA_LIB__
 JAVA_HOME    = __JAVA_HOME__
-VERSION      = __VERSION__
+VERSION      = $(shell git describe)
 JCA_BIN      = __JCA_BIN__
 JCA_DIST     = __JCA_DIST__
 
@@ -36,7 +36,7 @@ TST_OBJS     = $(patsubst $(TST_SRCDIR)/%.c,$(TST_OBJDIR)/%.o,$(TST_SRCS))
 VPATH        = $(LIB_SRCDIR) : $(JCA_SRCDIR) : $(TST_SRCDIR)
 FILES        = $(LIB_SRCS) $(JCA_SRCS) $(TST_SRCS)
 ALL_INCLUDES = $(LIB_INCLUDES) $(JCA_INCLUDES) $(TST_INCLUDES)
-MAVEN_ARGS   = -D install.dir=$(JCA_DIST) -D bin.dir=$(JCA_BIN) -D jar.version=$(VERSION)
+MAVEN_ARGS   = -D install.dir=$(JCA_DIST) -D bin.dir=$(JCA_BIN) -D jar.version=$(VERSION) -D jdk.home=$(JAVA_HOME)
 
 CFLAGS       = -pedantic-errors -pedantic -Wall -ansi -Winline -Wunused-parameter -pthread -fPIC
 ifeq ($(_DEBUG_),)

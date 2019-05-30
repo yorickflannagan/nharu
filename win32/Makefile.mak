@@ -104,7 +104,7 @@ JCA_HEADERS = $(LIB_HEADERS) $(JVA_HEADERS)
 JCA_INCLUDE = $(LIB_INCLUDE) $(JDK_INCLUDE) /I"$(JVA_HEADERS)"
 JCA_LIBPATH = /LIBPATH:"$(OUT)" $(SSL_LIBPATH) $(IDN_LIBPATH)
 JCA_IMPLIBS = "nharu.lib" "libidn.lib" "libcrypto.lib" "crypt32.lib" "ws2_32.lib" "kernel32.lib" "user32.lib" "gdi32.lib" "winspool.lib" "comdlg32.lib" "advapi32.lib" "shell32.lib" "ole32.lib" "oleaut32.lib" "uuid.lib" "odbc32.lib" "odbccp32.lib"
-MAVEN_ARGS  = -D install.dir=$(OUT)\java -D bin.dir=$(OBJ)\java -D jar.version=$(VERSION)
+MAVEN_ARGS  = -D install.dir=$(OUT)\java -D bin.dir=$(OBJ)\java -D jar.version=$(VERSION) -D java.home=$(JAVA_HOME)
 
 
 #

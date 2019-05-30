@@ -50,7 +50,6 @@ function jdk_7()
 function initialize()
 {
 	TARGET=linux
-	VERSION=1.3.0
 	CURRENT=$(current_dir)
 	PROJECT="$(dirname $CURRENT)"
 	DIST_DIR="$PROJECT/dist"
@@ -73,8 +72,6 @@ function initialize()
 		esac
 		case $KEY in
 			(--target) TARGET="$VALUE"
-			;;
-			(--version) VERSION="$VALUE"
 			;;
 			(--dist) DIST_DIR="$VALUE"
 			;;
@@ -268,8 +265,7 @@ while read -r line || [[ -n "$line" ]]; do
 	NEW="${NEW/\__OPENSSL__/$OPENSSL}"
 	NEW="${NEW/\__IDN__/$IDN}"
 	NEW="${NEW/\__DLA_LIB__/$DLA_LIB}"
-	NEW="${NEW/\__JAVA_HOME__/$JAVA_HOME}"
-	NEW="${NEW/\__VERSION__/$VERSION}"
+	NEW="${NEW/\__JAVA_HOME__/$JDK_7}"
 	NEW="${NEW/\__JCA_BIN__/$JCA_BIN}"
 	NEW="${NEW/\__JCA_DIST__/$JCA_DIST}"
 	printf "%s\n" $NEW>>"$CURRENT/Makefile"
@@ -277,7 +273,6 @@ done < "$CURRENT/Makefile.in"
 printf "\n"
 printf " %s\n" "Current configuration:"
 printf " %s\n" "Target                   = $TARGET"
-printf " %s\n" "Version                  = $VERSION"
 printf " %s\n" "Current folder           = $CURRENT"
 printf " %s\n" "Project folder           = $PROJECT"
 printf " %s\n" "Distribution folder      = $DIST_DIR"

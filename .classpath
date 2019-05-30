@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="bin/jca" path="jca/java">
+	<classpathentry kind="src" output="bin/java-bin" path="jca/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" output="dist/jca/test-classes" path="src/test/java">
+	<classpathentry kind="src" output="dist/java/test-classes" path="src/test/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -23,7 +23,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="dist/jca/generated-sources/annotations">
+	<classpathentry kind="src" path="dist/java/generated-sources/annotations">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -31,7 +31,7 @@
 			<attribute name="m2e-apt" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" output="dist/jca/test-classes" path="dist/jca/generated-test-sources/test-annotations">
+	<classpathentry kind="src" output="dist/java/test-classes" path="dist/java/generated-test-sources/test-annotations">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -40,5 +40,5 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="output" path="bin/jca"/>
+	<classpathentry kind="output" path="bin/java-bin"/>
 </classpath>
