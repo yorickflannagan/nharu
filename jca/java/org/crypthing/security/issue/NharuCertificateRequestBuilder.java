@@ -4,13 +4,22 @@ import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
+import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PublicKey;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.crypthing.security.EncodingException;
+import org.crypthing.security.NharuRSAKeyPairGenerator;
+import org.crypthing.security.NharuRSAPrivateKey;
+import org.crypthing.security.NharuRSAPublicKey;
 import org.crypthing.security.NharuX500Name;
 import org.crypthing.security.SignerInterface;
 import org.crypthing.security.provider.NharuProvider;
+import org.crypthing.security.x509.NharuX509Certificate;
 import org.crypthing.util.NharuCommon;
 
 public class NharuCertificateRequestBuilder
@@ -67,4 +76,69 @@ public class NharuCertificateRequestBuilder
 	private static native void nhceSetPubKey(long hHandle, byte[] encoding) throws EncodingException;
 	private static native void nhceSignRequest(long hHandle, int mechanism, SignerInterface signer) throws GeneralSecurityException;
 	private static native byte[] nhceEncodeRequest(long hHandle);
+
+
+	public static void main(String[] args)
+	{
+		System.out.println("Validating self-signed certificate issue...");
+		try
+		{
+			KeyPairGenerator keyGen = new NharuRSAKeyPairGenerator();
+			KeyPair pair = keyGen.generateKeyPair();
+			NharuRSAPublicKey pubKey = (NharuRSAPublicKey) pair.getPublic();
+			try
+			{
+				NharuRSAPrivateKey privKey = (NharuRSAPrivateKey) pair.getPrivate();
+				try
+				{
+					NharuCertificateRequestBuilder request = new NharuCertificateRequestBuilder();
+					try
+					{
+						request.setSubject("C=BR, O=PKI Brazil, OU=PKI Ruler for All Cats, CN=Common Name for All Cats Root CA");
+						request.setPublicKey(pubKey);
+						request.sign("SHA256withRSA", privKey);
+						NharuCertificateRequest toSign = NharuCertificateRequest.parse(request.getEncoded());
+						try
+						{
+							toSign.verify();
+							CertificateParams params = new CertificateParams();
+							Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+							cal.setTime(params.getNotBefore());
+							cal.add(Calendar.YEAR, 9);
+							params.setNotAfter(cal.getTime());
+							params.setKeyUsage(new boolean[] { false, false, false, false, false, true, true, false, false });
+							params.setSerial(BigInteger.ONE);
+							params.setIssuer("C=BR, O=PKI Brazil, OU=PKI Ruler for All Cats, CN=Common Name for All Cats Root CA");
+							params.setSubject(toSign.getSubject().getName());
+							params.setPublicKey(toSign.getPublicKey());
+							params.setAKI(pubKey.getKeyIdentifier());
+							params.setCDP(new String[] { "http://localhost/ac/root.crl" });
+							params.turnonBasicConstraints();
+							params.setSKI(pubKey.getKeyIdentifier());
+							NharuCertificateEncoder cert = new NharuCertificateEncoder(params, new CAProfile());
+							try
+							{
+								cert.sign("SHA256withRSA", privKey);
+								NharuX509Certificate root = new NharuX509Certificate(cert.encode());
+								try
+								{
+									root.checkValidity();
+									root.verify(pubKey);
+									System.out.println("Done!");
+								}
+								finally { root.closeHandle(); }
+							}
+							finally { cert.releaseObject(); }
+						}
+						finally { toSign.releaseObject(); }
+					}
+					catch (GeneralSecurityException e) { throw new RuntimeException(e); }
+					finally { request.release(); }
+				}
+				finally { privKey.releaseObject(); }
+			}
+			finally { pubKey.releaseObject(); }
+		}
+		catch (Exception e) { e.printStackTrace(); }
+	}
 }

@@ -194,6 +194,18 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest
  * Signature: (J[B)V
  */
 JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSetPubKey(JNIEnv*, jclass, jlong, jbyteArray);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequestBuilder
+ * Method:    nhceSignRequest
+ * Signature: (JILorg/crypthing/security/SignerInterface;)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSignRequest(JNIEnv *, jclass, jlong, jint, jobject);
+/*
+ * Class:     org_crypthing_security_issue_NharuCertificateRequestBuilder
+ * Method:    nhceEncodeRequest
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceEncodeRequest(JNIEnv*, jclass, jlong);
 
 
 #ifdef __cplusplus

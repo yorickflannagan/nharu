@@ -588,9 +588,8 @@ static NH_NODE_WAY __tbscert_map[] =
 #define __NH_PUBKEY_SET			(__NH_VERSION_SET << 6)
 #define __NH_AKI_SET			(__NH_VERSION_SET << 7)
 #define __NH_KEYUSAGE_SET		(__NH_VERSION_SET << 8)
-#define __NH_ALTNAME_SET		(__NH_VERSION_SET << 9)
-#define __NH_CDP_SET			(__NH_VERSION_SET << 10)
-#define __NH_WELLFORMED_TBS		0x07FF
+#define __NH_CDP_SET			(__NH_VERSION_SET << 9)
+#define __NH_WELLFORMED_TBS		0x03FF
 #define __PATH_TO_EXTENSIONS		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 9) << 8) | NH_SAIL_SKIP_SOUTH)
 static NH_RV __put_version(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ unsigned int uVersion)
 {
@@ -768,11 +767,7 @@ static NH_RV __put_ski(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING
 		NH_SUCCESS(rv = 	NH_new_encoder(8, 1024, &hEncoder))
 	)
 	{
-		if
-		(
-			NH_SUCCESS(rv = hEncoder->chart(hEncoder, pkix_ski_map, PKIX_SKI_MAP_COUNT, &ext)) &&
-			NH_SUCCESS(rv = (ext = ext->child) ? NH_OK : NH_CANNOT_SAIL)
-		)
+		if ( NH_SUCCESS(rv = hEncoder->chart(hEncoder, pkix_ski_map, PKIX_SKI_MAP_COUNT, &ext)))
 		{
 			*ext->identifier = NH_asn_get_tag(ext->knowledge);
 			if
@@ -915,7 +910,6 @@ static NH_RV __put_subject_altname(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH
 
 	if
 	(
-		NH_SUCCESS(rv = !__IS_SET(__NH_ALTNAME_SET, hTBS->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
 		NH_SUCCESS(rv = pValue && ulCount > 0 ? NH_OK : NH_INVALID_ARG) &&
 		NH_SUCCESS(rv = 	NH_new_encoder(ulCount * 4, 4096, &hEncoder))
 	)
@@ -947,7 +941,7 @@ static NH_RV __put_subject_altname(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH
 				{
 					extValue.data = pBuffer;
 					extValue.length = uSize;
-					if (NH_SUCCESS(rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue))) hTBS->fields |= __NH_ALTNAME_SET;
+					rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue);
 				}
 				free(pBuffer);
 			}
@@ -977,7 +971,7 @@ static NH_RV __put_basic_constraints(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ 
 			*ext->identifier = NH_asn_get_tag(ext->knowledge);
 			if
 			(
-				NH_SUCCESS(rv = hEncoder->put_boolean(hEncoder, ext, CK_TRUE)) &&
+				NH_SUCCESS(rv = hEncoder->put_boolean(hEncoder, ext, TRUE)) &&
 				NH_SUCCESS(rv = (uSize = hEncoder->encoded_size(hEncoder, hEncoder->root)) > 0 ? NH_OK : NH_UNEXPECTED_ENCODING) &&
 				NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(uSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 			)

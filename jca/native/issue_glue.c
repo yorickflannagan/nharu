@@ -567,6 +567,7 @@ static void __sign(JNIEnv *env, jint mechanism, jobject signer, void *__handler,
 			rv = ((JNH_CERT_ENCODER) __handler)->hCert->sign(((JNH_CERT_ENCODER) __handler)->hCert, ((JNH_CERT_ENCODER) __handler)->hTBS, mechanism, sign_callback, &params);
 			break;
 		case SIGN_REQUEST:
+			rv = ((NH_CREQUEST_ENCODER) __handler)->sign((NH_CREQUEST_ENCODER) __handler, mechanism, sign_callback, &params);
 			break;
 		default: rv = NH_INVALID_ARG;
 		}
@@ -587,6 +588,31 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSign
 {
 	__sign(env, mechanism, signer, (JNH_CERT_ENCODER) handle, SIGN_CERTIFICATE);
 }
+
+static jbyteArray __encode(JNIEnv *env, NH_ASN1_ENCODER_HANDLE hEncoder)
+{
+	NH_RV rv;
+	size_t size;
+	unsigned char *pBuffer;
+	jbyteArray ret = NULL;
+
+	if ((size = hEncoder->encoded_size(hEncoder, hEncoder->root)))
+	{
+		if (NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+		{
+			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pBuffer)))
+			{
+				if (!(ret = (*env)->NewByteArray(env, size))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) pBuffer);
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+			free(pBuffer);
+		}
+		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	}
+	else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, 0);
+	return ret;
+}
 JNIEXPORT jbyteArray JNICALL
 Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceEncode
 (
@@ -595,218 +621,8 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceEncode
 	jlong handle
 )
 {
-	NH_RV rv;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-	size_t size;
-	unsigned char *pBuffer;
-	jbyteArray ret = NULL;
-
-	size = hHandler->hCert->hEncoder->encoded_size(hHandler->hCert->hEncoder, hHandler->hCert->hEncoder->root);
-	if (NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(size)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
-	{
-		if
-		(
-			NH_SUCCE	NH_RV rv;
-	const char *algorithm;
-	JNH_RSA_CALLBACK_STR params;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-
-	switch (mechanism)
-	{
-	case CKM_SHA1_RSA_PKCS:
-		algorithm = "SHA1withRSA";
-		break;
-	case CKM_SHA256_RSA_PKCS:
-		algorithm = "SHA256withRSA";
-		break;
-	case CKM_SHA384_RSA_PKCS:
-		algorithm = "SHA384withRSA";
-		break;
-	case CKM_SHA512_RSA_PKCS:
-		algorithm = "SHA512withRSA";
-		break;
-	case CKM_MD5_RSA_PKCS:
-		algorithm = "MD5withRSA";
-		break;
-	default:
-		throw_new(env, J_UNSUP_MECH_EX, J_UNSUP_MECH_ERROR, 0);
-		return;
-	}
-	if
-	(
-		(params.algorithm = (*env)->NewStringUTF(env, algorithm)) &&
-		(params.clazz = (*env)->FindClass(env, "org/crypthing/security/SignerInterface"))
-	)
-	{
-		params.env = env;
-		params.iface = signer;
-		rv = hHandler->hCert->sign(hHandler->hCert, hHandler->hTBS, mechanism, sign_callback, &params);
-		if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGN_CERT_ERROR, rv);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
- hHandler->hCert->hEncoder->root, pBuffer)) &&
-			NH_SUCCE	NH_RV rv;
-	const char *algorithm;
-	JNH_RSA_CALLBACK_STR params;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-
-	switch (mechanism)
-	{
-	case CKM_SHA1_RSA_PKCS:
-		algorithm = "SHA1withRSA";
-		break;
-	case CKM_SHA256_RSA_PKCS:
-		algorithm = "SHA256withRSA";
-		break;
-	case CKM_SHA384_RSA_PKCS:
-		algorithm = "SHA384withRSA";
-		break;
-	case CKM_SHA512_RSA_PKCS:
-		algorithm = "SHA512withRSA";
-		break;
-	case CKM_MD5_RSA_PKCS:
-		algorithm = "MD5withRSA";
-		break;
-	default:
-		throw_new(env, J_UNSUP_MECH_EX, J_UNSUP_MECH_ERROR, 0);
-		return;
-	}
-	if
-	(
-		(params.algorithm = (*env)->NewStringUTF(env, algorithm)) &&
-		(params.clazz = (*env)->FindClass(env, "org/crypthing/security/SignerInterface"))
-	)
-	{
-		params.env = env;
-		params.iface = signer;
-		rv = hHandler->hCert->sign(hHandler->hCert, hHandler->hTBS, mechanism, sign_callback, &params);
-		if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGN_CERT_ERROR, rv);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-RROR)
-		)	(*env)->	NH_RV rv;
-	const char *algorithm;
-	JNH_RSA_CALLBACK_STR params;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-
-	switch (mechanism)
-	{
-	case CKM_SHA1_RSA_PKCS:
-		algorithm = "SHA1withRSA";
-		break;
-	case CKM_SHA256_RSA_PKCS:
-		algorithm = "SHA256withRSA";
-		break;
-	case CKM_SHA384_RSA_PKCS:
-		algorithm = "SHA384withRSA";
-		break;
-	case CKM_SHA512_RSA_PKCS:
-		algorithm = "SHA512withRSA";
-		break;
-	case CKM_MD5_RSA_PKCS:
-		algorithm = "MD5withRSA";
-		break;
-	default:
-		throw_new(env, J_UNSUP_MECH_EX, J_UNSUP_MECH_ERROR, 0);
-		return;
-	}
-	if
-	(
-		(params.algorithm = (*env)->NewStringUTF(env, algorithm)) &&
-		(params.clazz = (*env)->FindClass(env, "org/crypthing/security/SignerInterface"))
-	)
-	{
-		params.env = env;
-		params.iface = signer;
-		rv = hHandler->hCert->sign(hHandler->hCert, hHandler->hTBS, mechanism, sign_callback, &params);
-		if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGN_CERT_ERROR, rv);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-
-		else throw_new	NH_RV rv;
-	const char *algorithm;
-	JNH_RSA_CALLBACK_STR params;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-
-	switch (mechanism)
-	{
-	case CKM_SHA1_RSA_PKCS:
-		algorithm = "SHA1withRSA";
-		break;
-	case CKM_SHA256_RSA_PKCS:
-		algorithm = "SHA256withRSA";
-		break;
-	case CKM_SHA384_RSA_PKCS:
-		algorithm = "SHA384withRSA";
-		break;
-	case CKM_SHA512_RSA_PKCS:
-		algorithm = "SHA512withRSA";
-		break;
-	case CKM_MD5_RSA_PKCS:
-		algorithm = "MD5withRSA";
-		break;
-	default:
-		throw_new(env, J_UNSUP_MECH_EX, J_UNSUP_MECH_ERROR, 0);
-		return;
-	}
-	if
-	(
-		(params.algorithm = (*env)->NewStringUTF(env, algorithm)) &&
-		(params.clazz = (*env)->FindClass(env, "org/crypthing/security/SignerInterface"))
-	)
-	{
-		params.env = env;
-		params.iface = signer;
-		rv = hHandler->hCert->sign(hHandler->hCert, hHandler->hTBS, mechanism, sign_callback, &params);
-		if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGN_CERT_ERROR, rv);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-
-		free(pBuffer);	NH_RV rv;
-	const char *algorithm;
-	JNH_RSA_CALLBACK_STR params;
-	JNH_CERT_ENCODER hHandler = (JNH_CERT_ENCODER) handle;
-
-	switch (mechanism)
-	{
-	case CKM_SHA1_RSA_PKCS:
-		algorithm = "SHA1withRSA";
-		break;
-	case CKM_SHA256_RSA_PKCS:
-		algorithm = "SHA256withRSA";
-		break;
-	case CKM_SHA384_RSA_PKCS:
-		algorithm = "SHA384withRSA";
-		break;
-	case CKM_SHA512_RSA_PKCS:
-		algorithm = "SHA512withRSA";
-		break;
-	case CKM_MD5_RSA_PKCS:
-		algorithm = "MD5withRSA";
-		break;
-	default:
-		throw_new(env, J_UNSUP_MECH_EX, J_UNSUP_MECH_ERROR, 0);
-		return;
-	}
-	if
-	(
-		(params.algorithm = (*env)->NewStringUTF(env, algorithm)) &&
-		(params.clazz = (*env)->FindClass(env, "org/crypthing/security/SignerInterface"))
-	)
-	{
-		params.env = env;
-		params.iface = signer;
-		rv = hHandler->hCert->sign(hHandler->hCert, hHandler->hTBS, mechanism, sign_callback, &params);
-		if (NH_FAIL(rv)) throw_new(env, J_SIGNATURE_EX, J_SIGN_CERT_ERROR, rv);
-	}
-	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-
-	}
-	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
-	return ret;
+	return __encode(env, ((JNH_CERT_ENCODER) handle)->hCert->hEncoder);
 }
-
-
 JNIEXPORT jlong JNICALL
 Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceNewRequestBuilder(JNIEnv *env, _UNUSED_ jclass ignored)
 {
@@ -889,4 +705,26 @@ Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSetPubKey
 		(*env)->ReleaseByteArrayElements(env, encoding, jbuffer, JNI_ABORT);
 	}
 	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceSignRequest
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jint mechanism,
+	jobject signer
+)
+{
+	__sign(env, mechanism, signer, (NH_CREQUEST_ENCODER) handle, SIGN_REQUEST);
+}
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceEncodeRequest
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle
+)
+{
+	return __encode(env, ((NH_CREQUEST_ENCODER) handle)->hRequest);
 }

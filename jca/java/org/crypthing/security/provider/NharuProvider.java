@@ -19,6 +19,7 @@ import org.crypthing.security.cms.CMSDocument;
 import org.crypthing.security.issue.CertificateParams;
 import org.crypthing.security.issue.NharuCertificateEncoder;
 import org.crypthing.security.issue.NharuCertificateRequest;
+import org.crypthing.security.issue.NharuCertificateRequestBuilder;
 import org.crypthing.security.x509.NharuPKIBRParser;
 import org.crypthing.security.x509.NharuX509CRL;
 import org.crypthing.security.x509.NharuX509Certificate;
@@ -345,6 +346,8 @@ public final class NharuProvider extends Provider
 		CertificateParams.main(new String[0]);
 		System.out.println("====================================================================");
 		NharuCertificateEncoder.main(new String[0]);
+		System.out.println("====================================================================");
+		NharuCertificateRequestBuilder.main(new String[0]);
 		System.out.println("====================================================================");
 		org.crypthing.security.x509.CacheCleaner.debugShutDown();
 		try { Thread.sleep(1000); }
