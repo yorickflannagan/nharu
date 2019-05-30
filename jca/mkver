@@ -12,7 +12,6 @@ if [ -z "$VER" ]; then
 	exit 1
 fi
 VERSION="$VER"
-CVERSION="${VERSION//./_}"
-printf "const char *NHARU_VERSION_%s = \"%s\";\n" "$CVERSION" "$VERSION">"$CUR/native/version.c"
-printf "const char *NHARU_getVersion() { return NHARU_VERSION_%s; }" "$CVERSION">>"$CUR/native/version.c"
+printf "const char *NHARU_VERSION = \"%s\";\n" "$VERSION">"$CUR/native/version.c"
+printf "const char *NHARU_getVersion() { return NHARU_VERSION; }" >>"$CUR/native/version.c"
 

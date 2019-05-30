@@ -13,9 +13,8 @@ IF "%VER%" EQU "" (
 	EXIT /B 1
 )
 SET VERSION=%VER%%
-SET CVERSION=%VERSION:.=_%
-ECHO const char *NHARU_VERSION_%CVERSION% = "%VERSION%";>%CUR%native\version.c
-ECHO const char *NHARU_getVersion() { return NHARU_VERSION_%CVERSION%; }>>%CUR%native\version.c
+ECHO const char *NHARU_VERSION = "%VERSION%";>%CUR%native\version.c
+ECHO const char *NHARU_getVersion() { return NHARU_VERSION; }>>%CUR%native\version.c
 
 
 ENDLOCAL
