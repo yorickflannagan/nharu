@@ -11,29 +11,7 @@ if [ -z "$VER" ]; then
 	printf "%s\n" "Version argument must not be null"
 	exit 1
 fi
-sep='='
-IFS=''
-while read -r line || [[ -n "$line" ]]; do
-	case $line in
-	(*"$sep"*)
-		BUILD=${line#*"$sep"}
-		break
-	;;
-	(*)
-		BUILD=
-	;;
-	esac
-done < "$CUR/build.number"
-if [ -z "$BUILD" ]; then
-	printf "%s\n" "Could not find Ant build.number"
-	exit 1
-fi
-VERSION="$VER.$BUILD"
-CVERSION="${VERSION//./_}"
-printf "const char *NHARU_VERSION_%s = \"%s\";\n" "$CVERSION" "$VERSION">"$CUR/native/version.c"
-printf "const char *NHARU_getVersion() { return NHARU_VERSION_%s; }" "$CVERSION">>"$CUR/native/version.c"
-BUILD=$(($BUILD+1))
-printf "%s\n" "#Build number for Nharu JCA. Do not edit">"$CUR/build.number"
-printf "%s\n" "#$(date)">>"$CUR/build.number"
-printf "%s\n" "build.number=$BUILD">>"$CUR/build.number"
+VERSION="$VER"
+printf "const char *NHARU_VERSION = \"%s\";\n" "$VERSION">"$CUR/native/version.c"
+printf "const char *NHARU_getVersion() { return NHARU_VERSION; }" >>"$CUR/native/version.c"
 

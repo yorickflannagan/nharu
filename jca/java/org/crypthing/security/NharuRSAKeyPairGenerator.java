@@ -31,7 +31,7 @@ public class NharuRSAKeyPairGenerator extends KeyPairGenerator
 		{
 			final RSAKeyGenParameterSpec args = (RSAKeyGenParameterSpec) params;
 			bits = args.getKeysize();
-			e = args.getPublicExponent().longValueExact();
+			e = args.getPublicExponent().longValue();
 			if (random != null) nharuSeedPRNG(random.generateSeed(16));
 		}
 		catch (Exception e) { throw new InvalidAlgorithmParameterException(e); }
