@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project	DefaultTargets="Build"
+			ToolsVersion="15.0"
+			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<ItemGroup Label="ProjectConfigurations">
+		<ProjectConfiguration Include="Debug|Win32">
+			<Configuration>Debug</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|Win32">
+			<Configuration>Release</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Debug|x64">
+			<Configuration>Debug</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|x64">
+			<Configuration>Release</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+	</ItemGroup>
+
+	<PropertyGroup Label="Globals">
+		<VCProjectVersion>15.0</VCProjectVersion>
+		<ProjectGuid>{4EB1D61E-64E4-46B9-8120-6FB2A9848189}</ProjectGuid>
+		<Keyword>ConsoleProject</Keyword>
+		<RootNamespace>ntest</RootNamespace>
+		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+	</PropertyGroup>
+
+  	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+	<Import Project="$(ProjectDir)\targets\console-configurations.targets" />
+	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+	<ImportGroup Label="ExtensionSettings" />
+	<ImportGroup Label="Shared" />
+	<Import Project="$(ProjectDir)\targets\appdata-platform.targets" />
+
+	<PropertyGroup Label="UserMacros">
+		<Home>$(ProjectDir)..</Home>
+		<NharuLib>$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<OpenSSLFolder>$(Home)\dist\release\openssl</OpenSSLFolder>
+		<LibidnFolder>$(Home)\dist\release\idn</LibidnFolder>
+		<VSInstallDir>C:\Program Files (x86)\Microsoft Visual Studio\2017\Community</VSInstallDir>
+		<VCInstallDir>$(VSInstallDir)\VC</VCInstallDir>
+		<IntDir>$(Home)\bin\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+		<OutDir>$(Home)\dist\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<IncludeFolders>
+			$(Home);
+			$(Home)\include;
+			$(OpenSSLFolder)\include;
+			$(LibidnFolder)\include;
+			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
+			$(VCInstallDir)\Tools\MSVC\14.16.27023\include;
+			$(WindowsSdkDir)\include\10.0.17763.0\ucrt;
+			$(WindowsSdkDir)\include\10.0.17763.0\shared;
+			$(WindowsSdkDir)\include\10.0.17763.0\um;
+			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
+			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
+		</IncludeFolders>
+		<Warnings></Warnings>
+		<Dependencies>
+			nharu.lib;libidn.lib;libcrypto.lib;
+			crypt32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;odbc32.lib;
+			comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbccp32.lib
+		</Dependencies>
+		<TargetSubSystem>Console</TargetSubSystem>
+		<Libraries>$(NharuLib);$(OpenSSLFolder)\lib;$(LibidnFolder)\lib</Libraries>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>WIN32;_DEBUG;_DEBUG_;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>_DEBUG;_DEBUG_;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>WIN32;NDEBUG;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>NDEBUG;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
+
+	<Import Project="$(ProjectDir)\targets\debug.targets" Condition="'$(Configuration)'=='Debug'" />
+	<Import Project="$(ProjectDir)\targets\release.targets" Condition="'$(Configuration)'=='Release'" />
+
+	<ItemGroup>
+		<ClInclude Include="$(Home)\test\test.h" />
+	</ItemGroup>
+	<ItemGroup>
+		<ClCompile Include="$(Home)\test\cadest.c" />
+		<ClCompile Include="$(Home)\test\cert_t.c" />
+		<ClCompile Include="$(Home)\test\cms_t.c" />
+		<ClCompile Include="$(Home)\test\crl_t.c" />
+		<ClCompile Include="$(Home)\test\crypto_t.c" />
+		<ClCompile Include="$(Home)\test\issue_t.c" />
+		<ClCompile Include="$(Home)\test\nmain.c" />
+		<ClCompile Include="$(Home)\test\parser_t.c" />
+	</ItemGroup>
+
+	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+	<ImportGroup Label="ExtensionTargets" />
+
+</Project>

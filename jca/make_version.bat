@@ -6,13 +6,11 @@ SETLOCAL EnableDelayedExpansion
 
 SET ME=%~n0
 SET CUR=%~dp0
-SET VER=%~1
-SET OUTPUT=%~2
-IF "%VER%" EQU "" (
+SET VERSION=%~1
+IF "%VERSION%" EQU "" (
 	ECHO %ME%: Version number required
 	EXIT /B 1
 )
-SET VERSION=%VER%%
 ECHO const char *NHARU_VERSION = "%VERSION%";>%CUR%native\version.c
 ECHO const char *NHARU_getVersion() { return NHARU_VERSION; }>>%CUR%native\version.c
 

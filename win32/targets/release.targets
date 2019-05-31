@@ -1,0 +1,64 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!--
+		C/C++ definitions for Release
+		Required custom properties:
+			IncludeFolders: include files location list
+			Warnings: warnings to be disabled
+			Constants: preprocessor constants
+			Dependencies: Dependent libraries
+			TargetSubSystem: sub system (Console | Windows)
+			Libraries: Dependent libraries directories
+			TargetArchitecture: target platform (MachineX86 | MachineX64)
+	-->
+	<ItemDefinitionGroup>
+		<ClCompile>
+			<AdditionalIncludeDirectories>$(IncludeFolders)</AdditionalIncludeDirectories>
+			<AdditionalOptions>/permissive- /sdl /diagnostics:classic</AdditionalOptions>
+			<AlwaysAppend>/c</AlwaysAppend>
+			<BufferSecurityCheck>true</BufferSecurityCheck>
+			<CallingConvention>Cdecl</CallingConvention>
+			<CompileAs>CompileAsC</CompileAs>
+			<DisableSpecificWarnings>$(Warnings)</DisableSpecificWarnings>
+			<EnablePREfast>false</EnablePREfast>
+			<FloatingPointModel>Precise</FloatingPointModel>
+			<ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+			<MinimalRebuild>false</MinimalRebuild>
+			<OmitFramePointers>false</OmitFramePointers>
+			<PrecompiledHeader>NotUsing</PrecompiledHeader>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TreatWarningAsError>false</TreatWarningAsError>
+			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+			<UseFullPaths>true</UseFullPaths>
+			<WarningLevel>Level3</WarningLevel>
+			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+			<PreprocessorDefinitions>$(Constants)</PreprocessorDefinitions>
+			<ErrorReporting>None</ErrorReporting>
+			<FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+			<FunctionLevelLinking>true</FunctionLevelLinking>
+			<IntrinsicFunctions>true</IntrinsicFunctions>
+			<Optimization>MinSpace</Optimization>
+			<WholeProgramOptimization>true</WholeProgramOptimization>
+		</ClCompile>
+		<Link>
+			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
+			<DataExecutionPrevention>true</DataExecutionPrevention>
+			<OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
+			<RandomizedBaseAddress>true</RandomizedBaseAddress>
+			<SubSystem>$(TargetSubSystem)</SubSystem>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TypeLibraryResourceID>1</TypeLibraryResourceID>
+			<Version>1.0</Version>
+			<AdditionalLibraryDirectories>$(Libraries)</AdditionalLibraryDirectories>
+			<TargetMachine>$(TargetArchitecture)</TargetMachine>
+			<EnableUAC>true</EnableUAC>
+			<GenerateManifest>true</GenerateManifest>
+			<LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+			<UACExecutionLevel>AsInvoker</UACExecutionLevel>
+			<UACUIAccess>false</UACUIAccess>
+			<ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
+			<LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+			<OptimizeReferences>true</OptimizeReferences>
+			<EnableCOMDATFolding>true</EnableCOMDATFolding>
+		</Link>
+	</ItemDefinitionGroup>
+</Project>
