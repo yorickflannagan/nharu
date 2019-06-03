@@ -1,0 +1,24 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>WIN32;_DEBUG;_DEBUG_;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>_DEBUG;_DEBUG_;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>WIN32;NDEBUG;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>NDEBUG;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
+
+</Project>

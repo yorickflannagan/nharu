@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
+			InitialTargets="GetVersion;MakeVersion"
 			ToolsVersion="15.0"
 			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
 	<Import Project="targets\project-configurations.targets" />
 	<PropertyGroup Label="Globals">
 		<VCProjectVersion>15.0</VCProjectVersion>
-		<ProjectGuid>{4EB1D61E-64E4-46B9-8120-6FB2A9848189}</ProjectGuid>
-		<Keyword>ConsoleProject</Keyword>
-		<RootNamespace>ntest</RootNamespace>
+		<ProjectGuid>{0A4CDDBD-50BB-4EAD-A02A-002BBD9CAF44}</ProjectGuid>
+		<Keyword>DynamicLibraryProject</Keyword>
+		<RootNamespace>nharujca</RootNamespace>
 		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
 	</PropertyGroup>
-	
+
   	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-	<Import Project="targets\console-configurations.targets" />
+	<Import Project="targets\sharedlib-configurations.targets" />
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 	<ImportGroup Label="ExtensionSettings" />
 	<ImportGroup Label="Shared" />
@@ -30,6 +31,9 @@
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
+			$(Home)\jca\native;
+			$(JAVA_HOME)\include;
+			$(JAVA_HOME)\include\win32;
 			$(OpenSSLFolder)\include;
 			$(LibidnFolder)\include;
 			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
@@ -40,36 +44,57 @@
 			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
 			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
 		</IncludeFolders>
-		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706"</Warnings>
+		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706</Warnings>
 		<Dependencies>
 			nharu.lib;libidn.lib;libcrypto.lib;
 			crypt32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;odbc32.lib;
 			comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbccp32.lib
 		</Dependencies>
-		<TargetSubSystem>Console</TargetSubSystem>
+		<TargetSubSystem>Windows</TargetSubSystem>
 		<Libraries>$(NharuLib);$(OpenSSLFolder)\lib;$(LibidnFolder)\lib</Libraries>
-		<IsDLL>false</IsDLL>
+		<IsDLL>true</IsDLL>
 	</PropertyGroup>
 
-	<Import Project="targets\console-vars.targets" />
+	<Import Project="targets\sharedlib-vars.targets" />
 	<Import Project="targets\debug.targets" Condition="'$(Configuration)'=='Debug'" />
 	<Import Project="targets\release.targets" Condition="'$(Configuration)'=='Release'" />
 
 	<ItemGroup>
-		<ClInclude Include="$(Home)\test\test.h" />
+		<ClInclude Include="$(Home)\jca\native\jca.h" />
+		<ClInclude Include="$(Home)\jca\native\jcms.h" />
+		<ClInclude Include="$(Home)\jca\native\jcrypto.h" />
+		<ClInclude Include="$(Home)\jca\native\jissue.h" />
+		<ClInclude Include="$(Home)\jca\native\version.h" />
+		<ClInclude Include="$(Home)\jca\native\x509.h" />
+		<ClInclude Include="$(Home)\jca\native\b64\cdecode.h" />
+		<ClInclude Include="$(Home)\jca\native\b64\cencode.h" />
+		<ClInclude Include="$(Home)\jca\native\sb8\crc.h" />
 	</ItemGroup>
 	<ItemGroup>
-		<ClCompile Include="$(Home)\test\cadest.c" />
-		<ClCompile Include="$(Home)\test\cert_t.c" />
-		<ClCompile Include="$(Home)\test\cms_t.c" />
-		<ClCompile Include="$(Home)\test\crl_t.c" />
-		<ClCompile Include="$(Home)\test\crypto_t.c" />
-		<ClCompile Include="$(Home)\test\issue_t.c" />
-		<ClCompile Include="$(Home)\test\nmain.c" />
-		<ClCompile Include="$(Home)\test\parser_t.c" />
+		<ClCompile Include="$(Home)\jca\native\8x256_tables.c" />
+		<ClCompile Include="$(Home)\jca\native\cdecode.c" />
+		<ClCompile Include="$(Home)\jca\native\cencode.c" />
+		<ClCompile Include="$(Home)\jca\native\cms_glue.c" />
+		<ClCompile Include="$(Home)\jca\native\crc.c" />
+		<ClCompile Include="$(Home)\jca\native\crypto_glue.c" />
+		<ClCompile Include="$(Home)\jca\native\general.c" />
+		<ClCompile Include="$(Home)\jca\native\issue_glue.c" />
+		<ClCompile Include="$(Home)\jca\native\version.c" />
+		<ClCompile Include="$(Home)\jca\native\versionjca.c" />
+		<ClCompile Include="$(Home)\jca\native\x509_glue.c" />
 	</ItemGroup>
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
+
+	<Target Name="GetVersion" >
+		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="true">
+			<Output TaskParameter="ConsoleOutput" PropertyName="GitVersion" />
+		</Exec>
+	</Target>
+	<Target Name="MakeVersion" DependsOnTargets="GetVersion" >
+		<Exec Command="$(Home)\jca\make_version.bat $(GitVersion)" EchoOff="true" />
+	</Target>
+	
 
 </Project>

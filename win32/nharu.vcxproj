@@ -6,14 +6,14 @@
 	<Import Project="targets\project-configurations.targets" />
 	<PropertyGroup Label="Globals">
 		<VCProjectVersion>15.0</VCProjectVersion>
-		<ProjectGuid>{4EB1D61E-64E4-46B9-8120-6FB2A9848189}</ProjectGuid>
-		<Keyword>ConsoleProject</Keyword>
-		<RootNamespace>ntest</RootNamespace>
+		<ProjectGuid>{5417FF22-C910-4E01-A161-7AFAF688B0DD}</ProjectGuid>
+		<Keyword>StaticLibraryProject</Keyword>
+		<RootNamespace>nharu</RootNamespace>
 		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
 	</PropertyGroup>
-	
+
   	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-	<Import Project="targets\console-configurations.targets" />
+	<Import Project="targets\staticlib-configurations.targets" />
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 	<ImportGroup Label="ExtensionSettings" />
 	<ImportGroup Label="Shared" />
@@ -21,7 +21,6 @@
 
 	<PropertyGroup Label="UserMacros">
 		<Home>$(ProjectDir)..</Home>
-		<NharuLib>$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
 		<OpenSSLFolder>$(Home)\dist\release\openssl</OpenSSLFolder>
 		<LibidnFolder>$(Home)\dist\release\idn</LibidnFolder>
 		<VCInstallDir>$(VSInstallDir)\VC</VCInstallDir>
@@ -40,33 +39,46 @@
 			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
 			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
 		</IncludeFolders>
-		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706"</Warnings>
-		<Dependencies>
-			nharu.lib;libidn.lib;libcrypto.lib;
-			crypt32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;odbc32.lib;
-			comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbccp32.lib
-		</Dependencies>
-		<TargetSubSystem>Console</TargetSubSystem>
-		<Libraries>$(NharuLib);$(OpenSSLFolder)\lib;$(LibidnFolder)\lib</Libraries>
+		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706</Warnings>
+		<Dependencies></Dependencies>
+		<TargetSubSystem>Windows</TargetSubSystem>
+		<Libraries></Libraries>
 		<IsDLL>false</IsDLL>
 	</PropertyGroup>
 
-	<Import Project="targets\console-vars.targets" />
+	<Import Project="targets\staticlib-vars.targets" />
 	<Import Project="targets\debug.targets" Condition="'$(Configuration)'=='Debug'" />
 	<Import Project="targets\release.targets" Condition="'$(Configuration)'=='Release'" />
 
 	<ItemGroup>
-		<ClInclude Include="$(Home)\test\test.h" />
+		<ClInclude Include="$(Home)\pkcs11\cryptoki.h" />
+		<ClInclude Include="$(Home)\pkcs11\pkcs11.h" />
+		<ClInclude Include="$(Home)\pkcs11\pkcs11f.h" />
+		<ClInclude Include="$(Home)\pkcs11\pkcs11t.h" />
+		<ClInclude Include="$(Home)\include\base.h" />
+		<ClInclude Include="$(Home)\include\cms.h" />
+		<ClInclude Include="$(Home)\include\crypto.h" />
+		<ClInclude Include="$(Home)\include\error.h" />
+		<ClInclude Include="$(Home)\include\parser.h" />
+		<ClInclude Include="$(Home)\include\pki-issue.h" />
+		<ClInclude Include="$(Home)\include\pkibr.h" />
+		<ClInclude Include="$(Home)\include\pkix.h" />
+		<ClInclude Include="$(Home)\include\sysservc.h" />
+		<ClInclude Include="$(Home)\src\config.h" />
+		<ClInclude Include="$(Home)\src\libgfshare.h" />
+		<ClInclude Include="$(Home)\src\libgfshare_tables.h" />
 	</ItemGroup>
 	<ItemGroup>
-		<ClCompile Include="$(Home)\test\cadest.c" />
-		<ClCompile Include="$(Home)\test\cert_t.c" />
-		<ClCompile Include="$(Home)\test\cms_t.c" />
-		<ClCompile Include="$(Home)\test\crl_t.c" />
-		<ClCompile Include="$(Home)\test\crypto_t.c" />
-		<ClCompile Include="$(Home)\test\issue_t.c" />
-		<ClCompile Include="$(Home)\test\nmain.c" />
-		<ClCompile Include="$(Home)\test\parser_t.c" />
+		<ClCompile Include="$(Home)\src\cms_env.c" />
+		<ClCompile Include="$(Home)\src\cms_sd.c" />
+		<ClCompile Include="$(Home)\src\crypto.c" />
+		<ClCompile Include="$(Home)\src\issue.c" />
+		<ClCompile Include="$(Home)\src\libgfshare.c" />
+		<ClCompile Include="$(Home)\src\parser.c" />
+		<ClCompile Include="$(Home)\src\pkibr.c" />
+		<ClCompile Include="$(Home)\src\pkix.c" />
+		<ClCompile Include="$(Home)\src\sysservc.c" />
+		<ClCompile Include="$(Home)\src\x509.c" />
 	</ItemGroup>
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

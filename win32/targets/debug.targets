@@ -1,4 +1,5 @@
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
 	<!--
 		C/C++ definitions for Debug
 		Required custom properties:
@@ -9,11 +10,12 @@
 			TargetSubSystem: sub system (Console | Windows)
 			Libraries: Dependent libraries directories
 			TargetArchitecture: target platform (MachineX86 | MachineX64)
+			IsDLL: boolean to indicate a DLL build
 	-->
 	<ItemDefinitionGroup>
 		<ClCompile>
 			<AdditionalIncludeDirectories>$(IncludeFolders)</AdditionalIncludeDirectories>
-			<AdditionalOptions>/permissive- /sdl /diagnostics:classic</AdditionalOptions>
+			<AdditionalOptions>/permissive- /sdl- /diagnostics:classic</AdditionalOptions>
 			<AlwaysAppend>/c</AlwaysAppend>
 			<BufferSecurityCheck>true</BufferSecurityCheck>
 			<CallingConvention>Cdecl</CallingConvention>
@@ -38,7 +40,7 @@
 			<ErrorReporting>Prompt</ErrorReporting>
 			<InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
 			<Optimization>Disabled</Optimization>
-			<ProgramDataBaseFileName>$(IntDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+			<ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
 		</ClCompile>
 		<Link>
 			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
@@ -58,6 +60,8 @@
 			<UACUIAccess>false</UACUIAccess>
 			<AdditionalOptions>/DEBUG:FULL</AdditionalOptions>
 			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+			<LinkDLL>$(IsDLL)</LinkDLL>
 		</Link>
 	</ItemDefinitionGroup>
+
 </Project>
