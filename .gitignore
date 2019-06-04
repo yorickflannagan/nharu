@@ -28,3 +28,5 @@ win32/openssl
 win32/libidn
 win32/dev-env.cmd
 build.number
+*.user
+nharu-build.proj

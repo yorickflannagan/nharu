@@ -20,12 +20,13 @@
 	<Import Project="targets\appdata-platform.targets" />
 
 	<PropertyGroup Label="UserMacros">
-		<Home>$(ProjectDir)..</Home>
-		<OpenSSLFolder>$(Home)\dist\release\openssl</OpenSSLFolder>
-		<LibidnFolder>$(Home)\dist\release\idn</LibidnFolder>
-		<VCInstallDir>$(VSInstallDir)\VC</VCInstallDir>
-		<IntDir>$(Home)\bin\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-		<OutDir>$(Home)\dist\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<Home>$(MSBuildProjectDirectory)\..</Home>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\idn</LibidnFolder>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;

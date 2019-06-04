@@ -22,7 +22,7 @@ SET _CUR=%~dp0
 SET _TARGET=%~1
 FOR %%i IN ("%~dp0..") DO SET "_HOME=%%~fi"
 SET _SOURCE=%_CUR%openssl
-SET _PREFIX=%_HOME%\dist\%_TARGET%\openssl
+IF "%_TARGET%" EQU "" SET _TARGET=%_HOME%\dist\ssl
 
 SET _PERL_INSTALL_PATH=__PERL_INSTALL_PATH__
 SET _NASM_INSTALL_PATH=__NASM_INSTALL_PATH__
@@ -37,7 +37,7 @@ ECHO  Configuring OpenSSL
 ECHO  -----------------------------------------------
 ECHO. 
 CD "%_SOURCE%"
-"%_PERL_INSTALL_PATH%bin\perl.exe" Configure VC-WIN32 no-shared --prefix="%_PREFIX%" --openssldir="%_PREFIX%"
+"%_PERL_INSTALL_PATH%bin\perl.exe" Configure VC-WIN32 no-shared --prefix="%_TARGET%" --openssldir="%_TARGET%"
 IF %ERRORLEVEL% NEQ 0 GOTO :END
 ECHO.
 ECHO  -----------------------------------------------
@@ -87,7 +87,6 @@ GOTO:END
 SET _CUR=
 SET _TARGET=
 SET _HOME=
-SET _PREFIX=
 SET _PERL_INSTALL_PATH=
 SET _NASM_INSTALL_PATH=
 SET _VS_INSTALL_PATH=

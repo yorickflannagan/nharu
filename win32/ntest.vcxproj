@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
+			InitialTargets="Check"
 			ToolsVersion="15.0"
 			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
@@ -20,13 +21,14 @@
 	<Import Project="targets\appdata-platform.targets" />
 
 	<PropertyGroup Label="UserMacros">
-		<Home>$(ProjectDir)..</Home>
-		<NharuLib>$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
-		<OpenSSLFolder>$(Home)\dist\release\openssl</OpenSSLFolder>
-		<LibidnFolder>$(Home)\dist\release\idn</LibidnFolder>
-		<VCInstallDir>$(VSInstallDir)\VC</VCInstallDir>
-		<IntDir>$(Home)\bin\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-		<OutDir>$(Home)\dist\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<Home>$(MSBuildProjectDirectory)\..</Home>
+		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\idn</LibidnFolder>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
@@ -40,7 +42,7 @@
 			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
 			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
 		</IncludeFolders>
-		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706"</Warnings>
+		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706</Warnings>
 		<Dependencies>
 			nharu.lib;libidn.lib;libcrypto.lib;
 			crypt32.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;odbc32.lib;
@@ -71,5 +73,17 @@
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
+
+	<Target Name="Test" >
+		<Error Text="Test application must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
+		<Exec Command='"$(OutDir)$(ProjectName)$(TargetExt)" "$(Home)\test\repo"' EchoOff="true" />
+	</Target>
+
+	<Target Name="Check" >
+		<Message Text="Checking prerequisites" />
+		<Error Text="Static library must be found at $(NharuLib)\nharu.lib" Condition="!Exists('$(NharuLib)\nharu.lib')" />
+		<Error Text="OpenSSL library must be built first" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" />
+		<Error Text="GNU Libidn library must be built first" Condition="!Exists('$(LibidnFolder)\lib\libidn.lib')" />
+	</Target>
 
 </Project>

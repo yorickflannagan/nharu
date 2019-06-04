@@ -376,7 +376,7 @@ Class OpenSSL
 	' Ensures software is installed
 	' Arguments:
 	'	boolean retry: if true, tries to download and install it, if it does not exist
-	'	string target: compilation type (debug or release)
+	'	string target: OpenSSL install folder
 	Public Function EnsureInstall(retry, target)
 		Const SSL_URI = "https://github.com/openssl/openssl"
 		Const SSL_TAG = "OpenSSL_1_1_0f"
@@ -401,8 +401,10 @@ Class OpenSSL
 			m_git.Checkout sslFolder, SSL_TAG, SSL_BRANCH
 			stdout.WriteLine "Done!"
 			Dim bat : bat = BuildBatch(current, perlFolder, nasmFolder, vsFolder)
+			Dim arg : arg = ""
+			If Not IsNull(target) Then arg = " " & target
 			stdout.Write "Building OpenSSL from scratch... "
-			Dim rv : rv = m_shell.Run(bat & " " & target, 1, True)
+			Dim rv : rv = m_shell.Run(bat & arg, 1, True)
 			If rv <> 0 Then Err.Raise rv, "OpenSSL.EnsureInstall", "OpenSSL build failure"
 			m_fs.DeleteFile bat
 			stdout.WriteLine "Done!"
@@ -480,7 +482,7 @@ Class GNULibidn
 	' Ensures software is installed
 	' Arguments:
 	'	boolean retry: if true, tries to download and install it, if it does not exist
-	'	string target: compilation type (debug or release)
+	'	string target: Libidn install folder
 	Public Function EnsureInstall(retry, target)
 		Const IDN_URI = "https://git.savannah.gnu.org/git/libidn.git"
 		Const IDN_TAG = "libidn-1-32"
@@ -510,8 +512,10 @@ Class GNULibidn
 			Next
 			Set folder = Nothing
 			Dim bat : bat = BuildBatch(current, perlFolder, vsFolder, tlds)
+			Dim arg : arg = ""
+			If Not IsNull(target) Then arg = " " & target
 			stdout.Write "Building GNU Libidn from scratch... "
-			Dim rv : rv = m_shell.Run(bat & " " & target, 1, True)
+			Dim rv : rv = m_shell.Run(bat & arg, 1, True)
 			If rv <> 0 Then Err.Raise rv, "GNULibidn.EnsureInstall", "GNU Libidn build failure"
 			m_fs.DeleteFile bat
 			stdout.WriteLine "Done!"
@@ -595,7 +599,7 @@ End Class
 ' Nharu Library installation facility
 Class Nharu
 	Private REG_KEY, REG_VALUE
-	Private m_location, m_current, m_vsis, m_jdkil, m_gitil, m_drmil, m_sslidl, m_idnil, m_vnil
+	Private m_location, m_current, m_vsis, m_jdkil, m_gitil, m_drmil, m_sslil, m_idnil, m_vnil
 	Private m_fs, m_vs, m_jdk, m_git, m_drm, m_ssl, m_idn, m_vn, m_installer, m_shell
 	Private Sub Class_Initialize()
 		REG_KEY = "Software\Microsoft\Command Processor"
@@ -683,27 +687,26 @@ Class Nharu
 
 	' Create configuration file
 	' Arguments:
-	'	string version: Nharu version. Optional. Default: 1.3.0
 	'	string prefix: installation directory. Optional. Default: [nharu path]\dist
-	Public Sub Configure(version, prefix, target)
-		EnsurePreRequisites target
+	Public Sub Configure(prefix)
+		EnsurePreRequisites prefix
 		Dim stdout : Set stdout = m_fs.GetStandardStream(1)
-		stdout.Write "Creating configuration script... "
-		Dim template : Set template = m_fs.OpenTextFile(m_current & "\dev-env.template", 1)
-		Dim out : Set out = m_fs.CreateTextFile(m_current & "\dev-env.cmd")
+		stdout.Write "Creating build script... "
+		Dim template : Set template = m_fs.OpenTextFile(m_current & "\nharu-build.proj.in", 1)
+		Dim out : Set out = m_fs.CreateTextFile(m_current & "\nharu-build.proj")
+		Dim cdir : cdir = m_fs.GetParentFolderName(m_current) & "\bin"
+		Dim bdir : bdir = m_fs.GetParentFolderName(m_current) & "\dist"
+		If Not IsNull(prefix) Then bdir = prefix
 		While Not template.AtEndOfStream
 			Dim line : line = template.ReadLine()
-			line = Replace(line, "__JAVA_HOME__", RemoveSlash(m_jdkil))
-			line = Replace(line, "__VS_INSTALL_PATH__", RemoveSlash(m_vsis))
-			line = Replace(line, "__ADD_PATH__", RequiredPath())
-			If version <> Null Then
-				line = Replace(line, "SET _VERSION=1.3.0", "SET _VERSION=" & version)
-			End If
-			If prefix <> Null Then
-				line = Replace(line, "SET _PREFIX=%_HOME%dist", "SET _PREFIX=" & prefix)
-			End If
+			line = Replace(line, "__OPENSSL__", RemoveSlash(m_sslil))
+			line = Replace(line, "__LIBIDN__", RemoveSlash(m_idnil))
+			line = Replace(line, "__JDKHOME__", RemoveSlash(m_jdkil))
+			line = Replace(line, "__COMPILEDIR__", cdir)
+			line = Replace(line, "__BUILDDIR__", bdir)
 			out.WriteLine(line)
 		Wend
+		m_installer.AddToPath RequiredPath()
 		stdout.WriteLine "Done!"
 		template.Close
 		Set template = Nothing
@@ -714,30 +717,26 @@ Class Nharu
 	End Sub
 
 	Private Sub EnsurePreRequisites(target)
-		Dim tg : tg = "release"
-		If target <> Null Then
-			tg = target
-		End If
 		If IsEmpty(m_vsis) Then
 			m_vsis = m_vs.EnsureInstall()
 			m_jdkil = m_jdk.EnsureInstall("7")
 			m_gitil = m_git.EnsureInstall(True)
 			m_drmil = m_drm.EnsureInstall(True)
-			m_sslidl = m_ssl.EnsureInstall(True, tg)
-			m_idnil = m_idn.EnsureInstall(True, tg)
+			m_sslil = m_ssl.EnsureInstall(True, target)
+			m_idnil = m_idn.EnsureInstall(True, target)
 			m_vnil = m_vn.EnsureInstall(True)
 		End If
 	End Sub
 	Private Function RequiredPath()
 		Dim ret : ret = ""
 		If Not m_installer.IsInPath("git.exe") Then
-			ret = reg & m_gitil & "cmd;"
+			ret = ret & m_gitil & "cmd;"
 		End if
 		If Not m_installer.IsInPath("drmemory.exe") Then
-			ret = reg & m_drmil & "bin;"
+			ret = ret & m_drmil & "bin;"
 		End if
 		If Not m_installer.IsInPath("mvn.cmd") Then
-			ret = reg & m_vnil & "bin"
+			ret = ret & m_vnil & "bin"
 		End If
 		RequiredPath = ret
 	End Function
@@ -801,6 +800,15 @@ Class Installer
 			IsInPath = False
 		End If
 	End Function
+
+	Public Sub AddToPath(folder)
+
+		Dim old : old = m_shell.ExpandEnvironmentStrings("%Path%")
+		Dim env : Set env = m_shell.Environment("User")
+		env("Path") = old & ";" & folder
+		Set env = Nothing
+
+	End Sub
 
 	' Dowloads and unzips specified resource
 	' Arguments:
@@ -966,9 +974,7 @@ End Function
 
 
 ' Command line arguments
-'	/version: Library version. Optional. Deefault: 1.3.0
-'	/prefix: Library installation folder. Optional. Default: [path to Nharu]\dist\[target]
-'	/target: Compilation target. Optional. Default: release
+'	/prefix: Library installation folder. Optional. Default: [path to Nharu]\dist
 Sub Main
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo " Nharu Library"
@@ -976,28 +982,15 @@ Sub Main
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo ""
 	Dim args : Set args = WScript.Arguments.Named
-	Dim version, prefix, target
-	If args.Exists("version") Then
-		version = args.Item("version")
-	Else
-		version = Null
-	End If
+	Dim prefix
 	If args.Exists("prefix") Then
 		prefix = args.Item("prefix")
 	Else
 		prefix = Null
 	End If
-	If args.Exists("target") Then
-		target = args.Item("target")
-	Else
-		target = Null
-	End If
 	Set args = Nothing
-	dim fs : Set fs = CreateObject("Scripting.FileSystemObject")
-	Dim path : path = fs.GetParentFolderName(WScript.ScriptFullName)
-	Set fs = Nothing
 	Dim cfg : Set cfg = New Nharu
-	cfg.Configure version, prefix, target
+	cfg.Configure prefix
 	Set cfg = Nothing
 	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
@@ -1009,8 +1002,8 @@ Sub Main
 	WScript.Echo "   diego.sohsten@caixa.gov.br"
 	WScript.Echo "   yorick.flannagan@gmail.com"
 	WScript.Echo " --------------------------------------------------"
-	WScript.Echo " Use " & path & "\dev-env.cmd"
-	WScript.Echo " as your command line environment"
+	WScript.Echo " Run MSBuild under Visual Studio vcvarsamd64_x86.bat
+	WScript.Echo " as your command line environment to nharu-build.proj"
 	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 End Sub

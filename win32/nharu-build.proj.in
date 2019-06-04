@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project	DefaultTargets="Build"
+			InitialTargets="Check"
+			ToolsVersion="15.0"
+			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup Label="CreatedByConfigure">
+		<OpenSSLFolder>__OPENSSL__</OpenSSLFolder>
+		<LibidnFolder>__LIBIDN__</LibidnFolder>
+		<CompileDir>__COMPILEDIR__</CompileDir>
+		<BuildDir>__BUILDDIR__</BuildDir>
+		<JDKHome>__JDKHOME__</JDKHome>
+	</PropertyGroup>
+
+	<Choose>
+		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
+			<PropertyGroup>
+				<Platform>Win32</Platform>
+			</PropertyGroup>
+		</When>
+		<Otherwise>
+			<PropertyGroup>
+				<Platform>$(Platform)</Platform>
+			</PropertyGroup>
+		</Otherwise>
+	</Choose>
+	<PropertyGroup>
+		<Configuration Condition="'$(Configuration)'==''">Release</Configuration>
+		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>
+	</PropertyGroup>
+	<Choose>
+		<When Condition="'$(Configuration)'=='Debug'">
+			<PropertyGroup>
+				<LogLevel>LOG_LEVEL_TRACE</LogLevel>
+			</PropertyGroup>
+		</When>
+		<Otherwise>
+			<PropertyGroup>
+				<LogLevel>LOG_LEVEL_ERROR</LogLevel>
+			</PropertyGroup>
+		</Otherwise>
+	</Choose>
+	<PropertyGroup Label="BuildProperties">
+		<StaticLibProps>
+			Platform=$(Platform);
+			Configuration=$(Configuration);
+			OpenSSLFolder=$(OpenSSLFolder);
+			LibidnFolder=$(LibidnFolder);
+			CompileDir=$(CompileDir);
+			BuildDir=$(BuildDir)
+		</StaticLibProps>
+		<JCALibProps>
+			Platform=$(Platform);
+			Configuration=$(Configuration);
+			OpenSSLFolder=$(OpenSSLFolder);
+			LibidnFolder=$(LibidnFolder);
+			JDKHome=$(JDKHome);
+			CompileDir=$(CompileDir);
+			BuildDir=$(BuildDir)
+		</JCALibProps>
+		<TestProps>
+			Platform=$(Platform);
+			Configuration=$(Configuration);
+			NharuLib=$(NharuLib);
+			OpenSSLFolder=$(OpenSSLFolder);
+			LibidnFolder=$(LibidnFolder);
+			CompileDir=$(CompileDir);
+			BuildDir=$(BuildDir)
+		</TestProps>
+		<JavaProps>
+			CompileDir=$(CompileDir);
+			BuildDir=$(BuildDir);
+			LogLevel=$(LogLevel);
+			JDKHome=$(JDKHome);
+			NharuJCALib=$(NharuJCALib)
+		</JavaProps>
+	</PropertyGroup>
+
+	<Target Name="Echo">
+		<Message Text="Build properties:" />
+		<Message Text="OpenSSLFolder: $(OpenSSLFolder)" />
+		<Message Text="LibidnFolder:  $(LibidnFolder)" />
+		<Message Text="CompileDir:    $(CompileDir)" />
+		<Message Text="BuildDir:      $(BuildDir)" />
+		<Message Text="JDKHome:       $(JDKHome)" />
+		<Message Text="Platform:      $(Platform)" />
+		<Message Text="Configuration: $(Configuration)" />
+		<Message Text="NharuLib:      $(NharuLib)" />
+		<Message Text="NharuJCALib:   $(NharuJCALib)" />
+		<Message Text="LogLevel:      $(LogLevel)" />
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="Echo">
+		<MSBuild Projects="nharu.vcxproj" Properties="$(StaticLibProps)" />
+		<MSBuild Projects="nharujca.vcxproj" Properties="$(JCALibProps)" />
+		<MSBuild Projects="ntest.vcxproj" Properties="$(TestProps)" />
+		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" />
+	</Target>
+
+	<Target Name="Test" DependsOnTargets="Echo">
+		<MSBuild Projects="ntest.vcxproj" Properties="$(TestProps)" Targets="Test" />
+		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" Targets="Test" />
+	</Target>
+
+	<Target Name="Clean" DependsOnTargets="Echo">
+		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" Targets="Clean" />
+		<MSBuild Projects="ntest.vcxproj" Properties="$(TestProps)" Targets="Clean" />
+		<MSBuild Projects="nharujca.vcxproj" Properties="$(JCALibProps)" Targets="Clean" />
+		<MSBuild Projects="nharu.vcxproj" Properties="$(StaticLibProps)" Targets="Clean" />
+	</Target>
+
+	<Target Name="Check">
+		<Error Text="OpenSSL library must be built first" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" />
+		<Error Text="GNU Libidn library must be built first" Condition="!Exists('$(LibidnFolder)\lib\libidn.lib')" />
+		<Error Text="JDK Must be installed" Condition="!Exists('$(JDKHome)\include\jni.h') Or !Exists('$(JDKHome)\bin\java.exe')" />
+	</Target>
+
+</Project>

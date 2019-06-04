@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project	DefaultTargets="Build"
+			InitialTargets="GetVersion;GetMVN;GetJava"
+			ToolsVersion="15.0"
+			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup Label="Globals">
+		<Keyword>JavaProject</Keyword>
+		<ProjectGuid>{67FF37B1-506A-4D3E-9591-661186A3EC83}</ProjectGuid>
+		<Home>$(MSBuildProjectDirectory)\..</Home>
+		<ProjectName>$(MSBuildProjectName)</ProjectName>
+		<TargetExt>.jar</TargetExt>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Home)/bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Home)/dist</BuildDir>
+		<LogLevel Condition="'$(LogLevel)'==''">LOG_LEVEL_ERROR</LogLevel>
+		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
+		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(Home)\dist\Win32\Release\nharujca\nharujca.dll</NharuJCALib>
+		<BinDir >$(CompileDir)/java-bin</BinDir>
+		<InstallDir>$(BuildDir)/java</InstallDir>
+	</PropertyGroup>
+
+	<Target Name="Build" >
+		<Error Text="Java SDK must be defined at command line" Condition="'$(JDKHome)'==''" />
+		<Error Text="Apache Maven must be in path" Condition="'$(MVN)'==''" />
+		<Exec Command="MVN -B package -Dlog.level=$(LogLevel) -D install.dir=$(InstallDir) -D bin.dir=$(BinDir) -D jar.version=$(JarVersion) -D jdk.home=$(JDKHome) -Dhttps.protocols=TLSv1.2" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Clean" >
+		<Error Text="Apache Maven must be in path" Condition="'$(MVN)'==''" />
+		<Exec Command="MVN -B clean -Dlog.level=$(LogLevel) -D install.dir=$(InstallDir) -D bin.dir=$(BinDir) -D jar.version=$(JarVersion) -D jdk.home=$(JDKHome) -Dhttps.protocols=TLSv1.2" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Test" >
+		<Error Text="Java Runtime must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
+		<Error Text="Java project must be built first" Condition="!Exists('$(NharuJCALib)')" />
+		<Error Text="JNI project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
+		<Exec Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.provider.NharuProvider "$(Home)\test\repo\signer.p12" "$(Home)\test\repo\trust.jks"' EchoOff="true" />
+	</Target>
+
+	<Target Name="GetVersion" Condition="'$(JarVersion)'==''" >
+		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="true" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="JarVersion" />
+		</Exec>
+	</Target>
+	<Target Name="GetMVN" >
+		<Exec Command="where MVN.CMD" ConsoleToMsBuild="true" EchoOff="true" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="MVN" />
+		</Exec>
+	</Target>
+	<Target Name="GetJava" >
+		<Exec Command='"$(JDKHome)\bin\java.exe" -version' ConsoleToMsBuild="true" EchoOff="true" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="JavaVer" />
+		</Exec>
+	</Target>
+
+</Project>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="GetVersion;MakeVersion"
+			InitialTargets="Check"
 			ToolsVersion="15.0"
 			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
@@ -21,19 +21,21 @@
 	<Import Project="targets\appdata-platform.targets" />
 
 	<PropertyGroup Label="UserMacros">
-		<Home>$(ProjectDir)..</Home>
-		<NharuLib>$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
-		<OpenSSLFolder>$(Home)\dist\release\openssl</OpenSSLFolder>
-		<LibidnFolder>$(Home)\dist\release\idn</LibidnFolder>
-		<VCInstallDir>$(VSInstallDir)\VC</VCInstallDir>
-		<IntDir>$(Home)\bin\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-		<OutDir>$(Home)\dist\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<Home>$(MSBuildProjectDirectory)\..</Home>
+		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\idn</LibidnFolder>
+		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
 			$(Home)\jca\native;
-			$(JAVA_HOME)\include;
-			$(JAVA_HOME)\include\win32;
+			$(JDKHome)\include;
+			$(JDKHome)\include\win32;
 			$(OpenSSLFolder)\include;
 			$(LibidnFolder)\include;
 			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
@@ -87,14 +89,19 @@
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
 
-	<Target Name="GetVersion" >
+	<Target Name="GetVersion" BeforeTargets="MakeVersion">
 		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="true">
 			<Output TaskParameter="ConsoleOutput" PropertyName="GitVersion" />
 		</Exec>
 	</Target>
-	<Target Name="MakeVersion" DependsOnTargets="GetVersion" >
+	<Target Name="MakeVersion" BeforeTargets="ClCompile">
 		<Exec Command="$(Home)\jca\make_version.bat $(GitVersion)" EchoOff="true" />
 	</Target>
-	
+	<Target Name="Check">
+		<Message Text="Checking prerequisites" />
+		<Error Text="Static library must be found at $(NharuLib)\nharu.lib" Condition="!Exists('$(NharuLib)\nharu.lib')" />
+		<Error Text="OpenSSL library must be built first" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" />
+		<Error Text="GNU Libidn library must be built first" Condition="!Exists('$(LibidnFolder)\lib\libidn.lib')" />
+	</Target>
 
 </Project>
