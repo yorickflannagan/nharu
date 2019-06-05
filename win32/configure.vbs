@@ -617,16 +617,16 @@ Class Nharu
 		m_current = m_fs.GetParentFolderName(WScript.ScriptFullName)
 	End Sub
 	Private Sub Class_Terminate()
-			Set m_fs = Nothing
-			Set m_vs = Nothing
-			Set m_jdk = Nothing
-			Set m_git = Nothing
-			Set m_drm = Nothing
-			Set m_ssl = Nothing
-			Set m_idn = Nothing
-			Set m_vn = Nothing
-			Set m_installer = Nothing
-			Set m_shell = Nothing
+		Set m_fs = Nothing
+		Set m_vs = Nothing
+		Set m_jdk = Nothing
+		Set m_git = Nothing
+		Set m_drm = Nothing
+		Set m_ssl = Nothing
+		Set m_idn = Nothing
+		Set m_vn = Nothing
+		Set m_installer = Nothing
+		Set m_shell = Nothing
 	End Sub
 
 	' Retrieves install location
@@ -803,6 +803,7 @@ Class Installer
 
 	Public Sub AddToPath(folder)
 
+		If IsEmpty(folder) Or IsNull(folder) Or Len(folder) = 0 Then Exit Sub
 		Dim old : old = m_shell.ExpandEnvironmentStrings("%Path%")
 		Dim env : Set env = m_shell.Environment("User")
 		env("Path") = old & ";" & folder
@@ -1002,7 +1003,7 @@ Sub Main
 	WScript.Echo "   diego.sohsten@caixa.gov.br"
 	WScript.Echo "   yorick.flannagan@gmail.com"
 	WScript.Echo " --------------------------------------------------"
-	WScript.Echo " Run MSBuild under Visual Studio vcvarsamd64_x86.bat
+	WScript.Echo " Run MSBuild under Visual Studio vcvarsamd64_x86.bat"
 	WScript.Echo " as your command line environment to nharu-build.proj"
 	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
