@@ -755,7 +755,7 @@ NH_UTILITY(NH_RV, NH_chart_from)
 		if (NH_FAIL(rv = self->pave(self, current, encyclopedia[i].path, &next))) return rv;
 		if (!next) return NH_CANNOT_SAIL;
 		if (ASN_IS_ON(NH_ASN1_TWIN_BIT, encyclopedia[i].knowledge)) next->parent->child = NULL;
-		else if (encyclopedia[i].detour && !ASN_IS_ON(NH_ASN1_PORTOLANI_BIT, encyclopedia[i].knowledge))
+		else if (encyclopedia[i].detour)
 		{
 			if (NH_FAIL(rv = self->chart_from(self, next, encyclopedia[i].detour, encyclopedia[i].count))) return rv;
 		}
@@ -990,18 +990,7 @@ NH_UTILITY(NH_RV, NH_put_boolean)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN
 
 NH_UTILITY(NH_RV, NH_put_bitstring)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ NH_BITSTRING_VALUE_STR *value)
 {
-	NH_RV rv;
-	unsigned char *pBuffer;
-	size_t uSize = value->len + 1;
-
-	if (NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(uSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
-	{
-		pBuffer[0] = value->padding;
-		memcpy(pBuffer + 1, value->string, value->len);
-		rv = asn_put_value(self->container, node, pBuffer, uSize, NH_ASN1_BIT_STRING);
-		free(pBuffer);
-	}
-	return rv;
+	return asn_put_value(self->container, node, (void*) value, sizeof(NH_BITSTRING_VALUE), NH_ASN1_BIT_STRING);
 }
 
 NH_UTILITY(NH_RV, NH_put_objectid)
@@ -1079,6 +1068,9 @@ NH_UTILITY(size_t, NH_encoded_size)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_A
 				case NH_ASN1_BOOLEAN:
 					len = 1;
 					break;
+				case NH_ASN1_BIT_STRING:
+					len = ((NH_PBITSTRING_VALUE) current->value)->len + 1;
+					break;
 				case NH_ASN1_NULL:
 					len = 0;
 					break;
@@ -1124,6 +1116,7 @@ INLINE NH_UTILITY(NH_RV, asn_recursive_encoding)
 {
 	NH_RV rv = NH_OK;
 	unsigned int len, i = 0, off = 0;
+	NH_PBITSTRING_VALUE value;
 	NH_ASN1_PNODE current = node;
 	unsigned char *init = buffer;
 
@@ -1157,6 +1150,12 @@ INLINE NH_UTILITY(NH_RV, asn_recursive_encoding)
 				{
 					switch (current->knowledge & NH_ASN1_TAG_MASK)
 					{
+					case NH_ASN1_BIT_STRING:
+						value = (NH_PBITSTRING_VALUE) current->value;
+						*buffer++ = value->padding;
+						memcpy(buffer, value->string, value->len);
+						buffer += value->len;
+						break;
 					case NH_ASN1_NULL:
 						break;
 					case NH_ASN1_OBJECT_ID:
@@ -1333,7 +1332,7 @@ int saveTo(unsigned char *buffer, size_t size, char *filename)
 	FILE *stream;
 	int err = 0;
 
-	if ((stream = fopen(filename, "wb")))
+	if ((stream = fopen(filename, "w")))
 	{
 		if (fwrite(buffer, sizeof(unsigned char), size, stream) != size) err = ferror(stream);
 		fclose(stream);

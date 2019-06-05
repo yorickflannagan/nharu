@@ -423,6 +423,38 @@ struct NH_CERT_ENCODER_STR
 typedef NH_CERT_ENCODER_STR					*NH_CERT_ENCODER;
 
 
+
+typedef struct NH_TBSCERTLIST_ENCODER_STR			NH_TBSCERTLIST_ENCODER_STR;
+typedef NH_METHOD(NH_RV, NH_TBSCL_ADD_REVOKED)(_INOUT_ NH_TBSCERTLIST_ENCODER_STR*, _IN_ NH_BIG_INTEGER*, _IN_ char*, _IN_ unsigned int);
+struct NH_TBSCERTLIST_ENCODER_STR
+{
+	NH_ASN1_ENCODER_HANDLE	hEncoder;			/**< ASN.1 encoder */
+	NH_ASN1_PNODE		revokedCertificates;	/**< Shortcut to revoked list */
+	/**
+	 * @brief Adds a new certificate to revoked list
+	 * @param NH_TBSCERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param NH_BIG_INTEGER *serial: certificate serial number
+	 * @param char *szRevocation: revocation date in format YYYYMMDDHHSSZ. Must be NULL terminated
+	 * @param unsigned int reason: CRLReason enumerated
+	 * CRLReason ::= ENUMERATED {
+	 *    unspecified             (0),
+	 *    keyCompromise           (1),
+	 *    cACompromise            (2),
+	 *    affiliationChanged      (3),
+	 *    superseded              (4),
+	 *    cessationOfOperation    (5),
+	 *    certificateHold         (6),
+	 *    -- value 7 is not used
+	 *    removeFromCRL           (8),
+	 *    privilegeWithdrawn      (9),
+	 *    aACompromise           (10) }
+	 * 
+	 */
+	NH_TBSCL_ADD_REVOKED	add_cert;
+};
+typedef NH_TBSCERTLIST_ENCODER_STR				*NH_TBSCERTLIST_ENCODER;
+
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -486,6 +518,10 @@ NH_FUNCTION(NH_RV, NH_new_cert_encoder)(_OUT_ NH_CERT_ENCODER*);
  * 
  */
 NH_FUNCTION(void, NH_delete_cert_encoder)(_INOUT_ NH_CERT_ENCODER);
+
+NH_FUNCTION(NH_RV, NH_new_tbsCertList_encoder)(_OUT_ NH_TBSCERTLIST_ENCODER*);
+NH_FUNCTION(void, NH_delete_tbsCertiList_encoder)(_INOUT_ NH_TBSCERTLIST_ENCODER);
+
 
 #if defined(__cplusplus)
 }

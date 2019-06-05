@@ -217,13 +217,13 @@ NH_NODE_WAY pkix_time_map[] =
 {
 	{	/* utcTime */
 		NH_PARSE_ROOT,
-		NH_ASN1_CHOICE_BIT | NH_ASN1_UTC_TIME | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_OPTIONAL_BIT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_UTC_TIME | NH_ASN1_HAS_NEXT_BIT,
 		NULL,
 		0
 	},
 	{	/* generalTime */
 		NH_PARSE_ROOT,
-		NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_GENERALIZED_TIME | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_OPTIONAL_BIT,
+		NH_ASN1_CHOICE_BIT | NH_ASN1_CHOICE_END_BIT | NH_ASN1_GENERALIZED_TIME | NH_ASN1_HAS_NEXT_BIT,
 		NULL,
 		0
 	}
@@ -1201,7 +1201,7 @@ static const NH_CRL_HANDLER_STR defCRLHandler =
 	crl_map_extensions
 };
 
-static NH_NODE_WAY pkix_revoked_entry_map[] =
+NH_NODE_WAY pkix_revoked_entry_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -1228,7 +1228,7 @@ static NH_NODE_WAY pkix_revoked_entry_map[] =
 		0
 	}
 };
-static NH_NODE_WAY pkix_tbsCertList_map[] =
+NH_NODE_WAY pkix_tbsCertList_map[] =
 {
 	{	/* version */
 		NH_PARSE_ROOT,
@@ -1279,7 +1279,7 @@ static NH_NODE_WAY pkix_tbsCertList_map[] =
 		0
 	}
 };
-static NH_NODE_WAY pkix_CertificateList_map[] =
+NH_NODE_WAY pkix_CertificateList_map[] =
 {
 	{
 		/* CertificateList */
@@ -1296,7 +1296,7 @@ static NH_NODE_WAY pkix_CertificateList_map[] =
 	},
 	{
 		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_SEQUENCE,
+		NH_ASN1_SEQUENCE | NH_ASN1_PORTOLANI_BIT,
 		pkix_tbsCertList_map,
 		ASN_NODE_WAY_COUNT(pkix_tbsCertList_map)
 	},
