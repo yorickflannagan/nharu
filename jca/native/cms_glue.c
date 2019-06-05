@@ -420,8 +420,17 @@ Java_org_crypthing_security_cms_CMSSignedDataBuilder_nhcmsNewEmptySignedData
 	if ((hRet = (JNH_CMS_ENCODING_HANDLER) malloc(sizeof(JNH_CMS_ENCODING_HANDLER_STR))))
 	{
 		memset(hRet, 0, sizeof(JNH_CMS_ENCODING_HANDLER_STR));
-		if (NH_SUCCESS(rv = NH_cms_encode_signed_data(NULL, &hRet->hBuilder))) ret = (jlong) hRet;
-		else { free(hRet); throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv); }
+		if
+		(
+			NH_SUCCESS(rv = NH_cms_encode_signed_data(NULL, &hRet->hBuilder)) &&
+			NH_SUCCESS(rv = hRet->hBuilder->data_ctype(hRet->hBuilder, CK_FALSE))
+		)	ret = (jlong) hRet;
+		else 
+		{
+			if (hRet->hBuilder) NH_cms_release_sd_encoder(hRet->hBuilder);
+			free(hRet);
+			throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
+		}
 	}
 	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, 0);
 	return ret;
