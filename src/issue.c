@@ -1435,7 +1435,7 @@ NH_FUNCTION(void, NH_delete_cert_encoder)(_INOUT_ NH_CERT_ENCODER hHandler)
  * X.509 Certificate Revocation List encoding
  * * * * * * * * * * * * * * * * * * * * * * *
  */
-
+static unsigned int id_ce_cRLReasons_oid[] = { 2, 5, 29, 21 };
 static NH_RV __add_revoked
 (
 	_INOUT_ NH_TBSCERTLIST_ENCODER_STR *hHandler,
@@ -1446,20 +1446,37 @@ static NH_RV __add_revoked
 {
 	NH_RV rv;
 	NH_ASN1_PNODE node;
+	NH_OID_STR pOID = { id_ce_cRLReasons_oid, NHC_OID_COUNT(id_ce_cRLReasons_oid) };
+	unsigned char bReason[3] = { 0x0A, 0x01 , 0x00 };
+	NH_OCTET_SRING pValue = { NULL , 3 };
 
-	rv = pSerial && pSerial->data && szRevocation && eReason >= 0 && eReason < 11 && eReason != 7 ? NH_OK : NH_INVALID_ARG;
-	node = hHandler->revokedCertificates;
-	if (!ASN_IS_PRESENT(node)) hHandler->hEncoder->register_optional(node);
-	rv = (node = hHandler->hEncoder->add_to_set(hHandler->hEncoder->container, node)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR;
-	rv = hHandler->hEncoder->chart_from(hHandler->hEncoder, node, pkix_revoked_entry_map, PKIX_REVOKEDENTRY_MAP_COUNT);
-	rv = (node = node->child) ? NH_OK : NH_CANNOT_LOCK;
-	rv = hHandler->hEncoder->put_integer(hHandler->hEncoder, node, pSerial->data, pSerial->length);
-	rv = (node = node->next) ? NH_OK : NH_CANNOT_LOCK;
-	hHandler->hEncoder->register_optional(node);
-	rv = hHandler->hEncoder->put_generalized_time(hHandler->hEncoder, node, szRevocation, strlen(szRevocation));
-	rv = (node = node->next) ? NH_OK : NH_CANNOT_LOCK;
-	hHandler->hEncoder->register_optional(node);
-	__put_extension__(hHandler->hEncoder, node, NH_PARSE_ROOT, NULL, FALSE, NULL);
+	if (NH_SUCCESS(rv = pSerial && pSerial->data && szRevocation && eReason >= 0 && eReason < 11 && eReason != 7 ? NH_OK : NH_INVALID_ARG))
+	{
+		node = hHandler->revokedCertificates;
+		if (!ASN_IS_PRESENT(node)) hHandler->hEncoder->register_optional(node);
+		if
+		(
+			NH_SUCCESS(rv = (node = hHandler->hEncoder->add_to_set(hHandler->hEncoder->container, node)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
+			NH_SUCCESS(rv = hHandler->hEncoder->chart_from(hHandler->hEncoder, node, pkix_revoked_entry_map, PKIX_REVOKEDENTRY_MAP_COUNT)) &&
+			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hHandler->hEncoder->put_integer(hHandler->hEncoder, node, pSerial->data, pSerial->length)) &&
+			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL)
+		)
+		{
+			hHandler->hEncoder->register_optional(node);
+			if
+			(
+				NH_SUCCESS(rv = hHandler->hEncoder->put_generalized_time(hHandler->hEncoder, node, szRevocation, strlen(szRevocation))) &&
+				NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL)
+			)
+			{
+				hHandler->hEncoder->register_optional(node);
+				bReason[2] = eReason;
+				pValue.data = bReason;
+				rv = __put_extension__(hHandler->hEncoder, node, NH_PARSE_ROOT, &pOID, FALSE, &pValue);
+			}
+		}
+	}
 	return rv;
 }
 static NH_TBSCERTLIST_ENCODER_STR __tbscertlist_encoder =
@@ -1469,7 +1486,7 @@ static NH_TBSCERTLIST_ENCODER_STR __tbscertlist_encoder =
 
 	__add_revoked
 };
-NH_FUNCTION(NH_RV, NH_new_tbsCertList_encoder)(_OUT_ NH_TBSCERTLIST_ENCODER *hHandler)
+NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_TBSCERTLIST_ENCODER *hHandler)
 {
 	NH_RV rv;
 	NH_TBSCERTLIST_ENCODER hOut;
@@ -1492,11 +1509,11 @@ NH_FUNCTION(NH_RV, NH_new_tbsCertList_encoder)(_OUT_ NH_TBSCERTLIST_ENCODER *hHa
 				NH_SUCCESS(rv = (hOut->revokedCertificates = hOut->hEncoder->sail(hOut->hEncoder->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5))) ? NH_OK : NH_CANNOT_SAIL)
 			)	*hHandler = hOut;
 		}
-		if (NH_FAIL(rv)) NH_delete_tbsCertiList_encoder(hOut);
+		if (NH_FAIL(rv)) NH_delete_tbscertilist_encoder(hOut);
 	}
 	return rv;
 }
-NH_FUNCTION(void, NH_delete_tbsCertiList_encoder)(_INOUT_ NH_TBSCERTLIST_ENCODER hHandler)
+NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_TBSCERTLIST_ENCODER hHandler)
 {
 	if (hHandler)
 	{
