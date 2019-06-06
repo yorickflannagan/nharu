@@ -1026,13 +1026,15 @@ NH_UTILITY(NH_RV, NH_put_objectid)
 NH_UTILITY(NH_RV, NH_put_little_integer)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ int value)
 {
 	size_t size;
-	unsigned char buffer[sizeof(int)];
-	int i = 0;
+	unsigned char buffer[sizeof(int) + 1];
+	int i = 1;
 
-	memcpy(buffer, &value, sizeof(int));
-	NH_swap(buffer, sizeof(int));
-	while (!buffer[i] && i < sizeof(int) - 1) i++;
-	size = sizeof(int) - i;
+	buffer[0] = 0;
+	memcpy(buffer + 1, &value, sizeof(int));
+	NH_swap(buffer, sizeof(int) + 1);
+	while (!buffer[i] && i < sizeof(int)) i++;
+	if (value > 0 && buffer[i] & 0x80) i--;
+	size = sizeof(int) - i + 1;
 	return asn_put_value(self->container, node, (void*) &buffer[i], size, NH_ASN1_INTEGER);
 }
 
