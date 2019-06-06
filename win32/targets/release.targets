@@ -32,7 +32,7 @@
 			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
 			<UseFullPaths>true</UseFullPaths>
 			<WarningLevel>Level3</WarningLevel>
-			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
 			<PreprocessorDefinitions>$(Constants)</PreprocessorDefinitions>
 			<ErrorReporting>None</ErrorReporting>
 			<FavorSizeOrSpeed>Size</FavorSizeOrSpeed>

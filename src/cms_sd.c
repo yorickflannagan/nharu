@@ -730,12 +730,12 @@ NH_UTILITY(NH_RV, cms_sd_data_ctype)(_INOUT_ NH_CMS_SD_ENCODER_STR *self, _IN_ C
 	NH_RV rv;
 	NH_ASN1_PNODE node;
 
-	if (!self->eContent.data) return NH_CMS_SD_NOECONTENT_ERROR;
 	if (!(node = self->hEncoder->sail(self->content, (NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 2) << 8) |  NH_SAIL_SKIP_SOUTH))) return NH_CANNOT_SAIL;
 	if (ASN_IS_PARSED(node)) return NH_CMS_ALREADYSET_ERROR;
 	if (NH_FAIL(rv = self->hEncoder->put_objectid(self->hEncoder, node, cms_data_ct_oid, NHC_OID_COUNT(cms_data_ct_oid), FALSE))) return rv;
 	if (attach && NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL))
 	{
+		if (!self->eContent.data) return NH_CMS_SD_NOECONTENT_ERROR;
 		self->hEncoder->register_optional(node);
 		if (NH_FAIL(rv = self->hEncoder->chart_from(self->hEncoder, node, eContent_map, ASN_NODE_WAY_COUNT(eContent_map)))) return rv;
 		if (NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)) rv = self->hEncoder->put_octet_string(self->hEncoder, node, self->eContent.data, self->eContent.length);
