@@ -707,47 +707,53 @@ static NH_RV __put_pubkey(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ NH_ASN1
 	)	hEncoder->fields |= __NH_PUBKEY_SET;
 	return rv;
 }
+static NH_RV __encode_aki(_IN_ NH_OCTET_SRING *pValue, _OUT_ NH_OCTET_SRING *pExt)
+{
+	NH_RV rv;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	NH_ASN1_PNODE node;
+
+	if
+	(
+		NH_SUCCESS(rv = pValue ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = NH_new_encoder(8, 1024, &hEncoder))
+	)
+	{
+		if
+		(
+			NH_SUCCESS(rv = hEncoder->chart(hEncoder, pkix_aki_map, PKIX_AKI_MAP_COUNT, &node)) &&
+			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
+		)
+		{
+			*node->identifier = NH_asn_get_tag(node->knowledge);
+			if
+			(
+				NH_SUCCESS(rv = hEncoder->put_octet_string(hEncoder, node, pValue->data, pValue->length)) &&
+				NH_SUCCESS(rv = (pExt->length = hEncoder->encoded_size(hEncoder, hEncoder->root)) > 0 ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+				NH_SUCCESS(rv = (pExt->data = (unsigned char*) malloc(pExt->length)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				if (NH_FAIL(rv = hEncoder->encode(hEncoder, hEncoder->root, pExt->data))) free(pExt->data);
+			}
+		}
+		NH_release_encoder(hEncoder);
+	}
+	return rv;
+}
 static NH_RV __put_aki(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING *pValue)
 {
 	NH_RV rv;
-	NH_ASN1_PNODE ext;
-	NH_ASN1_ENCODER_HANDLE hEncoder;
-	size_t uSize;
-	unsigned char *pBuffer;
 	NH_OCTET_SRING extValue = { 0, 0 };
 	NH_OID_STR oid = { aki_oid, AKI_OID_COUNT };
 
 	if
 	(
 		NH_SUCCESS(rv = !__IS_SET(__NH_AKI_SET, hTBS->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
-		NH_SUCCESS(rv = pValue ? NH_OK : NH_INVALID_ARG) &&
-		NH_SUCCESS(rv = 	NH_new_encoder(8, 1024, &hEncoder))
+		NH_SUCCESS(rv = __encode_aki(pValue, &extValue))
 	)
 	{
-		if
-		(
-			NH_SUCCESS(rv = hEncoder->chart(hEncoder, pkix_aki_map, PKIX_AKI_MAP_COUNT, &ext)) &&
-			NH_SUCCESS(rv = (ext = ext->child) ? NH_OK : NH_CANNOT_SAIL)
-		)
-		{
-			*ext->identifier = NH_asn_get_tag(ext->knowledge);
-			if
-			(
-				NH_SUCCESS(rv = hEncoder->put_octet_string(hEncoder, ext, pValue->data, pValue->length)) &&
-				NH_SUCCESS(rv = (uSize = hEncoder->encoded_size(hEncoder, hEncoder->root)) > 0 ? NH_OK : NH_UNEXPECTED_ENCODING) &&
-				NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(uSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
-			)
-			{
-				if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pBuffer)))
-				{
-					extValue.data = pBuffer;
-					extValue.length = uSize;
-					if (NH_SUCCESS(rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue))) hTBS->fields |= __NH_AKI_SET;
-				}
-				free(pBuffer);
-			}
-		}
-		NH_release_encoder(hEncoder);
+		if (NH_SUCCESS(rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue))) hTBS->fields |= __NH_AKI_SET;
+		free(extValue.data);
 	}
 	return rv;
 }
@@ -1438,7 +1444,7 @@ NH_FUNCTION(void, NH_delete_cert_encoder)(_INOUT_ NH_CERT_ENCODER hHandler)
 static unsigned int id_ce_cRLReasons_oid[] = { 2, 5, 29, 21 };
 static NH_RV __add_revoked
 (
-	_INOUT_ NH_TBSCERTLIST_ENCODER_STR *hHandler,
+	_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler,
 	_IN_ NH_BIG_INTEGER *pSerial,
 	_IN_ char *szRevocation,
 	_IN_ unsigned int eReason
@@ -1453,71 +1459,125 @@ static NH_RV __add_revoked
 	if (NH_SUCCESS(rv = pSerial && pSerial->data && szRevocation && eReason >= 0 && eReason < 11 && eReason != 7 ? NH_OK : NH_INVALID_ARG))
 	{
 		node = hHandler->revokedCertificates;
-		if (!ASN_IS_PRESENT(node)) hHandler->hEncoder->register_optional(node);
+		if (!ASN_IS_PRESENT(node)) hHandler->hTBS->register_optional(node);
 		if
 		(
-			NH_SUCCESS(rv = (node = hHandler->hEncoder->add_to_set(hHandler->hEncoder->container, node)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
-			NH_SUCCESS(rv = hHandler->hEncoder->chart_from(hHandler->hEncoder, node, pkix_revoked_entry_map, PKIX_REVOKEDENTRY_MAP_COUNT)) &&
+			NH_SUCCESS(rv = (node = hHandler->hTBS->add_to_set(hHandler->hTBS->container, node)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR) &&
+			NH_SUCCESS(rv = hHandler->hTBS->chart_from(hHandler->hTBS, node, pkix_revoked_entry_map, PKIX_REVOKEDENTRY_MAP_COUNT)) &&
 			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL) &&
-			NH_SUCCESS(rv = hHandler->hEncoder->put_integer(hHandler->hEncoder, node, pSerial->data, pSerial->length)) &&
+			NH_SUCCESS(rv = hHandler->hTBS->put_integer(hHandler->hTBS, node, pSerial->data, pSerial->length)) &&
 			NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL)
 		)
 		{
-			hHandler->hEncoder->register_optional(node);
+			*node->identifier = NH_ASN1_GENERALIZED_TIME;
+			node->knowledge = NH_ASN1_GENERALIZED_TIME;
 			if
 			(
-				NH_SUCCESS(rv = hHandler->hEncoder->put_generalized_time(hHandler->hEncoder, node, szRevocation, strlen(szRevocation))) &&
+				NH_SUCCESS(rv = hHandler->hTBS->put_generalized_time(hHandler->hTBS, node, szRevocation, strlen(szRevocation))) &&
 				NH_SUCCESS(rv = (node = node->next) ? NH_OK : NH_CANNOT_SAIL)
 			)
 			{
-				hHandler->hEncoder->register_optional(node);
+				hHandler->hTBS->register_optional(node);
 				bReason[2] = eReason;
 				pValue.data = bReason;
-				rv = __put_extension__(hHandler->hEncoder, node, NH_PARSE_ROOT, &pOID, FALSE, &pValue);
+				rv = __put_extension__(hHandler->hTBS, node, NH_PARSE_ROOT, &pOID, FALSE, &pValue);
 			}
 		}
 	}
 	return rv;
 }
-static NH_TBSCERTLIST_ENCODER_STR __tbscertlist_encoder =
+static NH_RV __set_issuer(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ NH_NAME *pIssuer, _IN_ size_t ulCount)
 {
-	NULL,
-	NULL,
-
-	__add_revoked
-};
-NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_TBSCERTLIST_ENCODER *hHandler)
+	return __put_name(hHandler->hTBS, (NH_SAIL_SKIP_SOUTH << 8 | (NH_PARSE_EAST | 2)), pIssuer, ulCount);
+}
+static NH_RV __set_update(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ unsigned int path, _IN_ char *szDate)
 {
 	NH_RV rv;
-	NH_TBSCERTLIST_ENCODER hOut;
 	NH_ASN1_PNODE node;
 
-	if (NH_SUCCESS(rv = (hOut = (NH_TBSCERTLIST_ENCODER) malloc(sizeof(NH_TBSCERTLIST_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	if
+	(
+		NH_SUCCESS(rv = szDate ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = (node = hHandler->hTBS->sail(hHandler->hTBS->root, path)) ? NH_OK : NH_CANNOT_SAIL)
+	)
 	{
-		memcpy(hOut, &__tbscertlist_encoder, sizeof(NH_TBSCERTLIST_ENCODER_STR));
+		*node->identifier = NH_ASN1_GENERALIZED_TIME;
+		node->knowledge = NH_ASN1_GENERALIZED_TIME;
+		rv = hHandler->hTBS->put_generalized_time(hHandler->hTBS, node, szDate, strlen(szDate));
+	}
+	return rv;	
+}
+static NH_RV __set_this_update(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ char *szDate)
+{
+	return __set_update(hHandler, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 3), szDate);
+}
+static NH_RV __set_next_update(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ char *szDate)
+{
+	return __set_update(hHandler, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 4), szDate);
+}
+static NH_RV __set_aki(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ NH_OCTET_SRING *pValue)
+{
+	NH_RV rv;
+	NH_OCTET_SRING extValue = { 0, 0 };
+	NH_OID_STR oid = { aki_oid, AKI_OID_COUNT };
+
+	if (NH_SUCCESS(rv = __encode_aki(pValue, &extValue)))
+	{
+		if (!ASN_IS_PRESENT(hHandler->extensions))
+		{
+			hHandler->hTBS->register_optional(hHandler->extensions);
+			if (NH_SUCCESS(rv = __add_child(hHandler->hTBS, hHandler->extensions, NH_ASN1_SEQUENCE))) rv = hHandler->extensions->child ? NH_OK : NH_CANNOT_SAIL;
+		}
+		if (NH_SUCCESS(rv)) rv = __put_extension__(hHandler->hTBS, hHandler->extensions, NH_SAIL_SKIP_SOUTH, &oid, FALSE, &extValue);
+		free(extValue.data);
+	}
+	return rv;
+}
+static NH_CERTLIST_ENCODER_STR __tbscertlist_encoder =
+{
+	NULL,
+	NULL,
+	NULL,
+
+	__add_revoked,
+	__set_issuer,
+	__set_this_update,
+	__set_next_update,
+	__set_aki
+};
+NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_CERTLIST_ENCODER *hHandler)
+{
+	NH_RV rv;
+	NH_CERTLIST_ENCODER hOut;
+	NH_ASN1_PNODE node;
+
+	if (NH_SUCCESS(rv = (hOut = (NH_CERTLIST_ENCODER) malloc(sizeof(NH_CERTLIST_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+	{
+		memcpy(hOut, &__tbscertlist_encoder, sizeof(NH_CERTLIST_ENCODER_STR));
 		if
 		(
-			NH_SUCCESS(rv = NH_new_encoder(128, 32768, &hOut->hEncoder)) &&
-			NH_SUCCESS(rv = hOut->hEncoder->chart(hOut->hEncoder, pkix_tbsCertList_map, PKIX_TBSCERTLIST_MAP_COUNT, &node)) &&
+			NH_SUCCESS(rv = NH_new_encoder(128, 32768, &hOut->hTBS)) &&
+			NH_SUCCESS(rv = hOut->hTBS->chart(hOut->hTBS, pkix_tbsCertList_map, PKIX_TBSCERTLIST_MAP_COUNT, &node)) &&
 			NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_CANNOT_SAIL)
 		)
 		{
-			hOut->hEncoder->register_optional(node);
+			hOut->hTBS->register_optional(node);
 			if
 			(
-				NH_SUCCESS(rv = hOut->hEncoder->put_little_integer(hOut->hEncoder, node, 1)) &&
-				NH_SUCCESS(rv = (hOut->revokedCertificates = hOut->hEncoder->sail(hOut->hEncoder->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5))) ? NH_OK : NH_CANNOT_SAIL)
+				NH_SUCCESS(rv = hOut->hTBS->put_little_integer(hOut->hTBS, node, 1)) &&
+				NH_SUCCESS(rv = (hOut->revokedCertificates = hOut->hTBS->sail(hOut->hTBS->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 5))) ? NH_OK : NH_CANNOT_SAIL) &&
+				NH_SUCCESS(rv = (hOut->extensions = hOut->hTBS->sail(hOut->hTBS->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 6))) ? NH_OK : NH_CANNOT_SAIL)
 			)	*hHandler = hOut;
 		}
 		if (NH_FAIL(rv)) NH_delete_tbscertilist_encoder(hOut);
 	}
 	return rv;
 }
-NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_TBSCERTLIST_ENCODER hHandler)
+NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_CERTLIST_ENCODER hHandler)
 {
 	if (hHandler)
 	{
-		if (hHandler->hEncoder) NH_release_encoder(hHandler->hEncoder);
+		if (hHandler->hTBS) NH_release_encoder(hHandler->hTBS);
 		free(hHandler);
 	}
 }

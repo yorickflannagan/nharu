@@ -424,15 +424,19 @@ typedef NH_CERT_ENCODER_STR					*NH_CERT_ENCODER;
 
 
 
-typedef struct NH_TBSCERTLIST_ENCODER_STR			NH_TBSCERTLIST_ENCODER_STR;
-typedef NH_METHOD(NH_RV, NH_TBSCL_ADD_REVOKED)(_INOUT_ NH_TBSCERTLIST_ENCODER_STR*, _IN_ NH_BIG_INTEGER*, _IN_ char*, _IN_ unsigned int);
-struct NH_TBSCERTLIST_ENCODER_STR
+typedef struct NH_CERTLIST_ENCODER_STR			NH_CERTLIST_ENCODER_STR;
+typedef NH_METHOD(NH_RV, NH_TBSCL_ADD_REVOKED)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_BIG_INTEGER*, _IN_ char*, _IN_ unsigned int);
+typedef NH_METHOD(NH_RV, NH_TBSCL_SET_ISSUER)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_NAME*, _IN_ size_t);
+typedef NH_METHOD(NH_RV, NH_TBSCL_SET_UPDATE)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ char*);
+typedef NH_METHOD(NH_RV, NH_TBSCL_SET_AKI)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_OCTET_SRING*);
+struct NH_CERTLIST_ENCODER_STR
 {
-	NH_ASN1_ENCODER_HANDLE	hEncoder;			/**< ASN.1 encoder */
+	NH_ASN1_ENCODER_HANDLE	hTBS;				/**< ASN.1 encoder */
 	NH_ASN1_PNODE		revokedCertificates;	/**< Shortcut to revoked list */
+	NH_ASN1_PNODE		extensions;			/**< Shortcut to revoked list */
 	/**
 	 * @brief Adds a new certificate to revoked list
-	 * @param NH_TBSCERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
 	 * @param NH_BIG_INTEGER *serial: certificate serial number
 	 * @param char *szRevocation: revocation date in format YYYYMMDDHHSSZ. Must be NULL terminated
 	 * @param unsigned int reason: CRLReason enumerated
@@ -451,8 +455,41 @@ struct NH_TBSCERTLIST_ENCODER_STR
 	 * 
 	 */
 	NH_TBSCL_ADD_REVOKED	add_cert;
+	/**
+	 * @brief Sets CRL issuer Name
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param NH_NAME *pIssuer: issuer name
+	 * @param size_t ulCount: issuer length
+	 */
+	NH_TBSCL_SET_ISSUER	put_issuer;
+	/**
+	 * @brief Sets cRL this update field value
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param char *szDate: the date as a generalized time
+	 * 
+	 */
+	NH_TBSCL_SET_UPDATE	put_this_update;
+	/**
+	 * @brief Sets CRL next update field value
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param char *szDate: the date as a generalized time
+	 * 
+	 */
+	NH_TBSCL_SET_UPDATE	put_next_update;
+	/**
+	 * @brief Sets X.509 CRL authority key identifier extension
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param NH_OCTET_SRING *pValue: extension value
+	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
+	 */
+	NH_TBSCL_SET_AKI		put_aki;
 };
-typedef NH_TBSCERTLIST_ENCODER_STR				*NH_TBSCERTLIST_ENCODER;
+typedef NH_CERTLIST_ENCODER_STR				*NH_CERTLIST_ENCODER;
 
 
 #if defined(__cplusplus)
@@ -519,8 +556,8 @@ NH_FUNCTION(NH_RV, NH_new_cert_encoder)(_OUT_ NH_CERT_ENCODER*);
  */
 NH_FUNCTION(void, NH_delete_cert_encoder)(_INOUT_ NH_CERT_ENCODER);
 
-NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_TBSCERTLIST_ENCODER*);
-NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_TBSCERTLIST_ENCODER);
+NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_CERTLIST_ENCODER*);
+NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_CERTLIST_ENCODER);
 
 
 #if defined(__cplusplus)

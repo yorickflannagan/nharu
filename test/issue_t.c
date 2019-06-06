@@ -482,7 +482,7 @@ int test_sign_certificate()
 	NH_PKIBR_EXTENSION hExt = NULL;
 
 	printf("%s", "Testing certificate issuing... ");
-	if (NH_SUCCESS(create_TBS(&hTBSCert)))
+	if (NH_SUCCESS(rv = create_TBS(&hTBSCert)))
 	{
 		if (NH_SUCCESS(rv = NH_new_cert_encoder(&hCertificate)))
 		{

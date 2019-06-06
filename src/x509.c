@@ -1230,8 +1230,14 @@ NH_NODE_WAY pkix_revoked_entry_map[] =
 };
 NH_NODE_WAY pkix_tbsCertList_map[] =
 {
-	{	/* version */
+	{
 		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* version */
+		NH_SAIL_SKIP_SOUTH,
 		NH_ASN1_INTEGER | NH_ASN1_OPTIONAL_BIT | NH_ASN1_HAS_NEXT_BIT,
 		NULL,
 		0
@@ -1288,21 +1294,15 @@ NH_NODE_WAY pkix_CertificateList_map[] =
 		NULL,
 		0
 	},
-	{	/* tbsCertList */
-		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
-		NULL,
-		0
-	},
 	{
 		NH_SAIL_SKIP_SOUTH,
-		NH_ASN1_SEQUENCE | NH_ASN1_PORTOLANI_BIT,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT | NH_ASN1_PORTOLANI_BIT,
 		pkix_tbsCertList_map,
 		ASN_NODE_WAY_COUNT(pkix_tbsCertList_map)
 	},
 	{	/* signatureAlgorithm */
-		(NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST,
-		NH_ASN1_SEQUENCE,
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
 		pkix_algid_map,
 		PKIX_ALGID_COUNT
 	},

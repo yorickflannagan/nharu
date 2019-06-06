@@ -1096,9 +1096,9 @@ EXTERN NH_NODE_WAY pkix_extension_map[];
 EXTERN NH_NODE_WAY pkix_revoked_entry_map[];
 #define PKIX_REVOKEDENTRY_MAP_COUNT			4
 EXTERN NH_NODE_WAY pkix_tbsCertList_map[];
-#define PKIX_TBSCERTLIST_MAP_COUNT			8
+#define PKIX_TBSCERTLIST_MAP_COUNT			9
 EXTERN NH_NODE_WAY pkix_CertificateList_map[];
-#define PKIX_CERTLIST_MAP_COUNT			5
+#define PKIX_CERTLIST_MAP_COUNT			4
 
 
 NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NHIX_PUBLIC_KEY*);
