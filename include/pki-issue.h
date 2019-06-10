@@ -428,10 +428,13 @@ typedef struct NH_CERTLIST_ENCODER_STR			NH_CERTLIST_ENCODER_STR;
 typedef NH_METHOD(NH_RV, NH_TBSCL_ADD_REVOKED)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_BIG_INTEGER*, _IN_ char*, _IN_ unsigned int);
 typedef NH_METHOD(NH_RV, NH_TBSCL_SET_ISSUER)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_NAME*, _IN_ size_t);
 typedef NH_METHOD(NH_RV, NH_TBSCL_SET_UPDATE)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ char*);
-typedef NH_METHOD(NH_RV, NH_TBSCL_SET_AKI)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_OCTET_SRING*);
+typedef NH_METHOD(NH_RV, NH_TBSCL_SET_EXTENSION)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ NH_OCTET_SRING*);
+typedef NH_METHOD(NH_RV, NH_TBSCL_SIGN)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _IN_ CK_MECHANISM_TYPE, _IN_ NH_CMS_SIGN_FUNCTION, _IN_ void*);
+typedef NH_METHOD(NH_RV, NH_TBSCL_ENCODE)(_INOUT_ NH_CERTLIST_ENCODER_STR*, _OUT_ unsigned char*, _INOUT_ size_t*);
 struct NH_CERTLIST_ENCODER_STR
 {
-	NH_ASN1_ENCODER_HANDLE	hTBS;				/**< ASN.1 encoder */
+	NH_ASN1_ENCODER_HANDLE	hTBS;				/**< ASN.1 encoder for TBS Certificate List */
+	NH_ASN1_ENCODER_HANDLE	hCRL;				/**< ASN.1 encoder for Certificate List */
 	NH_ASN1_PNODE		revokedCertificates;	/**< Shortcut to revoked list */
 	NH_ASN1_PNODE		extensions;			/**< Shortcut to revoked list */
 	/**
@@ -487,7 +490,46 @@ struct NH_CERTLIST_ENCODER_STR
 	 * 	NH_OUT_OF_MEMORY_ERROR
 	 * 	NH_INVALID_DER_TYPE
 	 */
-	NH_TBSCL_SET_AKI		put_aki;
+	NH_TBSCL_SET_EXTENSION	put_aki;
+	/**
+	 * @brief Sets X.509 CRL number extension
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param NH_OCTET_SRING *pValue: extension value
+	 * @return
+	 * 	NH_ISSUE_ALREADY_PUT_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_CANNOT_SAIL
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_INVALID_DER_TYPE
+	 */
+	NH_TBSCL_SET_EXTENSION	put_crl_number;
+	/**
+	 * @brief Signs a CRL
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param CK_MECHANISM_TYPE mechanism: PKCS#11 signature mechanism constant
+	 * @param NH_CMS_SIGN_FUNCTION callback: signature callback function
+	 * @param void *pParams: parameters to callback function.
+	 * @return
+	 * 	NH_UNSUPPORTED_MECH_ERROR
+	 * 	NH_INVALID_ARG
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_CANNOT_SAIL
+	 * 	encoding type errors
+	 */
+	NH_TBSCL_SIGN		sign;
+	/**
+	 * @brief Encodes this signed certificate request
+	 * @param NH_CERTLIST_ENCODER_STR *hHandler: TBSCertificateList encoder handler
+	 * @param unsigned char *pBuffer: output buffer
+	 * @param size_t *ulSize: size of pBuffer; if pBuffer is NULL, returns required buffer size;
+	 * @return
+	 * 	NH_ISSUE_INCOMPLETEOB_ERROR
+	 * 	NH_BUF_TOO_SMALL
+	 * 	NH_INVALID_DER_TYPE
+	 * 	NH_OUT_OF_MEMORY_ERROR
+	 * 	NH_UNEXPECTED_ENCODING
+	 */
+	NH_TBSCL_ENCODE		encode;
 };
 typedef NH_CERTLIST_ENCODER_STR				*NH_CERTLIST_ENCODER;
 

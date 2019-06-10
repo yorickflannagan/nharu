@@ -266,3 +266,15 @@ NH_FUNCTION(void, NH_swap)(_INOUT_ unsigned char *value, _IN_ size_t size)
 		i++, j--;
 	}
 }
+
+NH_FUNCTION(int, ROUNDUP)(_IN_ int y)
+{
+	int x = y;
+	--x;
+	x |= x >> 1;
+	x |= x >> 2;
+	x |= x >> 4;
+	x |= x >> 8;
+	x |= x >> 16;
+	return ++x;
+}
