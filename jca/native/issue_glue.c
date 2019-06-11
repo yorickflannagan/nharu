@@ -281,6 +281,7 @@ static jboolean __get_name(JNIEnv *env, jobject jName, NH_NAME name)
 #define CERT_PUT_SUBJECT		2
 #define REQUEST_PUT_SUBJECT		3
 #define CERT_SUBJECT_ALT_NAME		4
+#define CRL_PUT_ISSUER			5
 static void __put_names(JNIEnv *env, jobjectArray value, void *__handler, int __type)
 {
 	NH_RV rv;
@@ -318,6 +319,9 @@ static void __put_names(JNIEnv *env, jobjectArray value, void *__handler, int __
 				break;
 			case CERT_SUBJECT_ALT_NAME:
 				rv = ((NH_TBSCERT_ENCODER) __handler)->put_subject_altname((NH_TBSCERT_ENCODER) __handler, name, len);
+				break;
+			case CRL_PUT_ISSUER:
+				rv = ((NH_CERTLIST_ENCODER) __handler)->put_issuer((NH_CERTLIST_ENCODER) __handler, name, len);
 				break;
 			default: rv = NH_INVALID_ARG;
 			}
@@ -526,6 +530,7 @@ Java_org_crypthing_security_issue_NharuCertificateEncoder_nhceSetSKI
 }
 #define SIGN_CERTIFICATE			1
 #define SIGN_REQUEST				2
+#define SIGN_CRL					3
 static void __sign(JNIEnv *env, jint mechanism, jobject signer, void *__handler, int __type)
 {
 	NH_RV rv;
@@ -568,6 +573,9 @@ static void __sign(JNIEnv *env, jint mechanism, jobject signer, void *__handler,
 			break;
 		case SIGN_REQUEST:
 			rv = ((NH_CREQUEST_ENCODER) __handler)->sign((NH_CREQUEST_ENCODER) __handler, mechanism, sign_callback, &params);
+			break;
+		case SIGN_CRL:
+			rv = ((NH_CERTLIST_ENCODER) __handler)->sign((NH_CERTLIST_ENCODER) __handler, mechanism, sign_callback, &params);
 			break;
 		default: rv = NH_INVALID_ARG;
 		}
@@ -727,4 +735,141 @@ Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceEncodeReque
 )
 {
 	return __encode(env, ((NH_CREQUEST_ENCODER) handle)->hRequest);
+}
+
+
+JNIEXPORT jlong JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclNewCRLEncoder(JNIEnv *env, _UNUSED_ jclass ignored)
+{
+	jlong ret = 0L;
+	NH_RV rv;
+	NH_CERTLIST_ENCODER hCRL;
+
+	if (NH_SUCCESS(rv = NH_new_certlist_encoder(&hCRL))) ret = (jlong) hCRL;
+	else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	return ret;
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclReleaseCRLEncoder(_UNUSED_ JNIEnv *env, _UNUSED_ jclass ignored, jlong handle)
+{
+	NH_delete_certilist_encoder((NH_CERTLIST_ENCODER) handle);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetIssuer(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle, jobjectArray value)
+{
+	__put_names(env, value, (NH_CERTLIST_ENCODER) handle, CRL_PUT_ISSUER);
+}
+static void __put_extension(JNIEnv *env, NH_CERTLIST_ENCODER hCRL, NH_TBSCL_SET_EXTENSION method, jbyteArray value)
+{
+	NH_RV rv;
+	NH_OCTET_SRING pValue;
+	jsize len;
+	jbyte *jbuffer;
+
+	len = (*env)->GetArrayLength(env, value);
+	if ((jbuffer = (*env)->GetByteArrayElements(env, value, NULL)))
+	{
+		pValue.data = (unsigned char*) jbuffer;
+		pValue.length = len;
+		if (NH_FAIL(rv = method(hCRL, &pValue))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		(*env)->ReleaseByteArrayElements(env, value, jbuffer, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetAKI(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle, jbyteArray value)
+{
+	__put_extension(env, (NH_CERTLIST_ENCODER) handle, ((NH_CERTLIST_ENCODER) handle)->put_aki, value);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetCRLNumber(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle, jbyteArray value)
+{
+	__put_extension(env, (NH_CERTLIST_ENCODER) handle, ((NH_CERTLIST_ENCODER) handle)->put_crl_number, value);
+}
+static void __put_date(JNIEnv *env, NH_CERTLIST_ENCODER hCRL, NH_TBSCL_SET_UPDATE method, jstring value)
+{
+	NH_RV rv;
+	const char *pValue;
+
+	if ((pValue = (*env)->GetStringUTFChars(env, value, NULL)))
+	{
+		if (NH_FAIL(rv = method(hCRL, pValue))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+		(*env)->ReleaseStringUTFChars(env, value, pValue);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetThisUpdate(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle, jstring value)
+{
+	__put_date(env, (NH_CERTLIST_ENCODER) handle, ((NH_CERTLIST_ENCODER) handle)->put_this_update, value);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetNextUpdate(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle, jstring value)
+{
+	__put_date(env, (NH_CERTLIST_ENCODER) handle, ((NH_CERTLIST_ENCODER) handle)->put_next_update, value);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclAddCert
+(
+	JNIEnv *env,
+	_UNUSED_ jclass ignored,
+	jlong handle,
+	jbyteArray serial,
+	jstring revoked,
+	jint reason
+)
+{
+	jsize len;
+	jbyte *jserial;
+	NH_BIG_INTEGER pSerial;
+	const char *szRevoked;
+	NH_RV rv;
+	NH_CERTLIST_ENCODER hCRL = (NH_CERTLIST_ENCODER) handle;
+
+	len = (*env)->GetArrayLength(env, serial);
+	if ((jserial = (*env)->GetByteArrayElements(env, serial, NULL)))
+	{
+		pSerial.data = (unsigned char*) jserial;
+		pSerial.length = len;
+		if ((szRevoked = (*env)->GetStringUTFChars(env, revoked, NULL)))
+		{
+			if (NH_FAIL(rv = hCRL->add_cert(hCRL, &pSerial, szRevoked, (unsigned int) reason))) throw_new(env, J_CERT_ENCODING_EX, J_TBS_PUT_ERROR, rv);
+			(*env)->ReleaseStringUTFChars(env, revoked, szRevoked);
+		}
+		else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+		(*env)->ReleaseByteArrayElements(env, serial, jserial, JNI_ABORT);
+	}
+	else throw_new(env, J_RUNTIME_EX, J_DEREF_ERROR, 0);
+}
+JNIEXPORT void JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSign(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle, jint mechanism, jobject signer)
+{
+	__sign(env, mechanism, signer, (NH_CERTLIST_ENCODER) handle, SIGN_CRL);
+}
+JNIEXPORT jbyteArray JNICALL
+Java_org_crypthing_security_issue_NharuCRLEncoder_nhclEncode(JNIEnv *env, _UNUSED_ jclass ignored, jlong handle)
+{
+	NH_RV rv;
+	NH_CERTLIST_ENCODER hCRL = (NH_CERTLIST_ENCODER) handle;
+	size_t ulSize;
+	unsigned char *pBuffer;
+	jbyteArray ret = NULL;
+
+	if (NH_SUCCESS(rv = hCRL->encode(hCRL, NULL, &ulSize)))
+	{
+		if (NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(ulSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
+		{
+			if (NH_SUCCESS(rv = hCRL->encode(hCRL, pBuffer, &ulSize)))
+			{
+				if (!(ret = (*env)->NewByteArray(env, ulSize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, ulSize, (jbyte*) pBuffer);
+			}
+			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
+			free(pBuffer);
+		}
+		else throw_new(env, J_OUTOFMEM_EX, J_OUTOFMEM_ERROR, rv);
+	}
+	else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, 0);
+	return ret;
 }

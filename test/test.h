@@ -26,4 +26,9 @@ int test_create_request();
 int test_encode_p8();
 int test_issue_crl();
 
+EXTERN unsigned char __ca_privkey[];
+#define CA_PRIVKEY_SIZE			1217
+EXTERN unsigned char __ca_cert[];
+#define CA_CERT_SIZE			1138
+
 #endif

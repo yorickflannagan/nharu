@@ -267,7 +267,7 @@ NH_FUNCTION(void, NH_swap)(_INOUT_ unsigned char *value, _IN_ size_t size)
 	}
 }
 
-NH_FUNCTION(int, ROUNDUP)(_IN_ int y)
+INLINE NH_FUNCTION(int, ROUNDUP)(_IN_ int y)
 {
 	int x = y;
 	--x;

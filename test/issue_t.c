@@ -141,7 +141,7 @@ int test_parse_pubkey()
 }
 
 
-static unsigned char __ca_privkey[] =
+unsigned char __ca_privkey[] =
 {
   0x30, 0x82, 0x04, 0xbd, 0x02, 0x01, 0x00, 0x30, 0x0d, 0x06, 0x09, 0x2a,
   0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00, 0x04, 0x82,
@@ -371,7 +371,7 @@ NH_RV signature_callback(_IN_ NH_BLOB *data, _IN_ CK_MECHANISM_TYPE mechanism, _
 	NH_RSA_PRIVKEY_HANDLER hHandler = (NH_RSA_PRIVKEY_HANDLER) params;
 	return hHandler->sign(hHandler, mechanism, data->data, data->length, signature, sigSize);
 }
-static unsigned char __ca_cert[] =
+unsigned char __ca_cert[] =
 {
 	0x30, 0x82, 0x04, 0x6e, 0x30, 0x82, 0x03, 0x56, 0xa0, 0x03, 0x02, 0x01,
 	0x02, 0x02, 0x01, 0x00, 0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
@@ -490,7 +490,7 @@ int test_sign_certificate()
 			{
 				if
 				(
-					NH_SUCCESS(rv = hPrivKey->from_privkey_info(hPrivKey, __ca_privkey, sizeof(__ca_privkey))) &&
+					NH_SUCCESS(rv = hPrivKey->from_privkey_info(hPrivKey, __ca_privkey, CA_PRIVKEY_SIZE)) &&
 					NH_SUCCESS(rv = hCertificate->sign(hCertificate, hTBSCert, CKM_SHA256_RSA_PKCS, signature_callback, hPrivKey)) &&
 					NH_SUCCESS(rv = (uSize = hCertificate->hEncoder->encoded_size(hCertificate->hEncoder, hCertificate->hEncoder->root)) > 0 ? NH_OK : NH_ISSUE_ERROR) &&
 					NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(uSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
@@ -502,7 +502,7 @@ int test_sign_certificate()
 						NH_SUCCESS(rv = NH_parse_certificate(pBuffer, uSize, &hCert))
 					)
 					{
-						if (NH_SUCCESS(rv = NH_parse_certificate(__ca_cert, sizeof(__ca_cert), &hCACert)))
+						if (NH_SUCCESS(rv = NH_parse_certificate(__ca_cert, CA_CERT_SIZE, &hCACert)))
 						{
 							if
 							(

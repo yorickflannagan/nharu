@@ -81,7 +81,7 @@
 #define J_CMS_ENCRYPT_ERROR		"Could not encrypt CMS contents"
 #define J_CERTREQ_PARSE_ERROR		"Could not parse certificate request"
 #define J_PUBKEY_PARSE_ERROR		"Could not parse public key encoding"
-#define J_TBS_PUT_ERROR			"Could not set Certificate field due to encoding error"
+#define J_TBS_PUT_ERROR			"Could not set X.509 structure field due to encoding error"
 #define J_INVALID_ARG_ERROR		"Invalid argument"
 #define J_SIGN_CERT_ERROR		"Could not sign TBSCertificate"
 #define J_CERT_ENCODING_ERROR		"Could not encode X.509 structure"

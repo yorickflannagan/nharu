@@ -136,7 +136,7 @@ typedef struct NH_BLOB
 
 } NH_BLOB, NH_BIG_INTEGER, NH_UTF8CHAR, NH_SYMKEY, NH_IV;
 
-INLINE NH_FUNCTION(int, ROUNDUP)(_IN_ int);
+NH_FUNCTION(int, ROUNDUP)(_IN_ int);
 
 
 #if defined(__cplusplus)

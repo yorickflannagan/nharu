@@ -598,8 +598,8 @@ NH_FUNCTION(NH_RV, NH_new_cert_encoder)(_OUT_ NH_CERT_ENCODER*);
  */
 NH_FUNCTION(void, NH_delete_cert_encoder)(_INOUT_ NH_CERT_ENCODER);
 
-NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_CERTLIST_ENCODER*);
-NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_CERTLIST_ENCODER);
+NH_FUNCTION(NH_RV, NH_new_certlist_encoder)(_OUT_ NH_CERTLIST_ENCODER*);
+NH_FUNCTION(void, NH_delete_certilist_encoder)(_INOUT_ NH_CERTLIST_ENCODER);
 
 
 #if defined(__cplusplus)

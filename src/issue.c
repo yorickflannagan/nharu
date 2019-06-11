@@ -1691,7 +1691,7 @@ static NH_RV __crl_encode(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _OUT_ unsig
 	
 	return rv;
 }
-static NH_CERTLIST_ENCODER_STR __tbscertlist_encoder =
+static NH_CERTLIST_ENCODER_STR __certlist_encoder =
 {
 	NULL,
 	NULL,
@@ -1707,7 +1707,7 @@ static NH_CERTLIST_ENCODER_STR __tbscertlist_encoder =
 	__crl_sign,
 	__crl_encode
 };
-NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_CERTLIST_ENCODER *hHandler)
+NH_FUNCTION(NH_RV, NH_new_certlist_encoder)(_OUT_ NH_CERTLIST_ENCODER *hHandler)
 {
 	NH_RV rv;
 	NH_CERTLIST_ENCODER hOut;
@@ -1715,7 +1715,7 @@ NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_CERTLIST_ENCODER *hHandl
 
 	if (NH_SUCCESS(rv = (hOut = (NH_CERTLIST_ENCODER) malloc(sizeof(NH_CERTLIST_ENCODER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR))
 	{
-		memcpy(hOut, &__tbscertlist_encoder, sizeof(NH_CERTLIST_ENCODER_STR));
+		memcpy(hOut, &__certlist_encoder, sizeof(NH_CERTLIST_ENCODER_STR));
 		if
 		(
 			NH_SUCCESS(rv = NH_new_encoder(128, 32768, &hOut->hTBS)) &&
@@ -1731,11 +1731,11 @@ NH_FUNCTION(NH_RV, NH_new_tbscertlist_encoder)(_OUT_ NH_CERTLIST_ENCODER *hHandl
 				NH_SUCCESS(rv = (hOut->extensions = hOut->hTBS->sail(hOut->hTBS->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 6))) ? NH_OK : NH_CANNOT_SAIL)
 			)	*hHandler = hOut;
 		}
-		if (NH_FAIL(rv)) NH_delete_tbscertilist_encoder(hOut);
+		if (NH_FAIL(rv)) NH_delete_certilist_encoder(hOut);
 	}
 	return rv;
 }
-NH_FUNCTION(void, NH_delete_tbscertilist_encoder)(_INOUT_ NH_CERTLIST_ENCODER hHandler)
+NH_FUNCTION(void, NH_delete_certilist_encoder)(_INOUT_ NH_CERTLIST_ENCODER hHandler)
 {
 	if (hHandler)
 	{
