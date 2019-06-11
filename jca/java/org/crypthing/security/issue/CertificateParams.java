@@ -786,6 +786,11 @@ public class CertificateParams
 		if (!(pubkey instanceof NharuRSAPublicKey)) throw new IllegalArgumentException("Unsupported Public Key type");
 		ski = ((NharuRSAPublicKey)pubkey).getKeyIdentifier();
 	}
+	private void __checkArray(final Object[] arr) throws CertificateProfileException
+	{
+		if (arr == null) throw new CertificateProfileException(new NullPointerException());
+		for (Object o: arr) if (o == null) throw new CertificateProfileException(new NullPointerException());
+	}
 
 	/**
 	 * Checks if current state conforms specified certificate profile
@@ -797,13 +802,13 @@ public class CertificateParams
 		if (version != profile.version) throw new CertificateProfileException("Version field does not match");
 		if (serial == null) throw new CertificateProfileException("Serial number field does not match");
 		if (Arrays.equals(signatureAlgorithm, NharuCommon.stringToOID(profile.signatureAlgorithm))) throw new CertificateProfileException("Signature algorithm field does not match");
-		if (issuer == null) throw new CertificateProfileException("Issuer field does not match");
+		__checkArray(issuer);
 		if (notBefore == null || notAfter == null) throw new CertificateProfileException("Validity field does not match");
 		final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
 		cal.setTime(notBefore);
 		cal.add(Calendar.YEAR, profile.validity);
 		if (!cal.getTime().equals(notAfter)) throw new CertificateProfileException("Validity field does not match");
-		if (subject == null) throw new CertificateProfileException("Subject field does not match");
+		__checkArray((subject));
 		if (publicKey == null || !publicKey.getAlgorithm().equalsIgnoreCase(profile.publicKeyAlgorithm)) throw new CertificateProfileException("Public Key Info field does not match");
 		if (profile.issuerUniqueID && issuerUniqueID == null) throw new CertificateProfileException("Issuer Unique ID field does not match");
 		if (profile.subjectUniqueID && subjectUniqueID == null) throw new CertificateProfileException("Subject Unique ID field does not match");
@@ -812,18 +817,18 @@ public class CertificateParams
 		if (profile.keyUsage && keyUsage == null) throw new CertificateProfileException("Key Usage extension does not match");
 		if (profile.certificatePolicies && certificatePolicies == null) throw new CertificateProfileException("Certificatge Policies extension does not match");
 		if (profile.policyMappings && policyMappings == null) throw new CertificateProfileException("Policy Mappings extension does not match");
-		if (profile.subjectAltName && subjectAltName == null) throw new CertificateProfileException("Subject Alternative Name extension does not match");
+		if (profile.subjectAltName) __checkArray(subjectAltName);
 		if (profile.issuerAltName && issuerAltName == null) throw new CertificateProfileException("Issuer Alternative Name extension does not match");
 		if (profile.subjectDirectoryAttributes && subjectDirectoryAttributes == null) throw new CertificateProfileException("Subject Directory Attributes extension does not match");
 		if (profile.basicConstraints != basicConstraints) throw new CertificateProfileException("Basic Constraints extension does not match");
 		if (profile.nameConstraints && nameConstraints == null) throw new CertificateProfileException("Name Constraints extension does not match");
 		if (profile.policyConstraints && policyConstraints == null) throw new CertificateProfileException("Policy Constraints extension does not match");
 		if (profile.extKeyUsage && extKeyUsage == null) throw new CertificateProfileException("Extended Key Usage extension does not match");
-		if (profile.cRLDistributionPoints && cdp == null) throw new CertificateProfileException("CRL Distribution Points extension does not match");
+		if (profile.cRLDistributionPoints)__checkArray(cdp);
 		if (profile.inhibitAnyPolicy && inhibitAnyPolicy== null) throw new CertificateProfileException("Inhibit Any Policy extension does not match");
-		if (profile.freshestCRL && freshestCRL == null) throw new CertificateProfileException("Freshest CRL extension does not match");
-		if (profile.authorityInfoAccess && authorityInfoAccess == null) throw new CertificateProfileException("Authority Info Access extension does not match");
-		if (profile.subjectInfoAccess && subjectInfoAccess == null) throw new CertificateProfileException("Subject Info Access extension does not match");
+		if (profile.freshestCRL)__checkArray(freshestCRL);
+		if (profile.authorityInfoAccess) __checkArray(authorityInfoAccess);
+		if (profile.subjectInfoAccess ) __checkArray(subjectInfoAccess);
 	}
 
 	@Override
