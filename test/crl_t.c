@@ -206,14 +206,14 @@ int test_issue_crl()
 				{
 					if
 					(
-						NH_SUCCESS(rv = hPrivKey->from_privkey_info(hPrivKey, __ca_privkey, sizeof(__ca_privkey))) &&
+						NH_SUCCESS(rv = hPrivKey->from_privkesy_info(hPrivKey, __ca_privkey, sizeof(__ca_privkey))) &&
 						NH_SUCCESS(rv = hCRL->sign(hCRL, CKM_SHA256_RSA_PKCS, crlsign_callback, hPrivKey)) &&
 						NH_SUCCESS(rv = hCRL->encode(hCRL, NULL, &ulSize)) &&
 						NH_SUCCESS(rv = (pBuffer = (unsigned char*) malloc(ulSize)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
 					)
 					{
-						rv = hCRL->encode(hCRL, pBuffer, &ulSize);
-						free(pBuffer);
+            rv = hCRL->encode(hCRL, pBuffer, &ulSize);
+            free(pBuffer);
 					}
 					NH_release_RSA_privkey_handler(hPrivKey);
 				}
