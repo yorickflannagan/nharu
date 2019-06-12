@@ -93,7 +93,7 @@ public class NharuCRLEncoder
 	{
 		if (__is_set(NEXT_UPDATED_SETTED)) throw new IllegalStateException("Property already setted");
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
-		nhclSetThisUpdate(hHandle, __format(instant));
+		nhclSetNextUpdate(hHandle, __format(instant));
 		fields |= NEXT_UPDATED_SETTED;
 	}
 	public void addCert(final BigInteger serial, final Date revoked, final CRLReason reason) throws ParameterException
@@ -146,7 +146,7 @@ public class NharuCRLEncoder
 
 	public static void main(String[] args)
 	{
-		System.out.println("Validating CRL issuing...");
+		System.out.print("Validating CRL issuing...");
 		BigInteger revoked = new BigInteger("128");
 		BigInteger another = new BigInteger("32768");
 		try
@@ -175,6 +175,7 @@ public class NharuCRLEncoder
 						{
 							crl.verify(caCert.getPublicKey());
 							if (!crl.isRevoked(revoked.toByteArray()) || !crl.isRevoked(another.toByteArray())) throw new RuntimeException("Check certificates not found in CRL");
+							System.out.println("Done!");
 						}
 						finally { crl.closeHandle(); }
 					}
@@ -184,6 +185,6 @@ public class NharuCRLEncoder
 			}
 			finally { caCert.closeHandle(); }
 		}
-		catch (Exception e) { e.printStackTrace(); }
+		catch (Exception e) { System.out.println(""); e.printStackTrace(); }
 	}
 }

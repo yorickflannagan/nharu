@@ -1266,7 +1266,7 @@ NH_NODE_WAY pkix_tbsCertList_map[] =
 		pkix_time_map,
 		ASN_NODE_WAY_COUNT(pkix_time_map)
 	},
-	{	/* nextUpdate */
+	{	/* nextUpdate. Optional under specification. But, "conforming CRL issuers MUST include the nextUpdate field in all CRLs". */
 		NH_SAIL_SKIP_EAST,
 		NH_ASN1_CHOICE_BIT,
 		pkix_time_map,

@@ -61,7 +61,7 @@ static NH_NAME_STR pOU = { &pOU_OID, "PKI Ruler for All Cats" };
 static NH_NAME_STR pCN = { &pCN_OID, "Common Name for All Cats End User CA" };
 static char szThis[] = "20190605154027Z";
 static char szNext[] = "20190605214027Z";
-static unsigned char __crlNumber[] = { 0x00, 0x80 };
+static unsigned char __crlNumber[] = { 0x01 };
 static unsigned char __aki[] = { 0x06, 0x06, 0x9A, 0x22, 0xC4, 0xA7, 0xC0, 0xF8, 0x55, 0xFE, 0x05, 0xEA, 0x86, 0x37, 0x0A, 0x8D, 0x2D, 0xC0, 0x17, 0xD3 };
 int test_issue_crl()
 {
