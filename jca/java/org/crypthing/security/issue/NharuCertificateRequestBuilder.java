@@ -80,7 +80,7 @@ public class NharuCertificateRequestBuilder
 
 	public static void main(String[] args)
 	{
-		System.out.println("Validating self-signed certificate issue...");
+		System.out.print("Validating self-signed certificate issue...");
 		try
 		{
 			KeyPairGenerator keyGen = new NharuRSAKeyPairGenerator();
