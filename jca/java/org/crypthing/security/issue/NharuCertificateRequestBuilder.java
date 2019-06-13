@@ -47,12 +47,14 @@ public class NharuCertificateRequestBuilder
 	public PublicKey getPublicKey() { return pubKey; }
 	public void setPublicKey(final PublicKey key) throws EncodingException
 	{
+		if (key == null) throw new NullPointerException();
 		if (pubKey != null) throw new IllegalStateException("Property already set");
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		nhceSetPubKey(hHandle, (pubKey = key).getEncoded());
 	}
 	public void sign(final String algorithm, final SignerInterface signer) throws GeneralSecurityException
 	{
+		if (signer == null) throw new NullPointerException();
 		if (subject == null || pubKey == null) throw new IllegalStateException("Request not built yet");
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
 		if (signed) throw new IllegalStateException("Request already signed");
@@ -80,7 +82,7 @@ public class NharuCertificateRequestBuilder
 
 	public static void main(String[] args)
 	{
-		System.out.println("Validating self-signed certificate issue...");
+		System.out.print("Validating self-signed certificate issue...");
 		try
 		{
 			KeyPairGenerator keyGen = new NharuRSAKeyPairGenerator();

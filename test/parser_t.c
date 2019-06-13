@@ -170,6 +170,7 @@ int test_encoder()
 	if (NH_SUCCESS(rv)) rv = hParser->parse_string(node);
 	if (NH_SUCCESS(rv)) rv = node->valuelen == strlen(serial) && memcmp(node->value, serial, node->valuelen) == 0 ? NH_OK : 1;
 	if (buffer) free(buffer);
+	if (hParser) NH_release_parser(hParser);
 	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
 	else printf("failed with error code %lu\n", rv);
 	return (int) rv;

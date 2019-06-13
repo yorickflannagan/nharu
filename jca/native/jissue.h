@@ -208,6 +208,68 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCertificateRequest
 JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCertificateRequestBuilder_nhceEncodeRequest(JNIEnv*, jclass, jlong);
 
 
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclNewCRLEncoder
+ * Signature: ()J
+ */
+JNIEXPORT jlong JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclNewCRLEncoder(JNIEnv*, jclass);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclReleaseCRLEncoder
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclReleaseCRLEncoder(JNIEnv*, jclass, jlong);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclSetIssuer
+ * Signature: (J[Lorg/crypthing/security/NharuX500Name;)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetIssuer(JNIEnv *, jclass, jlong, jobjectArray);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclSetAKI
+ * Signature: (J[B)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetAKI(JNIEnv *, jclass, jlong, jbyteArray);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclSetCRLNumber
+ * Signature: (J[B)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetCRLNumber(JNIEnv *, jclass, jlong, jbyteArray);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclSetThisUpdate
+ * Signature: (JLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetThisUpdate(JNIEnv *, jclass, jlong, jstring);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclSetNextUpdate
+ * Signature: (JLjava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSetNextUpdate(JNIEnv *, jclass, jlong, jstring);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclAddCert
+ * Signature: (J[BLjava/lang/String;I)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclAddCert(JNIEnv *, jclass, jlong, jbyteArray, jstring, jint);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclSign
+ * Signature: (JILorg/crypthing/security/SignerInterface;)V
+ */
+JNIEXPORT void JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclSign(JNIEnv *, jclass, jlong, jint, jobject);
+/*
+ * Class:     org_crypthing_security_issue_NharuCRLEncoder
+ * Method:    nhclEncode
+ * Signature: (J)[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_issue_NharuCRLEncoder_nhclEncode(JNIEnv *, jclass, jlong);
+
+
 #ifdef __cplusplus
 }
 #endif

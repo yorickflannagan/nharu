@@ -1,19 +1,12 @@
 package org.crypthing.security.cms;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 
 import org.crypthing.security.cert.NharuCertStore;
 import org.crypthing.security.provider.NharuProvider;
 import org.crypthing.security.x509.NharuX509Certificate;
-import org.crypthing.security.x509.NharuX509Factory;
 import org.crypthing.util.NharuArrays;
 
 /**

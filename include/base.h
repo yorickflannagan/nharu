@@ -131,10 +131,13 @@ typedef struct tm				NH_TIME;
 typedef NH_TIME*				NH_PTIME;
 typedef struct NH_BLOB
 {
-	unsigned char*		data;
-	size_t			length;
+	unsigned char*			data;
+	size_t				length;
 
 } NH_BLOB, NH_BIG_INTEGER, NH_UTF8CHAR, NH_SYMKEY, NH_IV;
+
+NH_FUNCTION(int, ROUNDUP)(_IN_ int);
+
 
 #if defined(__cplusplus)
 #define EXTERN				extern "C"

@@ -87,7 +87,6 @@ public class NharuCertPath extends CertPath
 	public byte[] getEncoded(String encoding) throws CertificateEncodingException
 	{
 		if (encoding.equals("PkiPath")) return encodePKIPath();
-		// TODO Auto-generated method stub
 		return null;
 	}
 

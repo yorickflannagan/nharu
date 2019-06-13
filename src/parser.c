@@ -1073,10 +1073,8 @@ NH_UTILITY(size_t, NH_encoded_size)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_A
 				switch (current->knowledge & NH_ASN1_TAG_MASK)
 				{
 				case NH_ASN1_BOOLEAN:
-					len = 1;
-					break;
 				case NH_ASN1_NULL:
-					len = 0;
+					len = 1;
 					break;
 				case NH_ASN1_OBJECT_ID:
 					i = 2;
@@ -1121,7 +1119,7 @@ INLINE NH_UTILITY(NH_RV, asn_recursive_encoding)
 	NH_RV rv = NH_OK;
 	unsigned int len, i = 0, off = 0;
 	NH_ASN1_PNODE current = node;
-	unsigned char *init = buffer;
+	unsigned char *init = buffer, null_tag[] = { NH_ASN1_NULL, 0x00 };
 
 	do
 	{
@@ -1154,6 +1152,8 @@ INLINE NH_UTILITY(NH_RV, asn_recursive_encoding)
 					switch (current->knowledge & NH_ASN1_TAG_MASK)
 					{
 					case NH_ASN1_NULL:
+						memcpy(buffer, null_tag, 2);
+						buffer += 2;
 						break;
 					case NH_ASN1_OBJECT_ID:
 						i = 2;
@@ -1187,6 +1187,7 @@ INLINE NH_UTILITY(NH_RV, asn_recursive_encoding)
 				}
 			}
 		}
+		else if (!ASN_IS_OPTIONAL(current->knowledge)) rv = NH_UNEXPECTED_ENCODING;
 	}
 	while(NH_SUCCESS(rv) && (current = current->next));
 	*offset = buffer - init;
@@ -1337,4 +1338,5 @@ int saveTo(unsigned char *buffer, size_t size, char *filename)
 	else err = errno;
 	return err;
 }
+void flush() { fflush(stdout); }
 #endif

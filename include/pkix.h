@@ -1070,29 +1070,35 @@ NH_FUNCTION(void, NH_release_crl)(_INOUT_ NH_CRL_HANDLER);
 EXTERN NH_NODE_WAY pkix_x500_rdn_map[];
 #define PKIX_X500_RDN_COUNT			2
 EXTERN unsigned int aki_oid[];
-#define AKI_OID_COUNT				4
+#define AKI_OID_COUNT					4
 EXTERN NH_NODE_WAY pkix_aki_map[];
-#define PKIX_AKI_MAP_COUNT			4
+#define PKIX_AKI_MAP_COUNT				4
 EXTERN unsigned int ski_oid[];
-#define SKI_OID_COUNT				4
+#define SKI_OID_COUNT					4
 EXTERN NH_NODE_WAY pkix_ski_map[];
-#define PKIX_SKI_MAP_COUNT			1
+#define PKIX_SKI_MAP_COUNT				1
 EXTERN unsigned int key_usage_oid[];
-#define KEYUSAGE_OID_COUNT			4
+#define KEYUSAGE_OID_COUNT				4
 EXTERN NH_NODE_WAY key_usage_map[];
-#define PKIX_KEYUSAGE_MAP_COUNT		1
+#define PKIX_KEYUSAGE_MAP_COUNT			1
 EXTERN unsigned int subject_alt_names_oid[];
-#define SUBJECT_ALTNAMES_OID_COUNT		4
+#define SUBJECT_ALTNAMES_OID_COUNT			4
 EXTERN unsigned int basic_constraints_oid[];
-#define BASIC_CONSTRAINTS_OID_COUNT		4
+#define BASIC_CONSTRAINTS_OID_COUNT			4
 EXTERN NH_NODE_WAY pkix_cert_basic_constraints_map[];
-#define PKIX_BASIC_CONSTRAINTS_MAP_COUNT	3
+#define PKIX_BASIC_CONSTRAINTS_MAP_COUNT		3
 EXTERN unsigned int ext_key_usage_oid[];
-#define EXT_KEYUSAGE_OID_COUNT		4
+#define EXT_KEYUSAGE_OID_COUNT			4
 EXTERN NH_NODE_WAY pkix_cert_ext_key_usage_map[];
-#define PKIX_EXT_KEYUSAGE_MAP_COUNT		2
+#define PKIX_EXT_KEYUSAGE_MAP_COUNT			2
 EXTERN NH_NODE_WAY pkix_extension_map[];
-#define PKIX_EXTENSION_MAP_COUNT		4
+#define PKIX_EXTENSION_MAP_COUNT			4
+EXTERN NH_NODE_WAY pkix_revoked_entry_map[];
+#define PKIX_REVOKEDENTRY_MAP_COUNT			4
+EXTERN NH_NODE_WAY pkix_tbsCertList_map[];
+#define PKIX_TBSCERTLIST_MAP_COUNT			9
+EXTERN NH_NODE_WAY pkix_CertificateList_map[];
+#define PKIX_CERTLIST_MAP_COUNT			4
 
 
 NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NHIX_PUBLIC_KEY*);

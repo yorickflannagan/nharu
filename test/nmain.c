@@ -61,6 +61,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_sign_certificate();
 	if (NH_SUCCESS(rv)) rv = test_create_request();
 	if (NH_SUCCESS(rv)) rv = test_encode_p8();
+	if (NH_SUCCESS(rv)) rv = test_issue_crl();
 	printf("%s\n", "Test done");
 	return rv;
 }
@@ -75,7 +76,6 @@ int save_buffer(unsigned char *buffer, size_t buflen, char *fname)
 	return 0;
 }
 
-#define ROUNDUP(x)	(--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
 int load_file(char *szFilename, unsigned char **out, int *outlen)
 {
 	unsigned char buf[512], *data = NULL;
@@ -88,7 +88,7 @@ int load_file(char *szFilename, unsigned char **out, int *outlen)
 		if (len + i > max)
 		{
 			max = len + i;
-			ROUNDUP(max);
+			max = ROUNDUP(max);
 			data = (unsigned char*) realloc(data, max);
 		}
 		memcpy(data + len, buf, i);

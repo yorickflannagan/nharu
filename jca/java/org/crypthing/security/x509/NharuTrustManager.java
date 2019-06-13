@@ -24,7 +24,6 @@ import static org.crypthing.security.LogDevice.LOG_LEVEL_INFO;
 import static org.crypthing.security.LogDevice.LOG_LEVEL_FATAL;
 import static org.crypthing.security.LogDevice.LOG_LEVEL_NONE;
 
-// TODO: Must implement CRL check
 public class NharuTrustManager extends X509ExtendedTrustManager 
 {
 	private static final String FATAL_ENV = "Invalid environment";
