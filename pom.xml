@@ -64,24 +64,6 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<!-- sets the version for each pom including children pom -->
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>versions-maven-plugin</artifactId>
-				<version>2.5</version>
-				<executions>
-					<execution>
-					<phase>validate</phase>
-					<goals>
-						<goal>set</goal>
-					</goals>
-					<inherited>false</inherited>
-					<configuration>
-						<newVersion>${git.commit.id.describe}</newVersion>
-					</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<!-- this will change the version for the current build, so the artifacts will be installed and deployed with the corret version -->
 				<groupId>org.codehaus.gmaven</groupId>
 				<artifactId>groovy-maven-plugin</artifactId>
