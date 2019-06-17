@@ -83,7 +83,7 @@ int load_file(char *szFilename, unsigned char **out, int *outlen)
 	FILE *fp;
 
 	if (!(fp = fopen(szFilename, "rb"))) return errno;
-	while ((i = fread(buf, 1, 512, fp)))
+	while ((i = (int) fread(buf, 1, 512, fp)))
 	{
 		if (len + i > max)
 		{

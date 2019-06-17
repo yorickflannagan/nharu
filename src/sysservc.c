@@ -256,7 +256,7 @@ NH_FUNCTION(NH_RV, NH_release_container)(_IN_ NH_CARGO_CONTAINER hHandle)
 NH_FUNCTION(void, NH_swap)(_INOUT_ unsigned char *value, _IN_ size_t size)
 {
 	register unsigned int i = 0;
-	register unsigned int j = size - 1;
+	register unsigned int j = (unsigned int) size - 1;
 	unsigned char temp;
 	while (i < j)
 	{

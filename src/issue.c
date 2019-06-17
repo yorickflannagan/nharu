@@ -400,7 +400,7 @@ static NH_RV __request_sign
 					)
 					{
 						memcpy(node->identifier, requestInfo.data, requestInfo.length);
-						node->size = requestInfo.length - ((requestInfo.data[1] & 0x80) ? ((requestInfo.data[1] & 0x7F) + 2) : 2);
+						node->size = (unsigned int) requestInfo.length - ((requestInfo.data[1] & 0x80) ? ((requestInfo.data[1] & 0x7F) + 2) : 2);
 						node->contents = node->identifier + (requestInfo.length - node->size);
 						if
 						(
@@ -1348,7 +1348,7 @@ static NH_RV __sign
 						pString.string = pSignature;
 						pString.len = uSigsize;
 						memcpy(node->identifier, pBuffer, uSize);
-						node->size = uSize - ((pBuffer[1] & 0x80) ? ((pBuffer[1] & 0x7F) + 2) : 2);
+						node->size = (unsigned int) uSize - ((pBuffer[1] & 0x80) ? ((pBuffer[1] & 0x7F) + 2) : 2);
 						node->contents = node->identifier + (uSize - node->size);
 						if
 						(
@@ -1643,7 +1643,7 @@ static NH_RV __crl_sign(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ CK_MECHA
 					if
 					(
 						NH_SUCCESS(rv = callback(&hash, mechanism, pParams, pSignature, &uSigsize)) &&
-						NH_SUCCESS(rv = NH_new_encoder(8, ROUNDUP(uSize), &hHandler->hCRL)) &&
+						NH_SUCCESS(rv = NH_new_encoder(8, (int) ROUNDUP((int) uSize), &hHandler->hCRL)) &&
 						NH_SUCCESS(rv = hHandler->hCRL->chart(hHandler->hCRL, pkix_CertificateList_map, PKIX_CERTLIST_MAP_COUNT, &node)) &&
 						NH_SUCCESS(rv = (node = node->child) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
 						NH_SUCCESS(rv = hHandler->hCRL->container->bite_chunk(hHandler->hCRL->container, uSize, (void*) &node->identifier))
@@ -1652,7 +1652,7 @@ static NH_RV __crl_sign(_INOUT_ NH_CERTLIST_ENCODER_STR *hHandler, _IN_ CK_MECHA
 						pString.string = pSignature;
 						pString.len = uSigsize;
 						memcpy(node->identifier, pBuffer, uSize);
-						node->size = uSize - ((pBuffer[1] & 0x80) ? ((pBuffer[1] & 0x7F) + 2) : 2);
+						node->size = (unsigned int) uSize - ((pBuffer[1] & 0x80) ? ((pBuffer[1] & 0x7F) + 2) : 2);
 						node->contents = node->identifier + (uSize - node->size);
 						if
 						(

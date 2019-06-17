@@ -57,7 +57,6 @@
 			<LinkErrorReporting>PromptImmediately</LinkErrorReporting>
 			<UACExecutionLevel>AsInvoker</UACExecutionLevel>
 			<UACUIAccess>false</UACUIAccess>
-			<ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
 			<LinkErrorReporting>NoErrorReport</LinkErrorReporting>
 			<OptimizeReferences>true</OptimizeReferences>
 			<EnableCOMDATFolding>true</EnableCOMDATFolding>

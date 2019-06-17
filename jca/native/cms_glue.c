@@ -12,7 +12,7 @@ INLINE NH_UTILITY(jlong, nharu_to_java_handler)(JNIEnv *env, _IN_ NH_CERTIFICATE
 		if ((jCert->encoding = (jbyte*) malloc(hCert->hParser->length)))
 		{
 			memcpy(jCert->encoding, hCert->hParser->encoding, hCert->hParser->length);
-			jCert->len = hCert->hParser->length;
+			jCert->len = (jsize) hCert->hParser->length;
 			jCert->hCert = hCert;
 			ret = (jlong) jCert;
 		}
@@ -268,7 +268,7 @@ JNIEXPORT void JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsValida
 
 JNIEXPORT jint JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsCountSigners(_UNUSED_ JNIEnv *env, _UNUSED_ jclass c, jlong handle)
 {
-	return ((JNH_CMSSD_PARSING_HANDLER) handle)->hCMS->count;
+	return (jint) ((JNH_CMSSD_PARSING_HANDLER) handle)->hCMS->count;
 }
 
 JNIEXPORT jlong JNICALL Java_org_crypthing_security_cms_CMSSignedData_nhcmsGetSignerCertificate
@@ -537,7 +537,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSSignedDataBuilde
 	{
 		if (NH_SUCCESS(rv = hHandler->hBuilder->hEncoder->encode(hHandler->hBuilder->hEncoder, hHandler->hBuilder->hEncoder->root, encoding)))
 		{
-			if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) encoding);
+			if ((ret = (*env)->NewByteArray(env, (jsize) size))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) size, (jbyte*) encoding);
 			else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 		}
 		else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);
@@ -666,9 +666,9 @@ NH_RV decrypt_callback
 	{
 		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "decrypt", "([BLjava/lang/String;)[B")))
 		{
-			if ((buffer = (*callback->env)->NewByteArray(callback->env, data->length)))
+			if ((buffer = (*callback->env)->NewByteArray(callback->env, (jsize) data->length)))
 			{
-				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
+				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, (jsize) data->length, (jbyte*) data->data);
 				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
 				size = (*callback->env)->GetArrayLength(callback->env, ret);
 				if (*plainSize < (size_t) size) rv = NH_BUF_TOO_SMALL;
@@ -732,7 +732,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedData_nh
 		{
 			if (NH_SUCCESS(rv = hHandler->hCMS->decrypt(hHandler->hCMS, 0, decrypt_callback, &callback)))
 			{
-				if ((ret = (*env)->NewByteArray(env, hHandler->hCMS->plaintext.length))) (*env)->SetByteArrayRegion(env, ret, 0L, hHandler->hCMS->plaintext.length, (jbyte*) hHandler->hCMS->plaintext.data);
+				if ((ret = (*env)->NewByteArray(env, (jsize) hHandler->hCMS->plaintext.length))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) hHandler->hCMS->plaintext.length, (jbyte*) hHandler->hCMS->plaintext.data);
 				else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 			}
 			else throw_new(env, J_CMS_DECRYPT_EX, J_CMS_DECRYPT_ERROR, rv);
@@ -859,7 +859,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_cms_CMSEnvelopedDataBui
 	{
 		if (NH_SUCCESS(rv = hHandler->hBuilder->hEncoder->encode(hHandler->hBuilder->hEncoder, hHandler->hBuilder->hEncoder->root, encoding)))
 		{
-			if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) encoding);
+			if ((ret = (*env)->NewByteArray(env, (jsize) size))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) size, (jbyte*) encoding);
 			else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 		}
 		else throw_new(env, J_CMS_PARSE_EX, J_CMS_PARSE_ERROR, rv);

@@ -57,7 +57,7 @@
 
 /* Supported compilers: GCC and Microsoft Visual C */
 #if defined(__GNUC__)
-#define _IN_				const
+#define _IN_					const
 #define _OUT_
 #define _INOUT_
 #define _CONSTRUCTOR_			__attribute__((constructor))
@@ -71,8 +71,8 @@
 #else
 #define NH_CALL_SPEC			__attribute__((cdecl))
 #endif
-#define INLINE				__inline__
-#define _NOP_				__asm__("nop")
+#define INLINE					__inline__
+#define _NOP_					__asm__("nop")
 #elif defined(_MSC_VER)
 #include <sal.h>
 #define _IN_				_In_ const

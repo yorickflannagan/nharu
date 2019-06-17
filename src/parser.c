@@ -867,7 +867,7 @@ INLINE NH_UTILITY(NH_RV, asn_put_value)
 	if (!ASN_IS_CONSTRUCTED(*node->identifier) && !ASN_IS_TAG(node, octet)) return NH_INVALID_DER_TYPE;
 	if (NH_FAIL(rv = hContainer->bite_chunk(hContainer, size, &node->value))) return rv;
 	memcpy(node->value, data, size);
-	node->valuelen = size;
+	node->valuelen = (unsigned int) size;
 	return rv;
 }
 
@@ -1019,7 +1019,7 @@ NH_UTILITY(NH_RV, NH_put_objectid)
 	}
 	if (NH_FAIL(rv = self->container->bite_chunk(self->container, sizeof(unsigned int) * count, &node->value))) return rv;
 	memcpy(node->value, value, sizeof(unsigned int) * count);
-	node->valuelen = count;
+	node->valuelen = (unsigned int) count;
 	return NH_OK;
 }
 
@@ -1057,7 +1057,7 @@ NH_UTILITY(size_t, NH_encoded_size)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_A
 		if (ASN_IS_OPTIONAL(current->knowledge) && *current->identifier == NH_NULL_TAG);
 		else if (ASN_IS_CONSTRUCTED(current->knowledge))
 		{
-			if (current->child && current->child->knowledge ) current->size = self->encoded_size(self, current->child);
+			if (current->child && current->child->knowledge ) current->size = (unsigned int) self->encoded_size(self, current->child);
 			size += ASN_ENCODED_SIZE(current->size);
 		}
 
@@ -1087,7 +1087,7 @@ NH_UTILITY(size_t, NH_encoded_size)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_A
 					len = current->valuelen;
 					break;
 				}
-				current->size = len;
+				current->size = (unsigned int) len;
 			} else len = current->size;
 			size += ASN_ENCODED_SIZE(len);
 		}
@@ -1100,7 +1100,7 @@ INLINE NH_UTILITY(size_t, encode_oid_int)(_IN_ unsigned int value, _OUT_ unsigne
 {
 	unsigned int i = 0, len, mask = 0x7F;
 
-	len = oid_len(value);
+	len = (unsigned int) oid_len(value);
 	buffer += len - 1;
 	*buffer-- = (value & mask);
 

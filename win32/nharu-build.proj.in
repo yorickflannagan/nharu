@@ -4,27 +4,29 @@
 			ToolsVersion="15.0"
 			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-	<PropertyGroup Label="CreatedByConfigure">
-		<OpenSSLFolder>__OPENSSL__</OpenSSLFolder>
-		<LibidnFolder>__LIBIDN__</LibidnFolder>
+	<PropertyGroup Label="GeneratedByConfigure">
+		<Dependencies>__DEPENDENCIES__</Dependencies>
 		<CompileDir>__COMPILEDIR__</CompileDir>
 		<BuildDir>__BUILDDIR__</BuildDir>
-		<JDKHome>__JDKHOME__</JDKHome>
 	</PropertyGroup>
-
 	<Choose>
 		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
 			<PropertyGroup>
 				<Platform>Win32</Platform>
+				<JDKHome>__JDK32HOME__</JDKHome>
 			</PropertyGroup>
 		</When>
 		<Otherwise>
 			<PropertyGroup>
 				<Platform>$(Platform)</Platform>
+				<JDKHome>__JDK64HOME__</JDKHome>
 			</PropertyGroup>
 		</Otherwise>
 	</Choose>
+
 	<PropertyGroup>
+		<OpenSSLFolder>$(Dependencies)\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder>$(Dependencies)\$(Platform)\idn</LibidnFolder>
 		<Configuration Condition="'$(Configuration)'==''">Release</Configuration>
 		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
 		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>

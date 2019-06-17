@@ -426,12 +426,12 @@ INLINE NH_UTILITY(jbyteArray, encode_signature)(JNIEnv *env, _IN_ NH_ASN1_PNODE 
 
 	if (node)
 	{
-		if ((ret = (*env)->NewByteArray(env, ((NH_PBITSTRING_VALUE) node->value)->len))) (*env)->SetByteArrayRegion
+		if ((ret = (*env)->NewByteArray(env, (jsize) ((NH_PBITSTRING_VALUE) node->value)->len))) (*env)->SetByteArrayRegion
 		(
 			env,
 			ret,
 			0L,
-			((NH_PBITSTRING_VALUE) node->value)->len,
+			(jsize) ((NH_PBITSTRING_VALUE) node->value)->len,
 			(jbyte*) ((NH_PBITSTRING_VALUE) node->value)->string
 		);
 		else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
@@ -988,7 +988,7 @@ INLINE NH_UTILITY(jlong, parse_pkibr_extension)(JNIEnv *env, _IN_ unsigned char 
 		if ((hHandler->encoding = (jbyte*) malloc(size)))
 		{
 			memcpy(hHandler->encoding, buffer, size);
-			hHandler->len = size;
+			hHandler->len = (jsize) size;
 			if (NH_FAIL(rv = NH_parse_pkibr_extension((unsigned char*) hHandler->encoding, hHandler->len, &hHandler->hExt)))
 			{
 				free(hHandler->encoding);

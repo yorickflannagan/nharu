@@ -20,8 +20,8 @@ PREFIX  = $(PREFIX)
 
 SRC     = $(PACKAGE)\lib
 WIN     = $(PACKAGE)\windows
-OBJ     = $(OUTPUT)\bin
-OUT     = $(OUTPUT)\dist
+OBJ     = $(OUTPUT)bin
+OUT     = $(OUTPUT)dist
 INC     = /I$(SRC)\gl /I$(SRC) /I$(WIN)\include
 
 CVARS   = /D "NDEBUG" /D "LIBIDN_STATIC" /D "IDNA_EXPORTS" /D "HAVE_CONFIG_H" /D "LIBIDN_BUILDING" /D "_MBCS" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "_UNICODE" /D "UNICODE" /D "_CRT_SECURE_NO_WARNINGS"

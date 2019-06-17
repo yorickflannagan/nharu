@@ -37,8 +37,8 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_provider_NharuDigest_nh
 					{
 						if
 						(
-							(ret = (*env)->NewByteArray(env, size))
-						)	(*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) out);
+							(ret = (*env)->NewByteArray(env, (jsize) size))
+						)	(*env)->SetByteArrayRegion(env, ret, 0L, (jsize) size, (jbyte*) out);
 						else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 					}
 					free(out);

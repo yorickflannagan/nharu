@@ -102,7 +102,7 @@ NH_UTILITY(NH_RV, NH_noise)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 				CryptAcquireContext(&hProv, NULL, pszName, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT)
 			)
 			{
-				if (!CryptGenRandom(hProv, len, buffer)) rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
+				if (!CryptGenRandom(hProv, (DWORD) len, buffer)) rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
 				CryptReleaseContext(hProv, 0);
 			}
 			else rv = (S_SYSERROR(GetLastError()) | NH_DEV_RND_ERROR);
@@ -118,14 +118,14 @@ NH_UTILITY(NH_RV, NH_noise)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 NH_UTILITY(NH_RV, NH_seed)(_IN_ unsigned char *noise, _IN_ size_t len)
 {
 	if (!noise) return NH_INVALID_ARG;
-	RAND_seed(noise, len);
+	RAND_seed(noise, (int) len);
 	return NH_OK;
 }
 
 NH_UTILITY(NH_RV, NH_rand)(_OUT_ unsigned char *buffer, _IN_ size_t len)
 {
 	if (!buffer) return NH_INVALID_ARG;
-	if (!RAND_bytes(buffer, len)) return (S_SYSERROR(ERR_get_error()) | NH_RND_GEN_ERROR);
+	if (!RAND_bytes(buffer, (int) len)) return (S_SYSERROR(ERR_get_error()) | NH_RND_GEN_ERROR);
 	return NH_OK;
 }
 
@@ -248,7 +248,7 @@ INLINE NH_UTILITY(int, has_value)(_IN_ unsigned char *buffer, _IN_ size_t count,
 INLINE NH_UTILITY(void, fill_no_zeros)(_INOUT_ unsigned char *buffer, _IN_ size_t count)
 {
     size_t i;
-    gfshare_fill_rand(buffer, count);
+    gfshare_fill_rand(buffer, (unsigned int) count);
     for(i = 0; i < count; i++) while (buffer[i] == 0 || (i > 0 && has_value(buffer, i , *(buffer + i)))) gfshare_fill_rand((buffer + i), 1);
 }
 NH_UTILITY(void, rand_func)(unsigned char *buffer, unsigned int size)
@@ -273,7 +273,7 @@ NH_UTILITY(NH_RV, NH_split_shares)
 	if (!(rnd_xxx = (unsigned char*) NH_MALLOC(n))) return NH_OUT_OF_MEMORY_ERROR;
 	gfshare_fill_rand = rand_func;
 	fill_no_zeros(rnd_xxx, n);
-	if (NH_SUCCESS(rv = (G = gfshare_ctx_init_enc(rnd_xxx, n, k, size)) ? NH_OK : NH_SHARE_INIT_ERROR))
+	if (NH_SUCCESS(rv = (G = gfshare_ctx_init_enc(rnd_xxx, n, k, (unsigned int) size)) ? NH_OK : NH_SHARE_INIT_ERROR))
 	{
 		gfshare_ctx_enc_setsecret(G, (unsigned char*) secret);
 		for (i = 0; i < n; i++)
@@ -329,7 +329,7 @@ NH_FUNCTION(NH_RV, NH_new_share)(_IN_ size_t size, _OUT_ NH_SHARE *share)
 		return NH_OUT_OF_MEMORY_ERROR;
 	}
 	memset(ret->y, 0, size);
-	ret->ylen = size;
+	ret->ylen = (int) size;
 	*share = ret;
 	return NH_OK;
 }
@@ -631,7 +631,7 @@ NH_UTILITY(NH_RV, init_cipher)
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
 	if (!EVP_CipherInit_ex(self->ctx, self->cipher, NULL, NULL, NULL, enc)) return NH_CIPHER_INIT_ERROR;
-	if (!EVP_CIPHER_CTX_set_key_length(self->ctx, self->key->length)) return NH_CIPHER_KEYSIZE_ERROR;
+	if (!EVP_CIPHER_CTX_set_key_length(self->ctx, (int) self->key->length)) return NH_CIPHER_KEYSIZE_ERROR;
 	return EVP_CipherInit_ex(self->ctx, self->cipher, NULL, self->key->data, iv->data, enc) ? NH_OK : NH_CIPHER_INIT_ERROR;
 }
 INLINE NH_UTILITY(NH_RV, update_cipher)
@@ -647,7 +647,7 @@ INLINE NH_UTILITY(NH_RV, update_cipher)
 
 	if (!in) return NH_INVALID_ARG;
 	if (!self->cipher) return NH_INVALID_STATE_ERROR;
-	rv = EVP_CipherUpdate(self->ctx, out, (int*) outlen, in, inlen) ? NH_OK : NH_CIPHER_ERROR;
+	rv = EVP_CipherUpdate(self->ctx, out, (int*) outlen, in, (int) inlen) ? NH_OK : NH_CIPHER_ERROR;
 	if (NH_FAIL(rv)) EVP_CIPHER_CTX_cleanup(self->ctx);
 	return rv;
 }
@@ -1129,7 +1129,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_verify)
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	if (!RSA_verify(nid, data, size, signature, sigSize, hHandler->key))
+	if (!RSA_verify(nid, data, (unsigned int) size, signature, (unsigned int) sigSize, hHandler->key))
 	{
 		e = ERR_get_error();
 		ERR_error_string(e, err);
@@ -1178,7 +1178,7 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_encrypt)
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
 	if (size > (size_t) flen) return NH_INVALID_ARG;
-	return RSA_public_encrypt(size, data, ciphertext, hHandler->key, padding) != -1 ? NH_OK :  S_SYSERROR(ERR_get_error()) | NH_RSA_ENCRYPT_ERROR;
+	return RSA_public_encrypt((int) size, data, ciphertext, hHandler->key, padding) != -1 ? NH_OK :  S_SYSERROR(ERR_get_error()) | NH_RSA_ENCRYPT_ERROR;
 }
 
 NH_NODE_WAY rsa_pubkey_map[] =
@@ -1419,8 +1419,8 @@ NH_UTILITY(NH_RV, NH_RSA_pubkey_create)
 	if (!(key = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 
     #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-	rv = (_n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = (_e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	rv = (_n = BN_bin2bn(n->data, (int) n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = (_e = BN_bin2bn(e->data, (int) e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = RSA_set0_key(key, _n, _e, NULL) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
     #else
 	rv = (key->n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
@@ -1604,7 +1604,7 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_decrypt)
 		break;
 	default: return NH_UNSUPPORTED_MECH_ERROR;
 	}
-	decoded = RSA_private_decrypt(cipherSize, ciphertext, plaintext, hHandler->key, padding);
+	decoded = RSA_private_decrypt((int) cipherSize, ciphertext, plaintext, hHandler->key, padding);
 	if (decoded != -1) *plainSize = decoded;
 	return decoded != -1 ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_DECRYPT_ERROR;
 }
@@ -2108,14 +2108,14 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_create)
 	if (!n || !n->data || !d || !d->data || (e && !e->data) || (p && !p->data) || (q && !q->data) || (dmp && !dmp->data) || (dmq && !dmq->data) || (qmp && !qmp->data)) return NH_INVALID_ARG;
 	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!(key = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	rv = (_n = BN_bin2bn(n->data, n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = (_d = BN_bin2bn(d->data, d->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && e) rv = (_e = BN_bin2bn(e->data, e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && p) rv = (_p = BN_bin2bn(p->data, p->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && q) rv = (_q = BN_bin2bn(q->data, q->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && dmp) rv = (_dmp1 = BN_bin2bn(dmp->data, dmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && dmq) rv = (_dmq1 = BN_bin2bn(dmq->data, dmq->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && qmp) rv = (_iqmp = BN_bin2bn(qmp->data, qmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	rv = (_n = BN_bin2bn(n->data, (int) n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv)) rv = (_d = BN_bin2bn(d->data, (int) d->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && e) rv = (_e = BN_bin2bn(e->data, (int) e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && p) rv = (_p = BN_bin2bn(p->data, (int) p->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && q) rv = (_q = BN_bin2bn(q->data, (int) q->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && dmp) rv = (_dmp1 = BN_bin2bn(dmp->data, (int) dmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && dmq) rv = (_dmq1 = BN_bin2bn(dmq->data, (int) dmq->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && qmp) rv = (_iqmp = BN_bin2bn(qmp->data, (int) qmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
 

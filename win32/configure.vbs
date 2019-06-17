@@ -74,7 +74,7 @@ Class Java
 		Const ENTRY = "Java SE Development Kit "
 		If IsEmpty(m_location) Then
 			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
-			stdout.Write "Looking for " & ENTRY & "... "
+			stdout.Write "Looking for " & ENTRY & version & "... "
 			Dim ret : ret = m_installer.GetInstallLocation(ENTRY & version)
 			If Not IsEmpty(ret) Then
 				m_location = AddSlash(ret)
@@ -329,7 +329,7 @@ End Class
 ' OpenSSL installation facility
 Class OpenSSL
 	Private LIB, HEADER
-	Private m_location, m_fs, m_finder, m_nasm, m_perl, m_vs, m_git, m_shell
+	Private m_location, m_fs, m_finder, m_nasm, m_perl, m_vs, m_git, m_shell, m_installer
 	Private Sub Class_Initialize()
 		LIB = "libcrypto.lib"
 		HEADER = "opensslconf.h"
@@ -340,6 +340,7 @@ Class OpenSSL
 		Set m_vs = New VisualStudio
 		Set m_git = New GitSCM
 		Set m_shell = CreateObject("Wscript.Shell")
+		Set m_installer = New Installer
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_fs = Nothing
@@ -349,6 +350,7 @@ Class OpenSSL
 		Set m_vs = Nothing
 		Set m_git = Nothing
 		Set m_shell = Nothing
+		Set m_installer = Nothing
 	End Sub
 
 	' Retrieves install location
@@ -389,6 +391,8 @@ Class OpenSSL
 			Dim nasmFolder : nasmFolder = m_nasm.EnsureInstall(True)
 			Dim perlFolder : perlFolder = m_perl.EnsureInstall(True)
 			Dim gitFolder : gitFolder = m_git.EnsureInstall(True)
+			If Not m_installer.IsInPath("git.exe") Then m_installer.AddToPath gitFolder
+			If Not m_installer.IsInPath("perl.exe") Then m_installer.AddToPath perlFolder
 			stdout.WriteLine "OpenSSL pre requisites satisfied!"
 			Dim current : current = m_fs.GetParentFolderName(WScript.ScriptFullName)
 			Dim sslFolder : sslFolder = current & "\openssl"
@@ -400,12 +404,14 @@ Class OpenSSL
 			stdout.Write "Checking out OpenSSL tag " & SSL_TAG & "... "
 			m_git.Checkout sslFolder, SSL_TAG, SSL_BRANCH
 			stdout.WriteLine "Done!"
-			Dim bat : bat = BuildBatch(current, perlFolder, nasmFolder, vsFolder)
+			Dim bat : bat = BuildBatch(current,  nasmFolder, vsFolder)
 			Dim arg : arg = ""
 			If Not IsNull(target) Then arg = " " & target
 			stdout.Write "Building OpenSSL from scratch... "
 			Dim rv : rv = m_shell.Run(bat & arg, 1, True)
-			If rv <> 0 Then Err.Raise rv, "OpenSSL.EnsureInstall", "OpenSSL build failure"
+			If rv <> 0 Then Err.Raise rv, "OpenSSL.EnsureInstall", "OpenSSL 32 bits build failure"
+			rv = m_shell.Run(bat & arg & " --platform=x64", 1, True)
+			If rv <> 0 Then Err.Raise rv, "OpenSSL.EnsureInstall", "OpenSSL 64 bits build failure"
 			m_fs.DeleteFile bat
 			stdout.WriteLine "Done!"
 			value = EnsureInstall(False, target)
@@ -415,13 +421,12 @@ Class OpenSSL
 		EnsureInstall = value
 	End Function
 
-	Private Function BuildBatch(current, perlFolder, nasmFolder, vsFolder)
+	Private Function BuildBatch(current, nasmFolder, vsFolder)
 		Dim ret : ret = current & "\" & Replace(m_fs.GetTempName(), ".tmp", ".bat")
 		Dim template : Set template = m_fs.OpenTextFile(current & "\openssl-build.template", 1)
 		Dim out : Set out = m_fs.CreateTextFile(ret, True)
 		While Not template.AtEndOfStream
 			Dim line : line = template.ReadLine()
-			line = Replace(line, "__PERL_INSTALL_PATH__", perlFolder)
 			line = Replace(line, "__NASM_INSTALL_PATH__", nasmFolder)
 			line = Replace(line, "__VS_INSTALL_PATH__",   vsFolder)
 			out.WriteLine(line)
@@ -437,7 +442,7 @@ End Class
 ' GNU Libidn installation facility
 Class GNULibidn
 	Private LIB, HEADER
-	Private m_location, m_fs, m_finder, m_perl, m_vs, m_git, m_shell
+	Private m_location, m_fs, m_finder, m_perl, m_vs, m_git, m_shell, m_installer
 	Private Sub Class_Initialize()
 		LIB = "libidn.lib"
 		HEADER = "stringprep.h"
@@ -447,6 +452,7 @@ Class GNULibidn
 		Set m_vs = New VisualStudio
 		Set m_git = New GitSCM
 		Set m_shell = CreateObject("Wscript.Shell")
+		Set m_installer = New Installer
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_fs = Nothing
@@ -455,6 +461,7 @@ Class GNULibidn
 		Set m_vs = Nothing
 		Set m_git = Nothing
 		Set m_shell = Nothing
+		Set m_installer = Nothing
 	End Sub
 
 	' Retrieves install location
@@ -494,6 +501,8 @@ Class GNULibidn
 			Dim vsFolder : vsFolder = m_vs.EnsureInstall()
 			Dim perlFolder : perlFolder = m_perl.EnsureInstall(True)
 			Dim gitFolder : gitFolder = m_git.EnsureInstall(True)
+			If Not m_installer.IsInPath("git.exe") Then m_installer.AddToPath gitFolder
+			If Not m_installer.IsInPath("perl.exe") Then m_installer.AddToPath perlFolder
 			stdout.WriteLine "GNU Libidn pre requisitesn satisfied!"
 			Dim current : current = m_fs.GetParentFolderName(WScript.ScriptFullName)
 			Dim idnFolder : idnFolder = current & "\libidn"
@@ -511,12 +520,14 @@ Class GNULibidn
 				If (InStr(Len(f1.Path) - 4, f1.Path, ".tld", vbTextCompare) > 0) Then tlds = tlds & " """ & f1.Path & """"
 			Next
 			Set folder = Nothing
-			Dim bat : bat = BuildBatch(current, perlFolder, vsFolder, tlds)
+			Dim bat : bat = BuildBatch(current, vsFolder, tlds)
 			Dim arg : arg = ""
 			If Not IsNull(target) Then arg = " " & target
 			stdout.Write "Building GNU Libidn from scratch... "
 			Dim rv : rv = m_shell.Run(bat & arg, 1, True)
-			If rv <> 0 Then Err.Raise rv, "GNULibidn.EnsureInstall", "GNU Libidn build failure"
+			If rv <> 0 Then Err.Raise rv, "GNULibidn.EnsureInstall", "GNU Libidn 32 bits build failure"
+			rv = m_shell.Run(bat & arg & " --platform=x64", 1, True)
+			If rv <> 0 Then Err.Raise rv, "GNULibidn.EnsureInstall", "GNU Libidn 64 bits build failure"
 			m_fs.DeleteFile bat
 			stdout.WriteLine "Done!"
 			value = EnsureInstall(False, target)
@@ -532,9 +543,8 @@ Class GNULibidn
 		Dim out : Set out = m_fs.CreateTextFile(ret, True)
 		While Not template.AtEndOfStream
 			Dim line : line = template.ReadLine()
-			line = Replace(line, "__PERL_INSTALL_PATH__", perlFolder)
-			line = Replace(line, "__VS_INSTALL_PATH__",   vsFolder)
-			line = Replace(line, "__LANGS__",             tlds)
+			line = Replace(line, "__VS_INSTALL_PATH__", vsFolder)
+			line = Replace(line, "__LANGS__",           tlds)
 			out.WriteLine(line)
 		Wend
 		out.Close
@@ -599,14 +609,15 @@ End Class
 ' Nharu Library installation facility
 Class Nharu
 	Private REG_KEY, REG_VALUE
-	Private m_location, m_current, m_vsis, m_jdkil, m_gitil, m_drmil, m_sslil, m_idnil, m_vnil
-	Private m_fs, m_vs, m_jdk, m_git, m_drm, m_ssl, m_idn, m_vn, m_installer, m_shell
+	Private m_location, m_current, m_vsis, m_jdkil, m_jdk64il, m_gitil, m_drmil, m_sslil, m_idnil, m_vnil
+	Private m_fs, m_vs, m_jdk, m_jdk64, m_git, m_drm, m_ssl, m_idn, m_vn, m_installer, m_shell
 	Private Sub Class_Initialize()
 		REG_KEY = "Software\Microsoft\Command Processor"
 		REG_VALUE = "AutoRun"
 		Set m_fs = CreateObject("Scripting.FileSystemObject")
 		Set m_vs = New VisualStudio
 		Set m_jdk = New Java
+		Set m_jdk64 = New Java
 		Set m_git = New GitSCM
 		Set m_drm = New DrMemory
 		Set m_ssl = New OpenSSL
@@ -620,6 +631,7 @@ Class Nharu
 		Set m_fs = Nothing
 		Set m_vs = Nothing
 		Set m_jdk = Nothing
+		Set m_jdk64 = Nothing
 		Set m_git = Nothing
 		Set m_drm = Nothing
 		Set m_ssl = Nothing
@@ -658,10 +670,12 @@ Class Nharu
 	' Arguments:
 	'	boolean retry: if true, tries to download and install it, if it does not exist
 	Public Function EnsureInstall(retry)
+	' TODO
 	End Function
 
 	Public Sub Build(version, prefix, target)
 		EnsurePreRequisites target
+		' TODO: REVIEW
 		Dim exec : exec = m_current & "\dev-env.cmd"
 		If Not m_fs.FileExists(exec) Then Err.Raise 1, "Nharu.AddAutoRun", "Must run Nharu.Configure() first"
 		Dim path : path = RequiredPath()
@@ -694,16 +708,17 @@ Class Nharu
 		stdout.Write "Creating build script... "
 		Dim template : Set template = m_fs.OpenTextFile(m_current & "\nharu-build.proj.in", 1)
 		Dim out : Set out = m_fs.CreateTextFile(m_current & "\nharu-build.proj")
+		Dim dep : dep = Replace(m_sslil, "\Win32\ssl\", "")
 		Dim cdir : cdir = m_fs.GetParentFolderName(m_current) & "\bin"
 		Dim bdir : bdir = m_fs.GetParentFolderName(m_current) & "\dist"
 		If Not IsNull(prefix) Then bdir = prefix
 		While Not template.AtEndOfStream
 			Dim line : line = template.ReadLine()
-			line = Replace(line, "__OPENSSL__", RemoveSlash(m_sslil))
-			line = Replace(line, "__LIBIDN__", RemoveSlash(m_idnil))
-			line = Replace(line, "__JDKHOME__", RemoveSlash(m_jdkil))
+			line = Replace(line, "__DEPENDENCIES__", DEP)
 			line = Replace(line, "__COMPILEDIR__", cdir)
 			line = Replace(line, "__BUILDDIR__", bdir)
+			line = Replace(line, "__JDK32HOME__", RemoveSlash(m_jdkil))
+			line = Replace(line, "__JDK64HOME__", RemoveSlash(m_jdk64il))
 			out.WriteLine(line)
 		Wend
 		m_installer.AddToPath RequiredPath()
@@ -719,7 +734,8 @@ Class Nharu
 	Private Sub EnsurePreRequisites(target)
 		If IsEmpty(m_vsis) Then
 			m_vsis = m_vs.EnsureInstall()
-			m_jdkil = m_jdk.EnsureInstall("7")
+			m_jdkil = m_jdk.EnsureInstall("7 Update 80")
+			m_jdk64il = m_jdk64.EnsureInstall("7 Update 80 (64-bit)")
 			m_gitil = m_git.EnsureInstall(True)
 			m_drmil = m_drm.EnsureInstall(True)
 			m_sslil = m_ssl.EnsureInstall(True, target)
@@ -769,7 +785,7 @@ Class Installer
 		Dim product, value
 		For Each product In m_products
 			value = m_installer.ProductInfo(product, "ProductName")
-			If InStrRev(value, productName, -1, vbTextCompare) <> 0 Then 
+			If StrComp(value, productName, 1) = 0 Then 
 				value = m_installer.ProductInfo(product, "InstallLocation")
 				If Not IsEmpty(value) Then GetInstallLocation = AddSlash(value)
 				Exit For
@@ -1004,7 +1020,8 @@ Sub Main
 	WScript.Echo "   yorick.flannagan@gmail.com"
 	WScript.Echo " --------------------------------------------------"
 	WScript.Echo " Run MSBuild under Visual Studio vcvarsamd64_x86.bat"
-	WScript.Echo " as your command line environment to nharu-build.proj"
+	WScript.Echo " or vcvars64.bat as your command line environment"
+	WScript.Echo " to build nharu-build.proj"
 	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 End Sub

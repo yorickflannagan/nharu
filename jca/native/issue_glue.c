@@ -610,8 +610,8 @@ static jbyteArray __encode(JNIEnv *env, NH_ASN1_ENCODER_HANDLE hEncoder)
 		{
 			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pBuffer)))
 			{
-				if (!(ret = (*env)->NewByteArray(env, size))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-				else (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) pBuffer);
+				if (!(ret = (*env)->NewByteArray(env, (jsize) size))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) size, (jbyte*) pBuffer);
 			}
 			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
 			free(pBuffer);
@@ -862,8 +862,8 @@ Java_org_crypthing_security_issue_NharuCRLEncoder_nhclEncode(JNIEnv *env, _UNUSE
 		{
 			if (NH_SUCCESS(rv = hCRL->encode(hCRL, pBuffer, &ulSize)))
 			{
-				if (!(ret = (*env)->NewByteArray(env, ulSize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-				else (*env)->SetByteArrayRegion(env, ret, 0L, ulSize, (jbyte*) pBuffer);
+				if (!(ret = (*env)->NewByteArray(env, (jsize) ulSize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) ulSize, (jbyte*) pBuffer);
 			}
 			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
 			free(pBuffer);

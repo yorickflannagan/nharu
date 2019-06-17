@@ -210,9 +210,9 @@ NH_RV sign_callback
 	{
 		if ((methodID = (*callback->env)->GetMethodID(callback->env, callback->clazz, "sign", "([BLjava/lang/String;)[B")))
 		{
-			if ((buffer = (*callback->env)->NewByteArray(callback->env, data->length)))
+			if ((buffer = (*callback->env)->NewByteArray(callback->env, (jsize) data->length)))
 			{
-				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, data->length, (jbyte*) data->data);
+				(*callback->env)->SetByteArrayRegion(callback->env, buffer, 0L, (jsize) data->length, (jbyte*) data->data);
 				ret = (*callback->env)->CallObjectMethod(callback->env, callback->iface, methodID, buffer, callback->algorithm);
 				size = (*callback->env)->GetArrayLength(callback->env, ret);
 				if (*sigSize < (size_t) size) rv = NH_BUF_TOO_SMALL;
@@ -481,7 +481,7 @@ Java_org_crypthing_security_NharuRSAPublicKey_getKeyEncoding
 	jbyteArray ret = NULL;
 
 	block = (NH_PBITSTRING_VALUE) ((JPUBKEY_HANDLER) handle)->hPubkey->pubkey->value;
-	if ((ret = (*env)->NewByteArray(env, block->len))) (*env)->SetByteArrayRegion(env, ret, 0L, block->len, (jbyte*) block->string);
+	if ((ret = (*env)->NewByteArray(env, (jsize) block->len))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) block->len, (jbyte*) block->string);
 	else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 
 	return ret;
@@ -555,7 +555,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
 			{
 				if (NH_SUCCESS(rv = hKey->sign(hKey, mechanism, (unsigned char*) jbuffer, len, signature, &size)))
 				{
-					if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) signature);
+					if ((ret = (*env)->NewByteArray(env, (jsize) size))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) size, (jbyte*) signature);
 					else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 				}
 				else throw_new(env, J_KEY_EX, J_KEY_ERROR, rv);
@@ -592,7 +592,7 @@ NH_UTILITY(jbyteArray, bignum_to_java_array)(JNIEnv *env, _IN_ BIGNUM *n)
 	{
 		memset(buffer, 0, num_bytes + offset);
 		BN_bn2bin(n, buffer + offset);
-		if ((ret = (*env)->NewByteArray(env, num_bytes + offset))) (*env)->SetByteArrayRegion(env, ret, 0L, num_bytes + offset, (jbyte*) buffer);
+		if ((ret = (*env)->NewByteArray(env, (jsize) (num_bytes + offset)))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) (num_bytes + offset), (jbyte*) buffer);
 		else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 		free(buffer);
 	}
@@ -658,7 +658,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_crypthing_security_NharuRSAPrivateKey_nhar
 			{
 				if (NH_SUCCESS(rv = hKey->decrypt(hKey, mechanism, (unsigned char*) jbuffer, len, plaintext, &size)))
 				{
-					if ((ret = (*env)->NewByteArray(env, size))) (*env)->SetByteArrayRegion(env, ret, 0L, size, (jbyte*) plaintext);
+					if ((ret = (*env)->NewByteArray(env, (jsize) size))) (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) size, (jbyte*) plaintext);
 					else throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
 				}
 				else throw_new(env, J_INVALID_KEY_EX, J_KEY_ERROR, rv);
@@ -755,8 +755,8 @@ Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGetPrivateKey(JNIEnv *
 		{
 			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pKey)))
 			{
-				if (!(ret = (*env)->NewByteArray(env, ulKeySize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-				else (*env)->SetByteArrayRegion(env, ret, 0L, ulKeySize, (jbyte*) pKey);
+				if (!(ret = (*env)->NewByteArray(env, (jsize) ulKeySize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) ulKeySize, (jbyte*) pKey);
 			}
 			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
 			free(pKey);
@@ -790,8 +790,8 @@ Java_org_crypthing_security_NharuRSAKeyPairGenerator_nharuGetPublicKey(JNIEnv *e
 		{
 			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pKey)))
 			{
-				if (!(ret = (*env)->NewByteArray(env, ulKeySize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
-				else (*env)->SetByteArrayRegion(env, ret, 0L, ulKeySize, (jbyte*) pKey);
+				if (!(ret = (*env)->NewByteArray(env, (jsize) ulKeySize))) throw_new(env, J_RUNTIME_EX, J_NEW_ERROR, 0);
+				else (*env)->SetByteArrayRegion(env, ret, 0L, (jsize) ulKeySize, (jbyte*) pKey);
 			}
 			else throw_new(env, J_CERT_ENCODING_EX, J_CERT_ENCODING_ERROR, rv);
 			free(pKey);

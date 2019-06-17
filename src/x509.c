@@ -937,9 +937,9 @@ INLINE NH_UTILITY(int, comp_integer)(_IN_ unsigned char *fvalue, _IN_ size_t fle
 	unsigned int realflen, realslen, i = 0, j = 0;
 
 	while (i < flength && fvalue[i] == 0) i++;
-	realflen = flength - i;
+	realflen = (unsigned int) flength - i;
 	while (j < slength && svalue[j] == 0) j++;
-	realslen = slength - j;
+	realslen = (unsigned int) slength - j;
 	if (realflen != realslen) return (realflen - realslen);
 	return memcmp(fvalue + i, svalue + j, realflen);
 }
@@ -960,7 +960,7 @@ INLINE NH_UTILITY(NH_RV, inc_integer)(_INOUT_ NH_CARGO_CONTAINER container, NH_B
 		buffer->length = num->length;
 	}
 	memcpy(buffer->data, num->data, num->length);
-	for (i = num->length - 1; i > -1; i--)
+	for (i = (int) num->length - 1; i > -1; i--)
 	{
 		if (buffer->data[i] == 0xFF) buffer->data[i] = 0x00;
 		else
@@ -998,7 +998,7 @@ INLINE NH_UTILITY(NH_RV, dec_integer)(_INOUT_ NH_CARGO_CONTAINER container, NH_B
 		buffer->length = num->length;
 	}
 	memcpy(buffer->data, num->data, num->length);
-	for (i = num->length - 1; i > -1; i--)
+	for (i = (int) num->length - 1; i > -1; i--)
 	{
 		if (buffer->data[i] == 0x00) buffer->data[i] = 0xFF;
 		else
@@ -1036,7 +1036,7 @@ NH_UTILITY(CK_BBOOL, is_revoked)(_IN_ NH_CRL_HANDLER_STR *self, NH_BIG_INTEGER *
 {
 	if (!serial) return CK_FALSE;
 	if (self->rcount == 0) return CK_FALSE;
-	return binary_search(self->revoked, self->rcount, serial) < 0 ? CK_TRUE : CK_FALSE;
+	return binary_search(self->revoked, (int) self->rcount, serial) < 0 ? CK_TRUE : CK_FALSE;
 }
 
 NH_UTILITY(NH_RV, verify_crl)(_IN_ NH_CRL_HANDLER_STR *self, _IN_ NH_ASN1_PNODE pubkeyInfo)
@@ -1100,7 +1100,7 @@ NH_UTILITY(NH_RV, get_revoked)(_IN_ NH_CRL_HANDLER_STR *self, _IN_ NH_BIG_INTEGE
 	if (!serial) return NH_INVALID_ARG;
 	*ret = NULL;
 	if (self->rcount == 0) return NH_OK;
-	idx = binary_search(self->revoked, self->rcount, (BDATA) serial);
+	idx = binary_search(self->revoked, (int) self->rcount, (BDATA) serial);
 	if (idx >= 0) return NH_OK;
 	idx *= -1;
 	interval = self->revoked[idx];
@@ -1485,7 +1485,7 @@ NH_UTILITY(NH_RV, sort_crl)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _IN_ NH_ASN1_
 		toSort[i++] = node;
 		node = node->next;
 	}
-	quickSort(toSort, 0, count - 1);
+	quickSort(toSort, 0, (tblIndex) count - 1);
 	if
 	(
 		NH_SUCCESS(rv = alloc_interval(hParser->container, NULL, NULL, &current)) &&
