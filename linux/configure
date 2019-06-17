@@ -36,6 +36,31 @@ ensure()
 		shift
 	done
 }
+ensure_build_tools()
+{
+	ensure make
+	ensure git-core
+	ensure autoconf
+	ensure automake
+	ensure libtool
+	ensure gettext
+	ensure cvs
+	ensure texinfo
+	ensure texlive
+	ensure texlive-generic-recommended
+	ensure texlive-extra-utils
+	ensure help2man
+	ensure gtk-doc-tools
+	ensure valgrind
+	ensure gengetopt
+	ensure gcj-jdk
+	ensure gjdoc
+	ensure transfig
+	ensure mono-mcs
+	ensure gperf
+}
+
+
 function libdl()
 {
 	ensure libc6-dev
@@ -53,6 +78,8 @@ function initialize()
 	CURRENT=$(current_dir)
 	PROJECT="$(dirname $CURRENT)"
 	DIST_DIR="$PROJECT/dist"
+
+	ensure_build_tools
 
 	local PARM=0
 	local SEP='='
@@ -202,6 +229,9 @@ function mklibidn()
 		exit 130
 	fi
 	printf "\n"
+
+	
+
 	if [ ! -d "$source_dir" ]; then
 		git clone https://git.savannah.gnu.org/git/libidn.git "$source_dir"
 		check_status
