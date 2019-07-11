@@ -30,6 +30,7 @@
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<Prefix>$(BuildDir)\$(Platform)\$(ProjectName)</Prefix>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
@@ -97,6 +98,12 @@
 	<Target Name="MakeVersion" BeforeTargets="ClCompile">
 		<Exec Command="$(Home)\jca\make_version.bat $(GitVersion)" EchoOff="true" />
 	</Target>
+
+	<Target Name="Install">
+		<Error Text="Dinamic library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+	</Target>
+
 	<Target Name="Check">
 		<Message Text="Checking prerequisites" />
 		<Error Text="Static library must be found at $(NharuLib)\nharu.lib" Condition="!Exists('$(NharuLib)\nharu.lib')" />

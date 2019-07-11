@@ -33,7 +33,7 @@
 			<UseFullPaths>true</UseFullPaths>
 			<WarningLevel>Level3</WarningLevel>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-			<PreprocessorDefinitions>$(Constants)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>$(Constants);$(Defines)</PreprocessorDefinitions>
 			<ErrorReporting>None</ErrorReporting>
 			<FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
 			<FunctionLevelLinking>true</FunctionLevelLinking>

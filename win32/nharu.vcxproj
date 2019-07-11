@@ -27,6 +27,7 @@
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<Prefix>$(BuildDir)\$(Platform)\$(ProjectName)</Prefix>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
@@ -84,5 +85,16 @@
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
+
+	<Target Name="Install">
+		<Error Text="Static library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
+		<ItemGroup>
+			<PKCSFiles Include="$(Home)\pkcs11\*.h" />
+			<IncludeFiles Include="$(Home)\include\*.h" />
+		</ItemGroup>
+		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\include" />
+		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\pkcs11" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+	</Target>
 
 </Project>

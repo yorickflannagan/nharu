@@ -32,13 +32,19 @@
 
 	<Target Name="Test" >
 		<Error Text="Java Runtime must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
-		<Error Text="Java project must be built first" Condition="!Exists('$(NharuJCALib)')" />
-		<Error Text="JNI project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
+		<Error Text="JNI project must be built first" Condition="!Exists('$(NharuJCALib)')" />
+		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
 		<Exec Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.provider.NharuProvider "$(Home)\test\repo\signer.p12" "$(Home)\test\repo\trust.jks"' EchoOff="true" />
 	</Target>
 
+	<Target Name="Install">
+		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
+		<Copy SourceFiles="$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+	</Target>
+
+
 	<Target Name="GetVersion" Condition="'$(JarVersion)'==''" >
-		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="true" >
+		<Exec Command="git describe --dirty" ConsoleToMsBuild="true" EchoOff="true" >
 			<Output TaskParameter="ConsoleOutput" PropertyName="JarVersion" />
 		</Exec>
 	</Target>

@@ -33,7 +33,7 @@
 			<UseFullPaths>true</UseFullPaths>
 			<WarningLevel>Level3</WarningLevel>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-			<PreprocessorDefinitions>$(Constants)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>$(Constants);$(Defines)</PreprocessorDefinitions>
 			<AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
 			<AssemblerOutput>AssemblyCode</AssemblerOutput>
 			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>

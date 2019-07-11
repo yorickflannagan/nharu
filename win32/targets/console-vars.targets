@@ -7,7 +7,7 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
 		<LinkIncremental>true</LinkIncremental>
-		<Constants>_DEBUG;_DEBUG_;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<Constants>_WIN64;_DEBUG;_DEBUG_;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
 		<TargetArchitecture>MachineX64</TargetArchitecture>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -17,7 +17,7 @@
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
 		<LinkIncremental>false</LinkIncremental>
-		<Constants>NDEBUG;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<Constants>_WIN64;NDEBUG;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
 		<TargetArchitecture>MachineX64</TargetArchitecture>
 	</PropertyGroup>
 

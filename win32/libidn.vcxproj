@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project	DefaultTargets="Build"
+			InitialTargets="Check"
+			ToolsVersion="15.0"
+			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Import Project="targets\project-configurations.targets" />
+	<PropertyGroup Label="Globals">
+		<VCProjectVersion>15.0</VCProjectVersion>
+		<ProjectGuid>{EAEB7F45-A4CB-4B43-8885-0435FD31A57C}</ProjectGuid>
+		<Keyword>StaticLibraryProject</Keyword>
+		<RootNamespace>libidn</RootNamespace>
+		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+	</PropertyGroup>
+
+  	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+	<Import Project="targets\staticlib-configurations.targets" />
+	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+	<ImportGroup Label="ExtensionSettings" />
+	<ImportGroup Label="Shared" />
+	<Import Project="targets\appdata-platform.targets" />
+
+	<PropertyGroup Label="UserMacros">
+		<Home>$(MSBuildProjectDirectory)\libidn</Home>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
+		<Src>$(Home)\lib</Src>
+		<SrcWin>$(Home)\windows</SrcWin>
+		<Prefix>$(MSBuildProjectDirectory)\..\dist\$(Platform)\idn</Prefix>
+		<IncludeFolders>
+			$(Src);
+			$(Src)\gl;
+			$(SrcWin)\include;
+			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
+			$(VCInstallDir)\Tools\MSVC\14.16.27023\include;
+			$(WindowsSdkDir)\include\10.0.17763.0\ucrt;
+			$(WindowsSdkDir)\include\10.0.17763.0\shared;
+			$(WindowsSdkDir)\include\10.0.17763.0\um;
+			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
+			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
+		</IncludeFolders>
+		<Warnings>4996;4005</Warnings>
+		<Dependencies></Dependencies>
+		<TargetSubSystem>Windows</TargetSubSystem>
+		<Libraries></Libraries>
+		<Defines>$(DepDefine);LIBIDN_STATIC;IDNA_EXPORTS;HAVE_CONFIG_H;LIBIDN_BUILDING;_MBCS;_WINDOWS;_WIN32</Defines>
+		<IsDLL>false</IsDLL>
+	</PropertyGroup>
+
+	<Import Project="targets\staticlib-vars.targets" />
+	<Import Project="targets\debug.targets" Condition="'$(Configuration)'=='Debug'" />
+	<Import Project="targets\release.targets" Condition="'$(Configuration)'=='Release'" />
+
+	<ItemGroup>
+		<ClInclude Include="$(SrcWin)\include\config.h" />
+		<ClInclude Include="$(SrcWin)\include\idn-int.h" />
+		<ClInclude Include="$(SrcWin)\include\ac-stdint.h" />
+		<ClInclude Include="$(SrcWin)\include\unistd.h" />
+		<ClInclude Include="$(Src)\gl\c-ctype.h" />
+		<ClInclude Include="$(Src)\gl\c-strcase.h" />
+		<ClInclude Include="$(Src)\stringprep.h" />
+		<ClInclude Include="$(Src)\punycode.h" />
+		<ClInclude Include="$(Src)\idna.h" />
+		<ClInclude Include="$(Src)\gunicomp.h" />
+		<ClInclude Include="$(Src)\gunidecomp.h" />
+		<ClInclude Include="$(Src)\pr29.h" />
+		<ClInclude Include="$(Src)\gl\gettext.h" />
+		<ClInclude Include="$(Src)\gl\striconv.h" />
+		<ClInclude Include="$(Src)\idn-free.h" />
+	</ItemGroup>
+	<ItemGroup>
+		<ClCompile Include="$(Src)\gl\c-ctype.c" />
+		<ClCompile Include="$(Src)\gl\c-strcasecmp.c" />
+		<ClCompile Include="$(Src)\gl\c-strncasecmp.c" />
+		<ClCompile Include="$(Src)\gl\striconv.c" />
+		<ClCompile Include="$(Src)\gl\strverscmp.c" />
+		<ClCompile Include="$(Src)\gl\unistr\u8-check.c" />
+		<ClCompile Include="$(Src)\idn-free.c" />
+		<ClCompile Include="$(Src)\idna.c" />
+		<ClCompile Include="$(Src)\nfkc.c" />
+		<ClCompile Include="$(Src)\pr29.c" />
+		<ClCompile Include="$(Src)\profiles.c" />
+		<ClCompile Include="$(Src)\punycode.c" />
+		<ClCompile Include="$(Src)\rfc3454.c" />
+		<ClCompile Include="$(Src)\strerror-idna.c" />
+		<ClCompile Include="$(Src)\strerror-pr29.c" />
+		<ClCompile Include="$(Src)\strerror-punycode.c" />
+		<ClCompile Include="$(Src)\strerror-stringprep.c" />
+		<ClCompile Include="$(Src)\strerror-tld.c" />
+		<ClCompile Include="$(Src)\stringprep.c" />
+		<ClCompile Include="$(Src)\tld.c" />
+		<ClCompile Include="$(Src)\tlds.c" />
+		<ClCompile Include="$(Src)\toutf8.c" />
+		<ClCompile Include="$(Src)\version.c" />
+	</ItemGroup>
+
+	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+	<ImportGroup Label="ExtensionTargets" />
+
+
+	<Target Name="Install">
+		<Error Text="Static library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
+		<Copy SourceFiles="@(ClInclude)" DestinationFolder="$(Prefix)\include" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\lib" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\lib" />
+	</Target>
+
+
+	<PropertyGroup>
+		<BuildDependsOn>
+			Prepare;
+			$(BuildDependsOn)
+		</BuildDependsOn>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CleanDependsOn>
+			$(CleanDependsOn);
+			Clean-Up
+		</CleanDependsOn>
+	</PropertyGroup>
+
+	<Target Name="Prepare" >
+		<ItemGroup>
+			<ACStdInt Include="#ifndef _AC_STDINT_H" />
+			<ACStdInt Include="#define _AC_STDINT_H" />
+			<ACStdInt Include="#ifndef _GENERATED_STDINT_H" />
+			<ACStdInt Include="#define _GENERATED_STDINT_H" />
+			<ACStdInt Include="#include &lt;stdint.h&gt;" />
+			<ACStdInt Include="#undef IDNAPI" />
+			<ACStdInt Include="#define IDNAPI __declspec(dllexport)" />
+			<ACStdInt Include="#define gint16 int16_t" />
+			<ACStdInt Include="#ifdef _WIN64" />
+			<ACStdInt Include="typedef __int64 ssize_t%3B" />
+			<ACStdInt Include="#else" />
+			<ACStdInt Include="typedef _W64 int ssize_t%3B" />
+			<ACStdInt Include="#endif" />
+			<ACStdInt Include="#endif" />
+			<ACStdInt Include="#endif" />
+			<TldFiles Include="$(Home)\doc\tld\*.tld" />
+		</ItemGroup>
+
+		<Message Text="Preparing Libidn for Windows compilation..." />
+		<Exec Command='powershell -NoLogo -NoProfile -NonInteractive -Command "(Get-Content $(Src)\nfkc.c) -replace """#define glong long""", """#ifdef _WIN64`r`n#define glong`tlong long`r`n#else`r`n#define glong`tlong`r`n#endif""" | Set-Content $(Src)\nfkc.c"' EchoOff="true" />
+		<WriteLinesToFile File="$(SrcWin)\include\ac-stdint.h" Lines="@(ACStdInt)" Overwrite="true" WriteOnlyWhenDifferent="true" Encoding="UTF-8"/>
+		<Copy SourceFiles="$(Src)\gl\unistr.in.h" DestinationFiles="$(Src)\gl\unistr.h" Condition="!Exists('$(Src)\gl\unistr.h')" />
+		<Copy SourceFiles="$(Src)\gl\unitypes.in.h" DestinationFiles="$(Src)\gl\unitypes.h" Condition="!Exists('$(Src)\gl\unitypes.h')" />
+		<Copy SourceFiles="$(Home)\build-aux\snippet\unused-parameter.h" DestinationFiles="$(Src)\gl\unused-parameter.h" Condition="!Exists('$(Src)\gl\unused-parameter.h')" />
+		<Exec Command="perl.exe gen-stringprep-tables.pl $(Home)\doc\specifications\rfc3454.txt" EchoOff="true" WorkingDirectory="$(Src)" Condition="!Exists('$(Src)\rfc3454.c')" />
+		<Exec Command="perl.exe gen-tld-tables.pl %(TldFiles.FullPath)&gt;$(Src)\tlds.c" EchoOff="true" WorkingDirectory="$(Src)" Condition="!Exists('$(Src)\tlds.c')" />
+	</Target>
+
+	<Target Name="Clean-Up">
+		<Message Text="Removing MSBuild garbage" />
+		<RemoveDir Directories="$(CompileDir);$(BuildDir)" />
+	</Target>
+
+	<Choose>
+		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
+			<PropertyGroup>
+				<Platform>Win32</Platform>
+			</PropertyGroup>
+		</When>
+		<Otherwise>
+			<PropertyGroup>
+				<DepDefine>_WIN64</DepDefine>
+			</PropertyGroup>
+		</Otherwise>
+	</Choose>
+	<Choose>
+		<When Condition="'$(Configuration)'==''">
+			<PropertyGroup>
+				<Configuration>Release</Configuration>
+			</PropertyGroup>
+		</When>
+	</Choose>
+
+	<Target Name="Check">
+		<Message Text="Checking prerequisites" />
+		<Exec Command="git clone https://git.savannah.gnu.org/git/libidn.git" EchoOff="false" Condition="!Exists('$(Home)')" />
+		<Exec Command="git checkout libidn-1-32 -b nharu_build" EchoOff="false" WorkingDirectory="$(Home)" IgnoreExitCode="true" Condition="Exists('$(Home)\libidn.pc.in')" />
+		<Error Text="GNU Libidn must exists at $(Home) directory" Condition="!Exists('$(Src)\stringprep.h')" />
+	</Target>
+
+</Project>
