@@ -1,0 +1,42 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<PropertyGroup>
+		<BuildDependsOn>
+			Prepare;
+			Config;
+			$(BuildDependsOn)
+		</BuildDependsOn>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CleanDependsOn>
+			$(CleanDependsOn);
+			Clean-Up
+		</CleanDependsOn>
+	</PropertyGroup>
+
+	<Target Name="Prepare" />
+
+	<Target Name="Config">
+		<Message Text="Project $(ProjectName) Configuration:" />
+		<Message Text="Configuration      = $(Configuration)" />
+		<Message Text="Platform           = $(Platform)" />
+		<Message Text="Home               = $(Home)" />
+		<Message Text="CompileDir         = $(CompileDir)" />
+		<Message Text="BuildDir           = $(BuildDir)" />
+		<Message Text="Prefix             = $(Prefix)" />
+		<Message Text="IncludeFolders     = $(IncludeFolders)" />
+		<Message Text="Warnings           = $(Warnings)" />
+		<Message Text="Dependencies       = $(Dependencies)" />
+		<Message Text="TargetSubSystem    = $(TargetSubSystem)" />
+		<Message Text="Libraries          = $(Libraries)" />
+		<Message Text="Constants          = $(Constants);$(Defines)" />
+		<Message Text="TargetArchitecture = $(TargetArchitecture)" />
+		<Message Text="IsDLL              = $(IsDLL)" />
+	</Target>
+
+	<Target Name="Clean-Up">
+		<Message Text="Removing MSBuild garbage" />
+		<RemoveDir Directories="$(IntDir);$(OutDir)" />
+	</Target>
+
+</Project>

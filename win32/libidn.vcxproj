@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="Check"
+			InitialTargets="GetGit;GetPerl;Check"
 			ToolsVersion="15.0"
 			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Choose>
+		<When Condition="'$(Platform)'=='x64'">
+			<PropertyGroup>
+				<DepDefine>_WIN64</DepDefine>
+			</PropertyGroup>
+		</When>
+	</Choose>
 
 	<Import Project="targets\project-configurations.targets" />
 	<PropertyGroup Label="Globals">
@@ -98,7 +106,7 @@
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
-
+	<Import Project="targets\common.targets" />
 
 	<Target Name="Install">
 		<Error Text="Static library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
@@ -107,19 +115,10 @@
 		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\lib" />
 	</Target>
 
-
-	<PropertyGroup>
-		<BuildDependsOn>
-			Prepare;
-			$(BuildDependsOn)
-		</BuildDependsOn>
-	</PropertyGroup>
-	<PropertyGroup>
-		<CleanDependsOn>
-			$(CleanDependsOn);
-			Clean-Up
-		</CleanDependsOn>
-	</PropertyGroup>
+	<Target Name="Uninstall">
+		<Message Text="Removing installation" />
+		<RemoveDir Directories="$(Prefix)" />
+	</Target>
 
 	<Target Name="Prepare" >
 		<ItemGroup>
@@ -151,35 +150,23 @@
 		<Exec Command="perl.exe gen-tld-tables.pl %(TldFiles.FullPath)&gt;$(Src)\tlds.c" EchoOff="true" WorkingDirectory="$(Src)" Condition="!Exists('$(Src)\tlds.c')" />
 	</Target>
 
-	<Target Name="Clean-Up">
-		<Message Text="Removing MSBuild garbage" />
-		<RemoveDir Directories="$(CompileDir);$(BuildDir)" />
+	<Target Name="GetGit" Condition="'$(GitLocation)'==''" >
+		<Exec Command="where git.exe" ConsoleToMsBuild="true" EchoOff="false" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="GitLocation" />
+		</Exec>
 	</Target>
-
-	<Choose>
-		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
-			<PropertyGroup>
-				<Platform>Win32</Platform>
-			</PropertyGroup>
-		</When>
-		<Otherwise>
-			<PropertyGroup>
-				<DepDefine>_WIN64</DepDefine>
-			</PropertyGroup>
-		</Otherwise>
-	</Choose>
-	<Choose>
-		<When Condition="'$(Configuration)'==''">
-			<PropertyGroup>
-				<Configuration>Release</Configuration>
-			</PropertyGroup>
-		</When>
-	</Choose>
-
+	<Target Name="GetPerl" Condition="'$(PerlLocation)'==''" >
+		<Exec Command="where perl.exe" ConsoleToMsBuild="true" EchoOff="false" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="PerlLocation" />
+		</Exec>
+	</Target>
 	<Target Name="Check">
 		<Message Text="Checking prerequisites" />
+		<Error Text="Requires that Git SCM is installed and is in path" Condition="'$(GitLocation)'==''" />
+		<Error Text="Requires that Perl is installed and is in path" Condition="'$(PerlLocation)'==''" />
+		<Error Text="Requires run under vcvarsamd64_x86.bat or vcvars64.bat" Condition="'$(VisualStudioVersion)'==''" />
 		<Exec Command="git clone https://git.savannah.gnu.org/git/libidn.git" EchoOff="false" Condition="!Exists('$(Home)')" />
-		<Exec Command="git checkout libidn-1-32 -b nharu_build" EchoOff="false" WorkingDirectory="$(Home)" IgnoreExitCode="true" Condition="Exists('$(Home)\libidn.pc.in')" />
+		<Exec Command="git checkout libidn-1-32 -B nharu_build" EchoOff="false" WorkingDirectory="$(Home)" Condition="Exists('$(Home)\libidn.pc.in')" />
 		<Error Text="GNU Libidn must exists at $(Home) directory" Condition="!Exists('$(Src)\stringprep.h')" />
 	</Target>
 

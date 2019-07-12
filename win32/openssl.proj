@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project	DefaultTargets="Build"
+			InitialTargets="GetGit;GetPerl;GetNASM;Check"
+			ToolsVersion="15.0"
+			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+	<Import Project="targets\project-configurations.targets" />
+	<PropertyGroup Label="UserMacros">
+		<Home>$(MSBuildProjectDirectory)\openssl</Home>
+		<Prefix>$(MSBuildProjectDirectory)\..\dist\$(Platform)\ssl</Prefix>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PerlCmdLine">
+		<PerlCmd>perl.exe Configure VC-WIN32 no-shared --debug --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PerlCmdLine">
+		<PerlCmd>perl.exe Configure VC-WIN32 no-shared --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PerlCmdLine">
+		<PerlCmd>perl.exe Configure VC-WIN64A no-shared --debug --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PerlCmdLine">
+		<PerlCmd>perl.exe Configure VC-WIN64A no-shared --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>
+	</PropertyGroup>
+	<Import Project="targets\common.targets" />
+
+	<Target Name="Configure" DependsOnTargets="Config">
+		<Message Text="Will configure OpenSSL build..." />
+		<Exec Command="$(PerlCmd)" EchoOff="true" WorkingDirectory="$(Home)" />
+		<Message Text="Command: $(PerlCmd)" />
+	</Target>
+
+	<Target Name="Prepare" >
+		<Message Text="Preparing OpenSSL for Windows compilation..." />
+		<Exec Command='powershell -NoLogo -NoProfile -NonInteractive -Command "(Get-Content $(Home)\makefile) -replace """/MT""", """/MD""" | Set-Content $(Home)\makefile"' EchoOff="true" />
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="Configure;Prepare">
+		<Message Text="Building OpenSSL..." />
+		<Exec Command="nmake.exe /nologo" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Test">
+		<Message Text="Testing OpenSSL..." />
+		<Exec Command="nmake.exe /nologo test" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Install">
+		<Message Text="Installing OpenSSL..." />
+		<Exec Command="nmake.exe /nologo install" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Uninstall">
+		<Message Text="Uninstalling OpenSSL..." />
+		<Exec Command="nmake.exe /nologo uninstall" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Clean">
+		<Message Text="Cleaning all things..." />
+		<Exec Command="nmake.exe /nologo clean" EchoOff="true" WorkingDirectory="$(Home)" />
+		<Exec Command="nmake.exe /nologo distclean" EchoOff="true" WorkingDirectory="$(Home)" />
+	</Target>
+
+	<Target Name="Clean-Up" />
+
+	<Target Name="GetGit" Condition="'$(GitLocation)'==''" >
+		<Exec Command="where git.exe" ConsoleToMsBuild="true" EchoOff="false" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="GitLocation" />
+		</Exec>
+	</Target>
+	<Target Name="GetPerl" Condition="'$(PerlLocation)'==''" >
+		<Exec Command="where perl.exe" ConsoleToMsBuild="true" EchoOff="false" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="PerlLocation" />
+		</Exec>
+	</Target>
+	<Target Name="GetNASM" Condition="'$(NASMLocation)'==''" >
+		<Exec Command="where nasm.exe" ConsoleToMsBuild="true" EchoOff="false" >
+			<Output TaskParameter="ConsoleOutput" PropertyName="NASMLocation" />
+		</Exec>
+	</Target>
+	<Target Name="Check">
+		<Message Text="Checking prerequisites" />
+		<Error Text="Requires that Git SCM is installed and is in path" Condition="'$(GitLocation)'==''" />
+		<Error Text="Requires that Perl is installed and is in path" Condition="'$(PerlLocation)'==''" />
+		<Error Text="Requires that Netwide Assembler is installed and is in path" Condition="'$(NASMLocation)'==''" />
+		<Error Text="Requires run under vcvarsamd64_x86.bat or vcvars64.bat" Condition="'$(VisualStudioVersion)'==''" />
+		<Exec Command="git clone https://github.com/openssl/openssl" EchoOff="false" Condition="!Exists('$(Home)')" />
+		<Exec Command="git checkout OpenSSL_1_1_0f -B nharu_build" EchoOff="false" WorkingDirectory="$(Home)" Condition="Exists('$(Home)\e_os.h')" />
+	</Target>
+
+</Project>

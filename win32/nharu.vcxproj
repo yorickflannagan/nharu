@@ -21,8 +21,8 @@
 
 	<PropertyGroup Label="UserMacros">
 		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\ssl</OpenSSLFolder>
-		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\idn</LibidnFolder>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\$(Platform)\idn</LibidnFolder>
 		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
@@ -85,6 +85,7 @@
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
+	<Import Project="targets\common.targets" />
 
 	<Target Name="Install">
 		<Error Text="Static library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
@@ -95,6 +96,7 @@
 		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\include" />
 		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\pkcs11" />
 		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\libs" />
 	</Target>
 
 </Project>

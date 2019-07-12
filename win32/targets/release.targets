@@ -40,6 +40,7 @@
 			<IntrinsicFunctions>true</IntrinsicFunctions>
 			<Optimization>MinSpace</Optimization>
 			<WholeProgramOptimization>true</WholeProgramOptimization>
+			<ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
 		</ClCompile>
 		<Link>
 			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
@@ -59,6 +60,7 @@
 			<UACUIAccess>false</UACUIAccess>
 			<LinkErrorReporting>NoErrorReport</LinkErrorReporting>
 			<OptimizeReferences>true</OptimizeReferences>
+			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
 			<EnableCOMDATFolding>true</EnableCOMDATFolding>
 			<LinkDLL>$(IsDLL)</LinkDLL>
 		</Link>

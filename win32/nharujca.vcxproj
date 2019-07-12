@@ -102,6 +102,7 @@
 	<Target Name="Install">
 		<Error Text="Dinamic library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
 		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\libs" />
 	</Target>
 
 	<Target Name="Check">
