@@ -36,7 +36,7 @@
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<Src>$(Home)\lib</Src>
 		<SrcWin>$(Home)\windows</SrcWin>
-		<Prefix>$(MSBuildProjectDirectory)\..\dist\$(Platform)\idn</Prefix>
+		<Prefix Condition="'$(Prefix)'==''">$(MSBuildProjectDirectory)\..\dist\$(Platform)\idn</Prefix>
 		<IncludeFolders>
 			$(Src);
 			$(Src)\gl;

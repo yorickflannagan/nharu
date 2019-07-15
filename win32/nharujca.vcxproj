@@ -22,15 +22,15 @@
 
 	<PropertyGroup Label="UserMacros">
 		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
-		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\ssl</OpenSSLFolder>
-		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\idn</LibidnFolder>
-		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\$(Platform)\idn</LibidnFolder>
 		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<Prefix>$(BuildDir)\$(Platform)</Prefix>
+		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
-		<Prefix>$(BuildDir)\$(Platform)\$(ProjectName)</Prefix>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
@@ -89,6 +89,7 @@
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
+	<Import Project="targets\common.targets" />
 
 	<Target Name="GetVersion" BeforeTargets="MakeVersion">
 		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="true">
@@ -99,10 +100,10 @@
 		<Exec Command="$(Home)\jca\make_version.bat $(GitVersion)" EchoOff="true" />
 	</Target>
 
-	<Target Name="Install">
+	<Target Name="Install" DependsOnTargets="Config">
 		<Error Text="Dinamic library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\nharu\libs" />
 	</Target>
 
 	<Target Name="Check">

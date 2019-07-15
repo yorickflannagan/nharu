@@ -7,7 +7,7 @@
 	<Import Project="targets\project-configurations.targets" />
 	<PropertyGroup Label="UserMacros">
 		<Home>$(MSBuildProjectDirectory)\openssl</Home>
-		<Prefix>$(MSBuildProjectDirectory)\..\dist\$(Platform)\ssl</Prefix>
+		<Prefix Condition="'$(Prefix)'==''">$(MSBuildProjectDirectory)\..\dist\$(Platform)\ssl</Prefix>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PerlCmdLine">
 		<PerlCmd>perl.exe Configure VC-WIN32 no-shared --debug --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>

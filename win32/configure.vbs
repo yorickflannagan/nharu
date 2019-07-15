@@ -413,64 +413,6 @@ Class Nharu
 		Set m_shell = Nothing
 	End Sub
 
-	' Retrieves install location
-	Public Function GetInstallLocation()
-		Const LIB = "nharu.lib"
-		Const DLL = "nharujca.dll"
-		Const HEADER = "pki-issue.h"
-		If IsEmpty(m_location) Then
-			Dim stdout : Set stdout = m_fs.GetStandardStream(1)
-			stdout.Write "Looking for Nharu libraries... "
-			Dim value : value = m_finder.Find(LIB)
-			If Not IsEmpty(value) Then
-				value = m_fs.GetParentFolderName(value)
-				If m_fs.FileExists(value & "\include\" & HEADER) And m_fs.FileExists(value & "\libs\" & DLL) Then
-					m_location = AddSlash(value)
-					stdout.WriteLine "Found!"
-				End If
-			End If
-			If IsEmpty(m_location) Then
-				stdout.WriteLine "Not found!"
-			End If
-			stdout.Close
-			Set stdout = Nothing
-		End If
-		GetInstallLocation = m_location
-	End Function
-
-	' Ensures software is installed
-	' Arguments:
-	'	boolean retry: if true, tries to download and install it, if it does not exist
-	Public Function EnsureInstall(retry)
-	' TODO
-	End Function
-
-	Public Sub Build(version, prefix)
-		EnsurePreRequisites
-		' TODO: REVIEW
-		Dim exec : exec = m_current & "\dev-env.cmd"
-		If Not m_fs.FileExists(exec) Then Err.Raise 1, "Nharu.AddAutoRun", "Must run Nharu.Configure() first"
-		Dim path : path = RequiredPath()
-		Dim arg : arg = " --build"
-		If version <> Null Then
-			arg = arg & " --version=" & version
-		End If
-		If prefix <> Null Then
-			arg = arg & " --prefix" & prefix
-		End If
-		If path <> "" Then
-			arg = arg & " --add-path=" & path
-		End If
-		Dim stdout : Set stdout = m_fs.GetStandardStream(1)
-		stdout.Write "Building Nharu libraries from scratch... "
-		Dim ret : ret = m_shell.Run(exec & arg, 1, True)
-		If ret <> 0 Then Err.Raise ret, "Nharu.Build", "Nharu library build failed"
-		stdout.WriteLine "Done!"
-		stdout.Close
-		Set stdout = Nothing
-	End Sub
-	
-
 	' Create configuration file
 	' Arguments:
 	'	string prefix: installation directory. Optional. Default: [nharu path]\dist
@@ -480,13 +422,11 @@ Class Nharu
 		stdout.Write "Creating build script... "
 		Dim template : Set template = m_fs.OpenTextFile(m_current & "\nharu-build.proj.in", 1)
 		Dim out : Set out = m_fs.CreateTextFile(m_current & "\nharu-build.proj")
-		Dim cdir : cdir = m_fs.GetParentFolderName(m_current) & "\bin"
-		Dim bdir : bdir = m_fs.GetParentFolderName(m_current) & "\dist"
-		If Not IsNull(prefix) Then bdir = prefix
+		If IsNull(prefix) Then prefix = m_fs.GetParentFolderName(m_current)
 		While Not template.AtEndOfStream
 			Dim line : line = template.ReadLine()
-			line = Replace(line, "__COMPILEDIR__", cdir)
-			line = Replace(line, "__BUILDDIR__", bdir)
+			line = Replace(line, "__TARGETDIR__", m_fs.GetParentFolderName(m_current))
+			line = Replace(line, "__PREFIX__",    prefix)
 			line = Replace(line, "__JDK32HOME__", RemoveSlash(m_jdkil))
 			line = Replace(line, "__JDK64HOME__", RemoveSlash(m_jdk64il))
 			out.WriteLine(line)

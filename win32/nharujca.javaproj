@@ -12,6 +12,7 @@
 		<TargetExt>.jar</TargetExt>
 		<CompileDir Condition="'$(CompileDir)'==''">$(Home)/bin</CompileDir>
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)/dist</BuildDir>
+		<Prefix Condition="'$(Prefix)'==''">$(BuildDir)\java</Prefix>
 		<LogLevel Condition="'$(LogLevel)'==''">LOG_LEVEL_ERROR</LogLevel>
 		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
 		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(Home)\dist\Win32\Release\nharujca\nharujca.dll</NharuJCALib>
@@ -19,27 +20,39 @@
 		<InstallDir>$(BuildDir)/java</InstallDir>
 	</PropertyGroup>
 
-	<Target Name="Build" >
+	<Target Name="Echo">
+		<Message Text="$(ProjectName) properties:" />
+		<Message Text="CompileDir:    $(CompileDir)" />
+		<Message Text="BuildDir:      $(BuildDir)" />
+		<Message Text="Prefix:        $(Prefix)" />
+		<Message Text="JDKHome:       $(JDKHome)" />
+		<Message Text="NharuJCALib:   $(NharuJCALib)" />
+		<Message Text="BinDir:        $(BinDir)" />
+		<Message Text="InstallDir:    $(InstallDir)" />
+		<Message Text="LogLevel:      $(LogLevel)" />
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="Echo">
 		<Error Text="Java SDK must be defined at command line" Condition="'$(JDKHome)'==''" />
 		<Error Text="Apache Maven must be in path" Condition="'$(MVN)'==''" />
 		<Exec Command="MVN -B package -Dlog.level=$(LogLevel) -D install.dir=$(InstallDir) -D bin.dir=$(BinDir) -D jar.version=$(JarVersion) -D jdk.home=$(JDKHome) -Dhttps.protocols=TLSv1.2" EchoOff="true" WorkingDirectory="$(Home)" />
 	</Target>
 
-	<Target Name="Clean" >
+	<Target Name="Clean" DependsOnTargets="Echo">
 		<Error Text="Apache Maven must be in path" Condition="'$(MVN)'==''" />
 		<Exec Command="MVN -B clean -Dlog.level=$(LogLevel) -D install.dir=$(InstallDir) -D bin.dir=$(BinDir) -D jar.version=$(JarVersion) -D jdk.home=$(JDKHome) -Dhttps.protocols=TLSv1.2" EchoOff="true" WorkingDirectory="$(Home)" />
 	</Target>
 
-	<Target Name="Test" >
+	<Target Name="Test" DependsOnTargets="Echo">
 		<Error Text="Java Runtime must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
 		<Error Text="JNI project must be built first" Condition="!Exists('$(NharuJCALib)')" />
 		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
 		<Exec Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.provider.NharuProvider "$(Home)\test\repo\signer.p12" "$(Home)\test\repo\trust.jks"' EchoOff="true" />
 	</Target>
 
-	<Target Name="Install">
+	<Target Name="Install" DependsOnTargets="Echo">
 		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
-		<Copy SourceFiles="$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+		<Copy SourceFiles="$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" DestinationFolder="$(Prefix)" />
 	</Target>
 
 

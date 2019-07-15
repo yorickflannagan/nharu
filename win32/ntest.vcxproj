@@ -22,11 +22,11 @@
 
 	<PropertyGroup Label="UserMacros">
 		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
-		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\ssl</OpenSSLFolder>
-		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\idn</LibidnFolder>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\$(Platform)\idn</LibidnFolder>
 		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<IncludeFolders>
@@ -73,8 +73,9 @@
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
+	<Import Project="targets\common.targets" />
 
-	<Target Name="Test" >
+	<Target Name="Test" DependsOnTargets="Config">
 		<Error Text="Test application must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
 		<Exec Command='"$(OutDir)$(ProjectName)$(TargetExt)" "$(Home)\test\repo"' EchoOff="true" />
 	</Target>
@@ -82,7 +83,7 @@
 	<Target Name="Check" >
 		<Message Text="Checking prerequisites" />
 		<Error Text="Static library must be found at $(NharuLib)\nharu.lib" Condition="!Exists('$(NharuLib)\nharu.lib')" />
-		<Error Text="OpenSSL library must be built first" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" />
+		<Error Text="OpenSSL library $(OpenSSLFolder)\lib\libcrypto.lib must be built first" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" />
 		<Error Text="GNU Libidn library must be built first" Condition="!Exists('$(LibidnFolder)\lib\libidn.lib')" />
 	</Target>
 

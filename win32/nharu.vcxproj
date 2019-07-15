@@ -25,9 +25,9 @@
 		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\$(Platform)\idn</LibidnFolder>
 		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
 		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
+		<Prefix Condition="'$(Prefix)'==''">$(BuildDir)\$(Platform)</Prefix>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
-		<Prefix>$(BuildDir)\$(Platform)\$(ProjectName)</Prefix>
 		<IncludeFolders>
 			$(Home);
 			$(Home)\include;
@@ -93,10 +93,10 @@
 			<PKCSFiles Include="$(Home)\pkcs11\*.h" />
 			<IncludeFiles Include="$(Home)\include\*.h" />
 		</ItemGroup>
-		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\include" />
-		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\pkcs11" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\libs" />
+		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\nharu\include" />
+		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\nharu\pkcs11" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\nharu\libs" />
 	</Target>
 
 </Project>
