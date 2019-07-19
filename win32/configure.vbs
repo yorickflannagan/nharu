@@ -535,8 +535,8 @@ Class Installer
 	Public Sub AddToPath(folder)
 
 		If IsEmpty(folder) Or IsNull(folder) Or Len(folder) = 0 Then Exit Sub
-		Dim old : old = m_shell.ExpandEnvironmentStrings("%Path%")
 		Dim env : Set env = m_shell.Environment("User")
+		Dim old : old = env("Path")
 		env("Path") = old & ";" & folder
 		Set env = Nothing
 
