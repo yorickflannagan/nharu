@@ -18,6 +18,7 @@
 		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(Home)\dist\Win32\Release\nharujca\nharujca.dll</NharuJCALib>
 		<BinDir >$(CompileDir)/java-bin</BinDir>
 		<InstallDir>$(BuildDir)/java</InstallDir>
+		<NoLogo>true</NoLogo>
 	</PropertyGroup>
 
 	<Target Name="Echo">

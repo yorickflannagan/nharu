@@ -8,6 +8,7 @@
 	<PropertyGroup Label="UserMacros">
 		<Home>$(MSBuildProjectDirectory)\openssl</Home>
 		<Prefix Condition="'$(Prefix)'==''">$(MSBuildProjectDirectory)\..\dist\$(Platform)\ssl</Prefix>
+		<NoLogo>true</NoLogo>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PerlCmdLine">
 		<PerlCmd>perl.exe Configure VC-WIN32 no-shared --debug --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>

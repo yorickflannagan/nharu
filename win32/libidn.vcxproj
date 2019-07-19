@@ -19,6 +19,7 @@
 		<Keyword>StaticLibraryProject</Keyword>
 		<RootNamespace>libidn</RootNamespace>
 		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+		<NoLogo>true</NoLogo>
 	</PropertyGroup>
 
   	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -37,18 +38,7 @@
 		<Src>$(Home)\lib</Src>
 		<SrcWin>$(Home)\windows</SrcWin>
 		<Prefix Condition="'$(Prefix)'==''">$(MSBuildProjectDirectory)\..\dist\$(Platform)\idn</Prefix>
-		<IncludeFolders>
-			$(Src);
-			$(Src)\gl;
-			$(SrcWin)\include;
-			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
-			$(VCInstallDir)\Tools\MSVC\14.16.27023\include;
-			$(WindowsSdkDir)\include\10.0.17763.0\ucrt;
-			$(WindowsSdkDir)\include\10.0.17763.0\shared;
-			$(WindowsSdkDir)\include\10.0.17763.0\um;
-			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
-			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
-		</IncludeFolders>
+		<IncludeFolders>$(Src);$(Src)\gl;$(SrcWin)\include</IncludeFolders>
 		<Warnings>4996;4005</Warnings>
 		<Dependencies></Dependencies>
 		<TargetSubSystem>Windows</TargetSubSystem>

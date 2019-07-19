@@ -5,8 +5,8 @@
 			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
 	<PropertyGroup Label="GeneratedByConfigure">
-		<TargetDir>__TARGETDIR__</TargetDir>
-		<Prefix>__PREFIX__</Prefix>
+		<NoLogo>true</NoLogo>
+		<Prefix Condition="'$(Prefix)'==''">__PREFIX__</Prefix>
 	</PropertyGroup>
 	<Choose>
 		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
@@ -25,12 +25,12 @@
 
 	<PropertyGroup>
 		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<TargetDir Condition="'$(TargetDir)'=='__TARGETDIR__'">$(Home)</TargetDir>
+		<TargetDir Condition="'$(TargetDir)'==''">$(Home)</TargetDir>
 		<CompileDir>$(TargetDir)\bin</CompileDir>
 		<BuildDir>$(TargetDir)\dist</BuildDir>
 		<Prefix Condition="'$(Prefix)'=='__PREFIX__'">$(BuildDir)\$(Platform)</Prefix>
-		<OpenSSLFolder>$(BuildDir)\$(Platform)\ssl</OpenSSLFolder>
-		<LibidnFolder>$(BuildDir)\$(Platform)\idn</LibidnFolder>
+		<OpenSSLFolder>$(Prefix)\ssl</OpenSSLFolder>
+		<LibidnFolder>$(Prefix)\idn</LibidnFolder>
 		<Configuration Condition="'$(Configuration)'==''">Release</Configuration>
 		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
 		<NharuJCALib>$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>
