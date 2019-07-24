@@ -398,6 +398,8 @@ Class Nharu
 		Set m_perl = New ActivePerl
 		Set m_shell = CreateObject("Wscript.Shell")
 		m_current = m_fs.GetParentFolderName(WScript.ScriptFullName)
+		m_jdkil = m_jdk.EnsureInstall("7 Update 80")
+		m_jdk64il = m_jdk64.EnsureInstall("7 Update 80 (64-bit)")
 	End Sub
 	Private Sub Class_Terminate()
 		Set m_fs = Nothing
@@ -416,8 +418,10 @@ Class Nharu
 	' Create configuration file
 	' Arguments:
 	'	string prefix: installation directory. Optional. Default: [nharu path]\dist
-	Public Sub Configure(prefix)
-		EnsurePreRequisites
+	Public Sub Configure(prefix, only)
+		If Not only Then
+			EnsurePreRequisites
+		End If
 		Dim stdout : Set stdout = m_fs.GetStandardStream(1)
 		stdout.Write "Creating build script... "
 		Dim template : Set template = m_fs.OpenTextFile(m_current & "\nharu-build.proj.in", 1)
@@ -443,13 +447,11 @@ Class Nharu
 	Private Sub EnsurePreRequisites()
 		If IsEmpty(m_vsis) Then
 			m_vsis = m_vs.EnsureInstall()
-			m_jdkil = m_jdk.EnsureInstall("7 Update 80")
-			m_jdk64il = m_jdk64.EnsureInstall("7 Update 80 (64-bit)")
+			m_perlil = m_perl.EnsureInstall(True)
+			m_nasmil = m_nasm.EnsureInstall(True)
 			m_gitil = m_git.EnsureInstall(True)
 			m_drmil = m_drm.EnsureInstall(True)
 			m_vnil = m_vn.EnsureInstall(True)
-			m_nasmil = m_nasm.EnsureInstall(True)
-			m_perlil = m_perl.EnsureInstall(True)
 		End If
 	End Sub
 	Private Function RequiredPath()
@@ -714,15 +716,20 @@ Sub Main
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
 	WScript.Echo ""
 	Dim args : Set args = WScript.Arguments.Named
-	Dim prefix
+	Dim prefix, only
 	If args.Exists("prefix") Then
 		prefix = args.Item("prefix")
 	Else
 		prefix = Null
 	End If
+	If args.Exists("configure") Then
+		only = true
+	Else
+		only = false
+	End If
 	Set args = Nothing
 	Dim cfg : Set cfg = New Nharu
-	cfg.Configure prefix
+	cfg.Configure prefix, only
 	Set cfg = Nothing
 	WScript.Echo ""
 	WScript.Echo " * * * * * * * * * * * * * * * * * * * * * * * * * *"
