@@ -425,7 +425,7 @@ Class Nharu
 		If IsNull(prefix) Then prefix = m_fs.GetParentFolderName(m_current)
 		While Not template.AtEndOfStream
 			Dim line : line = template.ReadLine()
-			line = Replace(line, "__PREFIX__",    prefix)
+			line = Replace(line, ">__PREFIX__</", ">" & prefix & "</")
 			line = Replace(line, "__JDK32HOME__", RemoveSlash(m_jdkil))
 			line = Replace(line, "__JDK64HOME__", RemoveSlash(m_jdk64il))
 			out.WriteLine(line)
