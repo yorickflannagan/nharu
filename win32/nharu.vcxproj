@@ -94,8 +94,8 @@
 			<PKCSFiles Include="$(Home)\pkcs11\*.h" />
 			<IncludeFiles Include="$(Home)\include\*.h" />
 		</ItemGroup>
-		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\nharu\include" />
-		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\nharu\pkcs11" />
+		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\$(Platform)\nharu\include" />
+		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\$(Platform)\nharu\pkcs11" />
 		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
 		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
 	</Target>
