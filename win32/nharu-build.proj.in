@@ -28,13 +28,13 @@
 		<TargetDir Condition="'$(TargetDir)'==''">$(Home)</TargetDir>
 		<CompileDir>$(TargetDir)\bin</CompileDir>
 		<BuildDir>$(TargetDir)\dist</BuildDir>
-		<Prefix Condition="'$(Prefix)'=='__PREFIX__'">$(BuildDir)\$(Platform)</Prefix>
-		<OpenSSLFolder>$(Prefix)\ssl</OpenSSLFolder>
-		<LibidnFolder>$(Prefix)\idn</LibidnFolder>
+		<Prefix Condition="'$(Prefix)'=='__PREFIX__'">$(BuildDir)</Prefix>
+		<OpenSSLFolder>$(Prefix)\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder>$(Prefix)\$(Platform)\idn</LibidnFolder>
 		<Configuration Condition="'$(Configuration)'==''">Release</Configuration>
 		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
 		<NharuJCALib>$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>
-		<JavaPrefix>$(Prefix)\nharu\libs</JavaPrefix>
+		<JavaPrefix>$(Prefix)\$(Platform)\nharu\libs</JavaPrefix>
 	</PropertyGroup>
 	<Choose>
 		<When Condition="'$(Configuration)'=='Debug'">

@@ -103,8 +103,8 @@
 
 	<Target Name="Install" DependsOnTargets="Config">
 		<Error Text="Dinamic library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\nharu\libs" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
 	</Target>
 
 	<Target Name="Check">

@@ -1793,6 +1793,11 @@ NH_UTILITY(CK_MECHANISM_TYPE, NH_oid_to_mechanism)(_IN_ unsigned int*, _IN_ size
 }
 #endif
 
+NH_FUNCTION(NH_RV, NH_parse_digest_info)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NH_ASN1_PARSER_HANDLE*);
+NH_FUNCTION(void, NH_release_digest_parser)(_INOUT_ NH_ASN1_PARSER_HANDLE);
+NH_FUNCTION(NH_RV, NH_encode_digest_info)(_IN_ unsigned int*, _IN_ size_t, _IN_ unsigned char*, _IN_ size_t, _OUT_ NH_ASN1_ENCODER_HANDLE*);
+NH_FUNCTION(void, NH_release_digest_encoder)(_INOUT_ NH_ASN1_ENCODER_HANDLE);
+
 
 /** ****************************
  *  Supported cryptographic OIDs

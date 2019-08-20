@@ -62,6 +62,8 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_create_request();
 	if (NH_SUCCESS(rv)) rv = test_encode_p8();
 	if (NH_SUCCESS(rv)) rv = test_issue_crl();
+
+	if (NH_SUCCESS(rv)) rv = test_digest_info();
 	printf("%s\n", "Test done");
 	return rv;
 }

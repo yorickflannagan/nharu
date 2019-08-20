@@ -96,8 +96,8 @@
 		</ItemGroup>
 		<Copy SourceFiles="@(IncludeFiles)" DestinationFolder="$(Prefix)\nharu\include" />
 		<Copy SourceFiles="@(PKCSFiles)" DestinationFolder="$(Prefix)\nharu\pkcs11" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\nharu\libs" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
 	</Target>
 
 </Project>

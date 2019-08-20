@@ -143,3 +143,65 @@ int test_issue_crl()
 	else printf("failed with error code %lu\n", rv);
 	return rv;
 }
+
+unsigned char __TLS_CHALLENGE[] = {
+	0x30, 0x2f, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03,
+	0x04, 0x02, 0x01, 0x04, 0x20, 0x95, 0x68, 0x22, 0x07, 0x72, 0xfc, 0x26,
+	0x80, 0xbd, 0x7d, 0x04, 0x8a, 0xae, 0x27, 0xff, 0x34, 0xca, 0x3b, 0xe9,
+	0xe4, 0x2c, 0xab, 0x7d, 0xdb, 0x2d, 0xef, 0xb6, 0x94, 0xc6, 0x13, 0xcf,
+	0xc4
+};
+unsigned int __TLS_CHALLENGE_T = 49;
+unsigned char __TLS_HASH[] =
+{
+	0x95, 0x68, 0x22, 0x07, 0x72, 0xFC, 0x26, 0x80,
+	0xBD, 0x7D, 0x04, 0x8A, 0xAE, 0x27, 0xFF, 0x34,
+	0xCA, 0x3B, 0xE9, 0xE4, 0x2C, 0xAB, 0x7D, 0xDB,
+	0x2D, 0xEF, 0xB6, 0x94, 0xC6, 0x13, 0xCF, 0xC4
+};
+unsigned int __TLS_HASH_T = 32;
+CK_MECHANISM_TYPE __HASH_ALG = CKM_SHA256;
+int test_digest_info()
+{
+	NH_RV rv;
+	NH_ASN1_PARSER_HANDLE hParser;
+	NH_ASN1_PNODE pNode;
+	CK_MECHANISM_TYPE hMechanism;
+	NH_ASN1_ENCODER_HANDLE hEncoder;
+	size_t cbEncode;
+	unsigned char *pEncode;
+
+	printf("%s", "Testing TLS DigestInfo parsing... ");
+	if (NH_SUCCESS(rv = NH_parse_digest_info(__TLS_CHALLENGE, __TLS_CHALLENGE_T, &hParser)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = (pNode = hParser->sail(hParser->root, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = (hMechanism = NH_oid_to_mechanism((unsigned int*) pNode->value, pNode->valuelen)) == __HASH_ALG ? CKR_OK : NH_PARSER_ERROR) &&
+			NH_SUCCESS(rv = (pNode = hParser->sail(hParser->root, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = pNode->valuelen == __TLS_HASH_T ? CKR_OK : NH_PARSER_ERROR)
+		)	rv = memcmp(pNode->value, __TLS_HASH, pNode->valuelen) == 0 ? CKR_OK : NH_PARSER_ERROR;
+		NH_release_digest_parser(hParser);
+	}
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+
+	printf("%s", "Testing TLS DigestInfo encoding... ");
+	if (NH_SUCCESS(rv = NH_encode_digest_info(sha256_oid, NHC_SHA256_OID_COUNT, __TLS_HASH, __TLS_HASH_T, &hEncoder)))
+	{
+		cbEncode = hEncoder->encoded_size(hEncoder, hEncoder->root);
+		if
+		(
+			NH_SUCCESS(rv = cbEncode == __TLS_CHALLENGE_T ? NH_OK : NH_PARSER_ERROR) &&
+			NH_SUCCESS(rv = (pEncode = (unsigned char*) malloc(cbEncode)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+		)
+		{
+			if (NH_SUCCESS(rv = hEncoder->encode(hEncoder, hEncoder->root, pEncode))) rv = memcmp(pEncode, __TLS_CHALLENGE, cbEncode) == 0 ? NH_OK : NH_PARSER_ERROR;
+			free(pEncode);
+		}
+		NH_release_digest_encoder(hEncoder);
+	}
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+	return rv;
+}

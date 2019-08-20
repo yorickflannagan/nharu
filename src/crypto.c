@@ -2681,3 +2681,98 @@ INLINE NH_UTILITY(CK_MECHANISM_TYPE, NH_oid_to_mechanism)(_IN_ unsigned int *OID
 	)	return supported_mechanisms_const[i];
 	return CK_UNAVAILABLE_INFORMATION;
 }
+
+
+/**
+ * Implements TLS 1.2 signature scheme
+ * DigestInfo ::= SEQUENCE {
+ * 	digestAlgorithm SEQUENCE {
+ * 		algorithm OBJECT IDENTIFIER,
+ * 		param ANY -- DEFINED BY algorithm
+ * 	},
+ * 	digest OCTET STRING
+ * }
+ */
+NH_NODE_WAY tls_digest_info_map[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_OBJECT_ID | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_ANY_TAG_BIT | NH_ASN1_OPTIONAL_BIT,
+		NULL,
+		0
+	},
+	{
+		(NH_SAIL_SKIP_WEST << 16) | (NH_SAIL_SKIP_NORTH << 8) | NH_SAIL_SKIP_EAST,
+		NH_ASN1_OCTET_STRING,
+		NULL,
+		0
+	}
+};
+NH_FUNCTION(NH_RV, NH_parse_digest_info)(_IN_ unsigned char *pEncoded, _IN_ size_t cbEncoded, _OUT_ NH_ASN1_PARSER_HANDLE *hParser)
+{
+	NH_RV rv;
+	NH_ASN1_PARSER_HANDLE hOut;
+	NH_ASN1_PNODE pNode;
+
+	if (!pEncoded) return NH_INVALID_ARG;
+	if (NH_SUCCESS(rv = NH_new_parser(pEncoded, cbEncoded, 6, 32, &hOut)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hOut->map(hOut, tls_digest_info_map, ASN_NODE_WAY_COUNT(tls_digest_info_map))) &&
+			NH_SUCCESS(rv = (pNode = hOut->sail(hOut->root, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hOut->parse_objectid(hOut, pNode, FALSE)) &&
+			NH_SUCCESS(rv = (pNode = hOut->sail(hOut->root, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hOut->parse_octetstring(hOut, pNode))
+		)	*hParser = hOut;
+		else NH_release_parser(hOut);
+	}
+	return rv;
+}
+NH_FUNCTION(void, NH_release_digest_parser)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser)
+{
+	if (hParser) NH_release_parser(hParser);
+}
+NH_FUNCTION(NH_RV, NH_encode_digest_info)(_IN_ unsigned int *pOid, _IN_ size_t cbOid, _IN_ unsigned char *pDigest, _IN_ size_t cbDigest, _OUT_ NH_ASN1_ENCODER_HANDLE *hEncoder)
+{
+	NH_RV rv;
+	NH_ASN1_ENCODER_HANDLE hOut;
+	NH_ASN1_PNODE pNode;
+
+	if (!pOid || !pDigest) return NH_INVALID_ARG;
+	if (NH_SUCCESS(rv = NH_new_encoder(6, 32, &hOut)))
+	{
+		if
+		(
+			NH_SUCCESS(rv = hOut->chart(hOut, tls_digest_info_map, ASN_NODE_WAY_COUNT(tls_digest_info_map), &pNode)) &&
+			NH_SUCCESS(rv = (pNode = hOut->sail(hOut->root, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hOut->put_objectid(hOut, pNode, pOid, cbOid, FALSE)) &&
+			NH_SUCCESS(rv = (pNode = hOut->sail(hOut->root, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_CANNOT_SAIL) &&
+			NH_SUCCESS(rv = hOut->put_octet_string(hOut, pNode, pDigest, cbDigest))
+		)	*hEncoder = hOut;
+		else NH_release_encoder(hOut);
+	}
+	return rv;
+}
+NH_FUNCTION(void, NH_release_digest_encoder)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder)
+{
+	if (hEncoder) NH_release_encoder(hEncoder);
+}
