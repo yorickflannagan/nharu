@@ -22,6 +22,18 @@
 			</PropertyGroup>
 		</Otherwise>
 	</Choose>
+	<Choose>
+		<When Condition="'$(Configuration)'==''">
+			<PropertyGroup>
+				<Configuration>Release</Configuration>
+			</PropertyGroup>
+		</When>
+		<Otherwise>
+			<PropertyGroup>
+				<BuildProperties>LinkIncremental=False</BuildProperties>
+			</PropertyGroup>
+		</Otherwise>
+	</Choose>
 
 	<PropertyGroup>
 		<Home>$(MSBuildProjectDirectory)\..</Home>
@@ -31,7 +43,6 @@
 		<Prefix Condition="'$(Prefix)'=='__PREFIX__'">$(BuildDir)</Prefix>
 		<OpenSSLFolder>$(Prefix)\$(Platform)\ssl</OpenSSLFolder>
 		<LibidnFolder>$(Prefix)\$(Platform)\idn</LibidnFolder>
-		<Configuration Condition="'$(Configuration)'==''">Release</Configuration>
 		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
 		<NharuJCALib>$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>
 		<JavaPrefix>$(Prefix)\$(Platform)\nharu\libs</JavaPrefix>
@@ -50,6 +61,7 @@
 	</Choose>
 	<PropertyGroup Label="BuildProperties">
 		<StaticLibProps>
+			$(BuildProperties);
 			Platform=$(Platform);
 			Configuration=$(Configuration);
 			OpenSSLFolder=$(OpenSSLFolder);

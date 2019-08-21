@@ -61,6 +61,8 @@
 			<AdditionalOptions>/DEBUG:FULL</AdditionalOptions>
 			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
 			<LinkDLL>$(IsDLL)</LinkDLL>
+			<IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib</IgnoreSpecificDefaultLibraries>
+			<LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
 		</Link>
 	</ItemDefinitionGroup>
 
