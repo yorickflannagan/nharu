@@ -567,24 +567,6 @@ typedef NH_METHOD(NH_RV, NH_ASN1_READSIZE_FUNCTION)(_IN_ unsigned char*, _IN_ un
  *
  */
 /*
- ****f* NH_ASN1_PARSER_HANDLE/parse_enumerated
- *
- * NAME
- *	parse_enumerated
- *
- * PURPOSE
- *	Parses ASN.1 ENUMERATED type.
- *
- * ARGUMENTS
- *	_INOUT_ NH_ASN1_NODE_STR *node: node to parse.
- *
- * RESULT
- *	NH_INVALID_DER_TYPE if identifier octet is not an ASN.1 ENUMERATED type.
- *
- ******
- *
- */
-/*
  ****f* NH_ASN1_PARSER_HANDLE/parse_embedded_pdv
  *
  * NAME
@@ -692,6 +674,26 @@ typedef NH_METHOD(NH_RV, NH_ASN1_NODE_FUNCTION)(_INOUT_ NH_ASN1_NODE_STR*);
  *
  * PURPOSE
  *	Parses ASN.1 time type.
+ *
+ * ARGUMENTS
+ *	_IN_ NH_ASN1_PARSER_STR *self: handler.
+ *	_INOUT_ NH_ASN1_NODE_STR *node: node to parse.
+ *
+ * RESULT
+ *	NH_INVALID_DER_TYPE if identifier octet is not an ASN.1 UTCTime or GeneralizedTime type.
+ *	NH_CARGO_CONTAINER/bite_chunk() return codes.
+ *
+ ******
+ *
+ */
+/*
+ ****f* NH_ASN1_PARSER_HANDLE/parse_enumerated
+ *
+ * NAME
+ *	parse_enumerated
+ *
+ * PURPOSE
+ *	Parses ASN.1 ENUMERATED type.
  *
  * ARGUMENTS
  *	_IN_ NH_ASN1_PARSER_STR *self: handler.
@@ -929,28 +931,6 @@ typedef NH_METHOD(NH_RV, NH_ASN1_PAVE_FUNCTION)(_IN_ NH_ASN1_ENCODER_STR*, _IN_ 
  *
  * PURPOSE
  *	Writes an ASN.1 REAL data
- *
- * ARGUMENTS
- *	_IN_ NH_ASN1_ENCODER_STR *self: handler.
- *	_INOUT_ NH_ASN1_NODE_STR *node: the node where to put value.
- *	__IN_ void *value: the binary data.
- *	_IN_ size_t size: size of value.
- *
- * RESULT
- *	NH_OUT_OF_MEMORY_ERROR.
- *	NH_INVALID_DER_TYPE if node was incorrectly paved.
- *
- ******
- *
- */
-/*
- ****f* NH_ASN1_ENCODER_HANDLE/put_enumerated
- *
- * NAME
- *	put_enumerated
- *
- * PURPOSE
- *	Writes an ASN.1 ENUMERATED data
  *
  * ARGUMENTS
  *	_IN_ NH_ASN1_ENCODER_STR *self: handler.
@@ -1324,6 +1304,28 @@ typedef NH_METHOD(NH_RV, NH_ASN1_PUTOID_FUNCTION)(_IN_ NH_ASN1_ENCODER_STR*, _IN
  ******
  *
  */
+/*
+ ****f* NH_ASN1_ENCODER_HANDLE/put_enumerated
+ *
+ * NAME
+ *	put_enumerated
+ *
+ * PURPOSE
+ *	Writes an ASN.1 ENUMERATED data
+ *
+ * ARGUMENTS
+ *	_IN_ NH_ASN1_ENCODER_STR *self: handler.
+ *	_INOUT_ NH_ASN1_NODE_STR *node: the node where to put value.
+ *	__IN_ void *value: the binary data.
+ *	_IN_ size_t size: size of value.
+ *
+ * RESULT
+ *	NH_OUT_OF_MEMORY_ERROR.
+ *	NH_INVALID_DER_TYPE if node was incorrectly paved.
+ *
+ ******
+ *
+ */
 typedef NH_METHOD(NH_RV, NH_ASN1_PUTINT_FUNCTION)(_IN_ NH_ASN1_ENCODER_STR*, _INOUT_ NH_ASN1_NODE_STR*, _IN_ int);
 
 /*
@@ -1498,7 +1500,7 @@ struct NH_ASN1_PARSER_STR
 	NH_ASN1_PARSEOID_FUNCTION	parse_objectid;		/* Parses an OBJECT IDENTIFIER ASN.1 type  */
 	NH_ASN1_NODE_FUNCTION		parse_string;		/* Parses an ASN.1 type of any string type */
 	NH_ASN1_NODE_FUNCTION		parse_object_descriptor;/* Parses an ObjectDescriptor ASN.1 type */
-	NH_ASN1_NODE_FUNCTION		parse_enumerated;		/* Parses an ASN.1 ENUMERATED type */
+	NH_ASN1_PARSE_FUNCTION		parse_enumerated;		/* Parses an ASN.1 ENUMERATED type */
 	NH_ASN1_NODE_FUNCTION		parse_embedded_pdv;	/* Parses an ASN.1 EMBEDDED PDV type */
 	NH_ASN1_PARSE_FUNCTION		parse_time;			/* Parses an ASN.1 time type */
 
@@ -1547,7 +1549,7 @@ struct NH_ASN1_ENCODER_STR
 	NH_ASN1_PUT_FUNCTION		put_octet_string;		/* Writes an ASN.1 OCTET STRING data */
 	NH_ASN1_PUT_FUNCTION		put_object_descriptor;	/* Writes an ASN.1 OBJECT DESCRIPTOR data */
 	NH_ASN1_PUT_FUNCTION		put_real;			/* Writes an ASN.1 REAL data */
-	NH_ASN1_PUT_FUNCTION		put_enumerated;		/* Writes an ASN.1 ENUMERATED data */
+	NH_ASN1_PUTINT_FUNCTION		put_enumerated;		/* Writes an ASN.1 ENUMERATED data */
 	NH_ASN1_PUT_FUNCTION		put_embedded_pdv;		/* Writes an ASN.1 EMBEDDED PDV data */
 	NH_ASN1_PUT_FUNCTION		put_utf8_string;		/* Writes an ASN.1 UTF8String data */
 	NH_ASN1_PUT_FUNCTION		put_numeric_string;	/* Writes an ASN.1 NumericString data */

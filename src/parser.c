@@ -580,9 +580,33 @@ NH_UTILITY(NH_RV, NH_parse_object_descriptor)(_INOUT_ NH_ASN1_NODE_STR *node)
 	return parse(node, NH_ASN1_OBJECT_DESCRIPTOR);
 }
 
-NH_UTILITY(NH_RV, NH_parse_enumerated)(_INOUT_ NH_ASN1_NODE_STR *node)
+NH_UTILITY(NH_RV, NH_parse_enumerated)(_IN_ NH_ASN1_PARSER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node)
 {
-	return parse(node, NH_ASN1_ENUMERATED);
+	unsigned int roll = 0;
+	long int value = 0;
+	NH_RV rv;
+
+	if (ASN_IS_CONSTRUCTED(*node->identifier) || !ASN_IS_TAG(node, NH_ASN1_ENUMERATED)) return NH_INVALID_DER_TYPE;
+	switch (node->size)
+	{
+	case 4:
+		value = *(node->contents + 3) << roll;
+		roll += 0x08;
+	case 3:
+		value |= *(node->contents + 2) << roll;
+		roll += 0x08;
+	case 2:
+		value |= *(node->contents + 1) << roll;
+		roll += 0x08;
+	case 1:
+		value |= *node->contents << roll;
+		break;
+	default: return NH_INVALID_DER_TYPE;
+	}
+	if (NH_FAIL(rv = self->container->bite_chunk(self->container, sizeof(long int), &node->value))) return rv;
+	*(long int*)node->value = value;
+	node->valuelen = sizeof(long int);
+	return NH_OK;
 }
 
 NH_UTILITY(NH_RV, NH_parse_embedded_pdv)(_INOUT_ NH_ASN1_NODE_STR *node)
@@ -901,18 +925,17 @@ NH_UTILITY(NH_RV, NH_put_real)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_N
 	return asn_put_value(self->container, node, value, size, NH_ASN1_REAL);
 }
 
-NH_UTILITY(NH_RV, NH_put_enumerated)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ void *value, _IN_ size_t size)
+NH_UTILITY(NH_RV, NH_put_enumerated)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ int value)
 {
-	size_t isize;
+	size_t size;
 	unsigned char buffer[sizeof(int)];
 	int i = 0;
 
-	if (size > sizeof(int)) return asn_put_value(self->container, node, value, size, NH_ASN1_ENUMERATED);
-	memcpy(buffer, value, sizeof(int));
+	memcpy(buffer, &value, sizeof(int));
 	NH_swap(buffer, sizeof(int));
 	while (!buffer[i] && i < sizeof(int) - 1) i++;
-	isize = sizeof(int) - i;
-	return asn_put_value(self->container, node, (void*) &buffer[i], isize, NH_ASN1_ENUMERATED);
+	size = sizeof(int) - i;
+	return asn_put_value(self->container, node, (void*) &buffer[i], size, NH_ASN1_INTEGER);
 }
 
 NH_UTILITY(NH_RV, NH_put_embedded_pdv)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ void *value, _IN_ size_t size)

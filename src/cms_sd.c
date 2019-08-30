@@ -821,7 +821,7 @@ NH_UTILITY(NH_RV, add_signing_time)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _IN
 	time(&instant);
 	now = gmtime(&instant);
 	sprintf(utc, "%04d%02d%02d%02d%02d%02dZ", now->tm_year + 1900, now->tm_mon, now->tm_mday, now->tm_hour, now->tm_min, now->tm_sec);
-	return hEncoder->put_generalized_time(hEncoder, node, utc, sizeof(utc));
+	return hEncoder->put_generalized_time(hEncoder, node, utc, strlen(utc));
 }
 NH_UTILITY(NH_RV, add_message_digest)(_INOUT_ NH_ASN1_ENCODER_HANDLE hEncoder, _INOUT_ NH_ASN1_PNODE set, _IN_ NH_BLOB *hash)
 {

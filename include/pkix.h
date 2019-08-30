@@ -1030,6 +1030,10 @@ NH_FUNCTION(NH_RV, NH_parse_crl)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NH_CRL_
 NH_FUNCTION(void, NH_release_crl)(_INOUT_ NH_CRL_HANDLER);
 
 
+NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NHIX_PUBLIC_KEY*);
+NH_FUNCTION(void, NHIX_release_pubkey)(_INOUT_ NHIX_PUBLIC_KEY);
+
+
 #if defined(__cplusplus)
 }
 #endif
@@ -1101,8 +1105,7 @@ EXTERN NH_NODE_WAY pkix_CertificateList_map[];
 #define PKIX_CERTLIST_MAP_COUNT			4
 
 
-NH_FUNCTION(NH_RV, NHIX_pubkey_parser)(_IN_ unsigned char*, _IN_ size_t, _OUT_ NHIX_PUBLIC_KEY*);
-NH_FUNCTION(void, NHIX_release_pubkey)(_INOUT_ NHIX_PUBLIC_KEY);
+#define RSA_PUBKEY_GET_MODULUS(_nhc)		_nhc->hParser->sail(_nhc->pubkey, (NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | (NH_PARSE_SOUTH | 2))
 
 #if defined(_ALIGN_)
 #pragma pack(pop, pkix_align)

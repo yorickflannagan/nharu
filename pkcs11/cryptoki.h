@@ -59,19 +59,29 @@
 #endif
 
 
+#ifndef CK_PTR
 #define CK_PTR *
+#endif
 
+#ifndef CK_DEFINE_FUNCTION
 #define CK_DEFINE_FUNCTION(returnType, name) \
   returnType CK_EXPORT_SPEC CK_CALL_SPEC name
+#endif
 
+#ifndef CK_DECLARE_FUNCTION
 #define CK_DECLARE_FUNCTION(returnType, name) \
   returnType CK_EXPORT_SPEC CK_CALL_SPEC name
+#endif
 
+#ifndef CK_DECLARE_FUNCTION_POINTER
 #define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
   returnType CK_IMPORT_SPEC (CK_CALL_SPEC CK_PTR name)
+#endif
 
+#ifndef CK_CALLBACK_FUNCTION
 #define CK_CALLBACK_FUNCTION(returnType, name) \
   returnType (CK_CALL_SPEC CK_PTR name)
+#endif
 
 #ifndef NULL_PTR
 #define NULL_PTR 0
