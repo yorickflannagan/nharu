@@ -935,7 +935,7 @@ NH_UTILITY(NH_RV, NH_put_enumerated)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_
 	NH_swap(buffer, sizeof(int));
 	while (!buffer[i] && i < sizeof(int) - 1) i++;
 	size = sizeof(int) - i;
-	return asn_put_value(self->container, node, (void*) &buffer[i], size, NH_ASN1_INTEGER);
+	return asn_put_value(self->container, node, (void*) &buffer[i], size, NH_ASN1_ENUMERATED);
 }
 
 NH_UTILITY(NH_RV, NH_put_embedded_pdv)(_IN_ NH_ASN1_ENCODER_STR *self, _INOUT_ NH_ASN1_NODE_STR *node, _IN_ void *value, _IN_ size_t size)
