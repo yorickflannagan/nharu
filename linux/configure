@@ -70,6 +70,9 @@ function libdl()
 function jdk_7()
 {
 	local JAVA_HOME=$(update-java-alternatives --jre -l | grep java-7 | awk '{ print $3 }')
+	if [ -z "$JAVA_HOME" ]; then
+		local JAVA_HOME=$(update-java-alternatives --jre -l | grep java-1.7 | awk '{ print $3 }')
+	fi
 	echo "$JAVA_HOME"
 }
 function initialize()
