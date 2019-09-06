@@ -523,7 +523,7 @@ public class CertificateParams
 	public String formatNotBefore()
 	{
 		if (notBefore == null) throw new RuntimeException("Instance field must not be null");
-		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssX");
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return df.format(notBefore);
 	}
@@ -540,7 +540,7 @@ public class CertificateParams
 	{
 		try
 		{
-			SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+			SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssX");
 			df.setTimeZone(TimeZone.getTimeZone("GMT"));
 			notBefore = df.parse(date);
 		}
@@ -562,7 +562,7 @@ public class CertificateParams
 	public String formatNotAfter()
 	{
 		if (notAfter == null) throw new RuntimeException("Instance field must not be null");
-		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssX");
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return df.format(notAfter);
 	}
@@ -575,7 +575,7 @@ public class CertificateParams
 	{
 		try
 		{
-			SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+			SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssX");
 			df.setTimeZone(TimeZone.getTimeZone("GMT"));
 			notAfter = df.parse(date);
 		}
