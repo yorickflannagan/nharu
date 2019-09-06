@@ -11,6 +11,7 @@
 		<log.file>${project.basedir}/jca/java/org/crypthing/security/LogDevice.java</log.file>
 		<log.level>LOG_LEVEL_ERROR</log.level>
 		<install.dir>${project.basedir}/dist/java</install.dir>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<bin.dir>${project.basedir}/bin/java-bin</bin.dir>
 		<jdk.home>${env.JAVA_HOME}</jdk.home>
 	</properties>

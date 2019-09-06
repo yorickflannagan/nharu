@@ -673,27 +673,20 @@ public class CertificateParams
 	 * Sets KeyUsage extension value
 	 * @param value: extension value as an array of boolean
 	 */
-	public void setKeyUsage(final boolean[] value)
-	{
-		if (value == null || value.length != 9) throw new IllegalArgumentException("Argument must conform KeyUsage extension bit map");
-		byte first = 0x00, second = 0x00;
-		int i = 0, unused = 9, mask = 0x80;
-		while (i < value.length)
-		{
-			if (value[i])
-			{
-				if (i < 8) first |= mask >> i;
-				else second |= 1 << 7;
-				unused--;
-			}
-			i++;
-		}
-		final byte[] keyUsage = new byte[second > 0 ? 3 : 2];
-		keyUsage[0] = (byte) unused;
-		keyUsage[1] = first;
-		if (second > 0) keyUsage[2] = second;
-		setKeyUsage(keyUsage);
-	}
+    public void setKeyUsage(final boolean[] value)
+    {
+        if (value == null || value.length != 9) throw new IllegalArgumentException("Argument must conform KeyUsage extension bit map");
+        int val = 0;
+        for(int i =0;i < 9; i++)  val  |= ((value[i] ? 1 : 0) << i); 
+        byte unused = (byte) ((8 - (((int) (Math.log(val) / Math.log(2) + 1e-10))+1) % 8) %8);
+        byte[] keyUsage;
+        if(val > 256) (keyUsage = new byte[3])[2]=(byte)128;
+        else           keyUsage = new byte[2];
+        keyUsage[1] = (byte) (((val & 0xFF) * 0x0202020202L & 0x010884422010L) % 1023) ; /*  https://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64BitsDiv */
+        keyUsage[0] = (byte) unused;
+        setKeyUsage(keyUsage);
+    }
+
 
 	/**
 	 * Gets SubjectAltName extension value
