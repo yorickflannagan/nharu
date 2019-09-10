@@ -382,7 +382,7 @@ public class NharuCertificateEncoder
 				request.verify();
 				final CertificateParams params = ca.getParams();
 				params.setSerial(ca.getSerial());
-				params.setSubject(request.getSubject().getName());
+				params.setSubject(request.getSubject());
 				params.setPublicKey(request.getPublicKey());
 				final NharuOtherName[] subjectAltName = new NharuOtherName[4];
 				subjectAltName[0] = new MicrosoftUPN(MS_UPN);
@@ -450,7 +450,7 @@ public class NharuCertificateEncoder
 					final CertificateParams current = (CertificateParams) params.clone();
 					serial = serial.add(BigInteger.ONE);
 					current.setSerial(serial);
-					current.setSubject(request.getSubject().getName());
+					current.setSubject(request.getSubject());
 					current.setPublicKey(request.getPublicKey());
 					final NharuOtherName[] subjectAltName = new NharuOtherName[4];
 					subjectAltName[0] = new MicrosoftUPN(MS_UPN);
@@ -500,7 +500,7 @@ public class NharuCertificateEncoder
 					final NharuCertificateRequest request = NharuCertificateRequest.parse(NharuCertificateRequest.CERTIFICATE_REQUEST.getBytes());
 					try
 					{
-						if (!cert.getSubjectX500Principal().getName().equals(request.getSubject().getName())) throw new RuntimeException("Certificagte subject does not match");
+						if (!cert.getSubjectX500Principal().getName().equals(request.getSubject())) throw new RuntimeException("Certificagte subject does not match");
 						final NharuPKIBRParser pkiBR = NharuPKIBRParser.parse(cert);
 						try
 						{

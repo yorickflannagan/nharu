@@ -678,15 +678,32 @@ public class CertificateParams
         if (value == null || value.length != 9) throw new IllegalArgumentException("Argument must conform KeyUsage extension bit map");
         int val = 0;
         for(int i =0;i < 9; i++)  val  |= ((value[i] ? 1 : 0) << i); 
-        byte unused = (byte) ((8 - (((int) (Math.log(val) / Math.log(2) + 1e-10))+1) % 8) %8);
-        byte[] keyUsage;
-        if(val > 256) (keyUsage = new byte[3])[2]=(byte)128;
-        else           keyUsage = new byte[2];
-        keyUsage[1] = (byte) (((val & 0xFF) * 0x0202020202L & 0x010884422010L) % 1023) ; /*  https://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith64BitsDiv */
-        keyUsage[0] = (byte) unused;
-        setKeyUsage(keyUsage);
-    }
-
+        setKeyUsage(val);
+	}
+	
+    private final static long bm = 4536609808452L;
+    public byte[] setKeyUsage(int value)
+    {
+        if( value > 511 || value <= 0 ) throw new IllegalArgumentException("Argument must conform KeyUsage extension bit map");
+        byte[] keyUsage; 
+        if((value & 1) == 1) (keyUsage = new byte[3])[2]=(byte)128; 
+        else  keyUsage = new byte[2];
+        final byte m = keyUsage[keyUsage.length-1];
+        keyUsage[1] = (byte) (value >> 1);
+        keyUsage[0] = (byte)((( m & 0x0F ) !=0 ) ? (( bm >> (( m & 0x0F ) * 3) & 7 )) : (( bm >> ((( m & 0xF0 ) >>> 4) * 3 )) & 7 )+4);
+        return keyUsage;
+	}
+	
+	public final static int DIGITAL_SIGNATURE  = 1 << 8;
+	public final static int NON_REPUDIATION    = 1 << 7;
+	public final static int CONTENT_COMMITMENT = 1 << 7;
+	public final static int KEY_ENCIPHERMENT   = 1 << 6;
+	public final static int DATA_ENCIPHERMENT  = 1 << 5;
+	public final static int KEY_AGREEMENT      = 1 << 4;
+	public final static int KEY_CERTSIGN       = 1 << 3;
+	public final static int CRL_SIGN           = 1 << 2;
+	public final static int ENCIPHER_ONLY      = 1 << 1;
+	public final static int DECIPHER_ONLY      = 1;
 
 	/**
 	 * Gets SubjectAltName extension value
@@ -985,7 +1002,7 @@ public class CertificateParams
 			
 			System.out.print("Validating CertificateParams JSON  of subject... ");
 			NharuCertificateRequest request = NharuCertificateRequest.parse(NharuCertificateRequest.CERTIFICATE_REQUEST.getBytes());
-			String[] names = request.getSubject().getName().split(",");
+			String[] names = request.getSubject().split(",");
 			NharuX500Name[] subject = new NharuX500Name[names.length];
 			for (int i = 0; i < names.length; i++) subject[i] = new NharuX500Name(names[i]);
 			NharuX500Name[] jSubject = json.getSubject();

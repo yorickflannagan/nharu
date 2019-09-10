@@ -111,7 +111,7 @@ public class NharuCertificateRequestBuilder
 							params.setKeyUsage(new boolean[] { false, false, false, false, false, true, true, false, false });
 							params.setSerial(BigInteger.ONE);
 							params.setIssuer("C=BR, O=PKI Brazil, OU=PKI Ruler for All Cats, CN=Common Name for All Cats Root CA");
-							params.setSubject(toSign.getSubject().getName());
+							params.setSubject(toSign.getSubject());
 							params.setPublicKey(toSign.getPublicKey());
 							params.setAKI(pubKey.getKeyIdentifier());
 							params.setCDP(new String[] { "http://localhost/ac/root.crl" });

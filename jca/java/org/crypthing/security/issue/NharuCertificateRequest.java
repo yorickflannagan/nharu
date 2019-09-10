@@ -36,7 +36,7 @@ public class NharuCertificateRequest
 
 	private final byte[] encoding;
 	private long hHandle;
-	private X500Principal subject;
+	private String subject;
 	private NharuRSAPublicKey pubkey;
 
 	private NharuCertificateRequest(final byte[] encoding, final long hHandle)
@@ -49,13 +49,16 @@ public class NharuCertificateRequest
 	 * Gets PKCS#10 subject as a "stringprep" (RFC 3454)
 	 * @return a X.500 Name
 	 */
-	public X500Principal getSubject()
+	public String getSubject()
 	{
 		if (subject == null)
 		{
 			recallHandle();
 			final byte[] value = nhCertGetSubject(hHandle);
-			subject = new X500Principal(value);
+			final String [] s = new X500Principal(value).getName().split(",");
+			final StringBuilder sb = new StringBuilder(value.length);
+			for(int i = s.length-1; i<0; i--) sb.append(s[i]).append(','); 
+			subject = sb.append(s[0]).toString();
 		}
 		return subject;
 	}
@@ -165,8 +168,8 @@ public class NharuCertificateRequest
 			try
 			{
 				System.out.print("Validating certificate request subject... ");
-				X500Principal subject = request.getSubject();
-				if (!subject.getName().equalsIgnoreCase(FRANCISVALDO)) throw new RuntimeException("Could not validate certificate request subject");
+				String subject = request.getSubject();
+				if (!subject.equalsIgnoreCase(FRANCISVALDO)) throw new RuntimeException("Could not validate certificate request subject");
 				System.out.println("Done!");
 
 				System.out.print("Validating certificate request public key... ");
