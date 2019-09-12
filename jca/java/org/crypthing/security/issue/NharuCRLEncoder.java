@@ -125,7 +125,7 @@ public class NharuCRLEncoder
 	private String __format(final Date instant)
 	{
 		if (instant == null) throw new NullPointerException();
-		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+		SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmssX");
 		df.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return df.format(instant);
 	}

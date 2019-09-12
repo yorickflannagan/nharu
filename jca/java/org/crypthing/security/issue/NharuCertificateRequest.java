@@ -57,7 +57,7 @@ public class NharuCertificateRequest
 			final byte[] value = nhCertGetSubject(hHandle);
 			final String [] s = new X500Principal(value).getName().split(",");
 			final StringBuilder sb = new StringBuilder(value.length);
-			for(int i = s.length-1; i<0; i--) sb.append(s[i]).append(','); 
+			for(int i = s.length-1; i > 0; i--) sb.append(s[i]).append(','); 
 			subject = sb.append(s[0]).toString();
 		}
 		return subject;
