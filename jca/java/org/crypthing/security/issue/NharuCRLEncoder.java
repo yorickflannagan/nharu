@@ -71,7 +71,9 @@ public class NharuCRLEncoder
 		final String [] s = issuer.getIssuerX500Principal().getName().split(",");
 		final StringBuilder sb = new StringBuilder(s.length);
 		for(int i = s.length-1; i > 0; i--) sb.append(s[i]).append(','); 
-		nhclSetIssuer(hHandle, CertificateParams.parseName(sb.append(s[0]).toString()));
+		sb.append(s[0]);
+		final String issuerName = sb.toString();
+		nhclSetIssuer(hHandle, CertificateParams.parseName(issuerName));
 		fields |= ISSUER_SETTED;
 		if (!(issuer.getPublicKey() instanceof NharuRSAPublicKey)) throw new IllegalArgumentException("Unsupported Public Key type");
 		nhclSetAKI(hHandle, ((NharuRSAPublicKey)issuer.getPublicKey()).getKeyIdentifier());
