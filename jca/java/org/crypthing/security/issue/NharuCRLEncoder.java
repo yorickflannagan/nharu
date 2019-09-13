@@ -68,7 +68,10 @@ public class NharuCRLEncoder
 		if (__is_set(ISSUER_SETTED) || __is_set(AKI_SETTED)) throw new IllegalStateException("Property already setted");
 		if (issuer == null) throw new NullPointerException();
 		if (hHandle == 0) throw new IllegalStateException("Object already released");
-		nhclSetIssuer(hHandle, CertificateParams.parseName(issuer.getIssuerX500Principal().getName()));
+		final String [] s = issuer.getIssuerX500Principal().getName().split(",");
+		final StringBuilder sb = new StringBuilder(s.length);
+		for(int i = s.length-1; i > 0; i--) sb.append(s[i]).append(','); 
+		nhclSetIssuer(hHandle, CertificateParams.parseName(sb.append(s[0]).toString()));
 		fields |= ISSUER_SETTED;
 		if (!(issuer.getPublicKey() instanceof NharuRSAPublicKey)) throw new IllegalArgumentException("Unsupported Public Key type");
 		nhclSetAKI(hHandle, ((NharuRSAPublicKey)issuer.getPublicKey()).getKeyIdentifier());
