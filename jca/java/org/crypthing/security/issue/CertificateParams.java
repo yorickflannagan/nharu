@@ -839,6 +839,7 @@ public class CertificateParams
 		if (profile.freshestCRL)__checkArray(freshestCRL);
 		if (profile.authorityInfoAccess) __checkArray(authorityInfoAccess);
 		if (profile.subjectInfoAccess ) __checkArray(subjectInfoAccess);
+		profile.check(this);
 	}
 
 	@Override
@@ -996,7 +997,7 @@ public class CertificateParams
 		{
 			CertificateParams json = new CertificateParams(PARAMS);
 			System.out.print("Validating CertificateParams JSON parsing... ");
-			json.check(new UserProfile());
+			json.check(new PKIBrPfProfile());
 			json = new CertificateParams(json.toString());
 			System.out.println("Done!");
 			

@@ -30,4 +30,5 @@ public abstract class CertificateProfile
 	boolean authorityInfoAccess = false;
 	boolean subjectInfoAccess = false;
 	protected CertificateProfile() {}
+	public abstract void check(CertificateParams params) throws CertificateProfileException;
 }
