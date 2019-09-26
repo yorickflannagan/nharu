@@ -130,16 +130,16 @@
 	</Target>
 
 	<Target Name="SSLBuild" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" >
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\ssl" Targets="Build" />
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\ssl" Targets="Test" />
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\ssl" Targets="Install" />
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\ssl" Targets="Clean" />
+		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Build" />
+		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Test" />
+		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Install" />
+		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Clean" />
 	</Target>
 	<Target Name="IDNBuild" Condition="!Exists('$(LibidnFolder)\lib\libidn.lib')">
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\idn" Targets="Clean" />
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\idn" Targets="Build" />
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\idn" Targets="Install" />
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\idn" Targets="Clean" />
+		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Clean" />
+		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Build" />
+		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Install" />
+		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Clean" />
 	</Target>
 	<Target Name="Check" DependsOnTargets="SSLBuild;IDNBuild" >
 		<Error Text="JDK Must be installed" Condition="!Exists('$(JDKHome)\include\jni.h') Or !Exists('$(JDKHome)\bin\java.exe')" />
