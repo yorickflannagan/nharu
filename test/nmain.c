@@ -21,7 +21,7 @@
 
 int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
-	int rv;
+	int rv = 0;
 	NH_NOISE_HANDLER hNoise;
 	char pkibrpf[MAX_PATH], endca[MAX_PATH], pkibrcrl[MAX_PATH], pkibrac[MAX_PATH], signer[MAX_PATH];
 	
@@ -41,6 +41,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	strcpy(signer, argc[1]);
 	strcat(signer, SIGNERCERT);
 
+	printf("SERPRO CRL check rv: %d\n", check_crl_serpro());
 	printf("%s\n", "Nharu library regression test");
 	if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
 	if (NH_SUCCESS(rv)) rv = test_encoder();
