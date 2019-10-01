@@ -41,9 +41,9 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	strcpy(signer, argc[1]);
 	strcat(signer, SIGNERCERT);
 
-	printf("SERPRO CRL check rv: %d\n", check_crl_serpro());
 	printf("%s\n", "Nharu library regression test");
 	if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
+	if (NH_SUCCESS(rv)) rv = check_crl_serpro();
 	if (NH_SUCCESS(rv)) rv = test_encoder();
 	if (NH_SUCCESS(rv)) rv = test_indefinite_length_form();
 	if (NH_SUCCESS(rv)) rv = test_secret_sharing();

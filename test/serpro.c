@@ -1,5 +1,6 @@
 #include "test.h"
 #include "pkix.h"
+#include <stdio.h>
 
 
 static unsigned char __CRL[] =
@@ -10488,6 +10489,11 @@ static size_t __CRL_T = 125737;
 
 int check_crl_serpro()
 {
+	CK_RV rv;
 	NH_CRL_HANDLER hCRL;
-	return (int) NH_parse_crl(__CRL, __CRL_T, &hCRL);
+	printf("%s... ", "Checking malformed CRL");
+	rv = NH_parse_crl(__CRL, __CRL_T, &hCRL);
+	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+	else printf("failed with error code %lu\n", rv);
+	return (int) rv;
 }

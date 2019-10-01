@@ -1502,36 +1502,40 @@ NH_UTILITY(NH_RV, sort_crl)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _IN_ NH_ASN1_
 	i = 0;
 	while (NH_SUCCESS(rv) && i < count)
 	{
-		if (i == 0 || comp_integer(it.data, it.length, (unsigned char*) toSort[i]->child->value, toSort[i]->child->valuelen))
+		it.data = (unsigned char*) toSort[i]->child->value;
+		it.length = toSort[i]->child->valuelen;
+		first = comp_integer(it.data, it.length, current->first->data, current->first->length);
+		if (first > 0)
 		{
-			it.data = (unsigned char*) toSort[i]->child->value;
-			it.length = toSort[i]->child->valuelen;
-			first = comp_integer(it.data, it.length, current->first->data, current->first->length);
-			if (first > 0)
+			tit = NULL;
+			if
+			(
+				NH_SUCCESS(rv = inc_integer(hParser->container, &it, &tit)) &&
+				NH_SUCCESS(rv = alloc_interval(hParser->container, tit, current->last, &current->next))
+			)
 			{
-				tit = NULL;
-				if
-				(
-					NH_SUCCESS(rv = inc_integer(hParser->container, &it, &tit)) &&
-					NH_SUCCESS(rv = alloc_interval(hParser->container, tit, current->last, &current->next))
-				)
+				current->last = NULL;
+				if (NH_SUCCESS(rv = dec_integer(hParser->container, &it, &current->last)))
 				{
-					current->last = NULL;
-					if (NH_SUCCESS(rv = dec_integer(hParser->container, &it, &current->last)))
-					{
-						current->next->previous = current;
-						rv = add_crl_node(hParser->container, current->next, toSort[i]);
-						current = current->next;
-						nodes++;
-					}
+					current->next->previous = current;
+					rv = add_crl_node(hParser->container, current->next, toSort[i]);
+					current = current->next;
+					nodes++;
 				}
 			}
-			else if (first == 0)
-			{
-				rv = inc_integer(hParser->container, current->first, &current->first);
-				if (NH_SUCCESS(rv)) rv = add_crl_node(hParser->container, current, toSort[i]);
-			}
-			else rv = NH_MALFORMED_CRL_SERIAL; /* We hope that this piece of shit will never happen */
+		}
+		else if (first == 0)
+		{
+			rv = inc_integer(hParser->container, current->first, &current->first);
+			if (NH_SUCCESS(rv)) rv = add_crl_node(hParser->container, current, toSort[i]);
+		}
+		else
+		{
+			if
+			(	/* Try to deal with duplicate certificate numbers */
+				i == 0 ||
+				comp_integer(it.data, it.length, (unsigned char*) toSort[i - 1]->child->value, toSort[i - 1]->child->valuelen)
+			)	rv = NH_MALFORMED_CRL_SERIAL; /* We hope that this piece of shit will never happen */
 		}
 		i++;
 	}
