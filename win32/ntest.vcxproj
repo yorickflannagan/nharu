@@ -70,6 +70,7 @@
 		<ClCompile Include="$(Home)\test\issue_t.c" />
 		<ClCompile Include="$(Home)\test\nmain.c" />
 		<ClCompile Include="$(Home)\test\parser_t.c" />
+		<ClCompile Include="$(Home)\test\serpro.c" />
 	</ItemGroup>
 
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
