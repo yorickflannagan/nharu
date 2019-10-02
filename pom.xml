@@ -14,12 +14,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<bin.dir>${project.basedir}/bin/java-bin</bin.dir>
 		<jdk.home>${env.JAVA_HOME}</jdk.home>
+		<jar.version>${git.commit.id.describe}</jar.version>
 	</properties>
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.crypthing</groupId>
 	<artifactId>nharujca</artifactId>
-	<version>${git.commit.id.describe}</version>
+	<version>${jar.version}</version>
 	<packaging>jar</packaging>
 	<name>Nharu Library</name>
 	<url>http://maven.apache.org</url>

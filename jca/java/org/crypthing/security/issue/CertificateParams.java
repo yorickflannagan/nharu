@@ -400,7 +400,12 @@ public class CertificateParams
 	public CertificateParams(final NharuX509Certificate issuer)
 	{
 		this();
-		setIssuer(issuer.getIssuerX500Principal().getName());
+		final String [] s = issuer.getSubjectX500Principal().getName().split(",");
+		final StringBuilder sb = new StringBuilder(s.length);
+		for(int i = s.length-1; i > 0; i--) sb.append(s[i]).append(','); 
+		sb.append(s[0]);
+		final String issuerName = sb.toString();
+		setIssuer(issuerName);
 		setAKI(issuer);
 	}
 	/**

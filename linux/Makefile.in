@@ -59,7 +59,7 @@ $(LIB_OBJDIR)/%.o: $(LIB_SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(LIB_INCLUDES) -c $< -o $@
 
 $(JCA_TARGET): $(JCA_OBJS)
-	$(CC) $(LDFLAGS) -shared $(LDLIBS) $(JCA_OBJS) -o $@ $(IMP_LIBS)
+	$(CC) $(LDFLAGS) -Wl,--wrap=memcpy -shared $(LDLIBS) $(JCA_OBJS) -o $@ $(IMP_LIBS)
 
 $(JCA_OBJDIR)/%.o: $(JCA_SRCDIR)/%.c
 	$(CC) $(CFLAGS) $(LIB_INCLUDES) $(JCA_INCLUDES) -c $< -o $@
