@@ -2105,23 +2105,23 @@ NH_UTILITY(NH_RV, NH_RSA_privkey_create)
 
 
 
-	if (!n || !n->data || !d || !d->data || (e && !e->data) || (p && !p->data) || (q && !q->data) || (dmp && !dmp->data) || (dmq && !dmq->data) || (qmp && !qmp->data)) return NH_INVALID_ARG;
+	if (!n || !n->data || !d || !d->data || (e && !e->data)) return NH_INVALID_ARG;
 	if (hHandler->key) return NH_INVALID_STATE_ERROR;
 	if (!(key = RSA_new())) return S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	rv = (_n = BN_bin2bn(n->data, (int) n->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv)) rv = (_d = BN_bin2bn(d->data, (int) d->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 	if (NH_SUCCESS(rv) && e) rv = (_e = BN_bin2bn(e->data, (int) e->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && p) rv = (_p = BN_bin2bn(p->data, (int) p->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && q) rv = (_q = BN_bin2bn(q->data, (int) q->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && dmp) rv = (_dmp1 = BN_bin2bn(dmp->data, (int) dmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && dmq) rv = (_dmq1 = BN_bin2bn(dmq->data, (int) dmq->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv) && qmp) rv = (_iqmp = BN_bin2bn(qmp->data, (int) qmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	
+	if (NH_SUCCESS(rv) && p && p->data) rv = (_p = BN_bin2bn(p->data, (int) p->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && q && q->data) rv = (_q = BN_bin2bn(q->data, (int) q->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && dmp && dmp->data) rv = (_dmp1 = BN_bin2bn(dmp->data, (int) dmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && dmq && dmp->data) rv = (_dmq1 = BN_bin2bn(dmq->data, (int) dmq->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && qmp && qmp->data) rv = (_iqmp = BN_bin2bn(qmp->data, (int) qmp->length, NULL)) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100001L
-
 	if (NH_SUCCESS(rv)) rv = RSA_set0_key(key,_n,_e,_d) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_set0_factors(key,_p,_q) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
-	if (NH_SUCCESS(rv)) rv = RSA_set0_crt_params(key,_dmp1,_dmq1,_iqmp) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && _p && _q) rv = RSA_set0_factors(key,_p,_q) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
+	if (NH_SUCCESS(rv) && _dmp1 && _dmq1 && _iqmp) rv = RSA_set0_crt_params(key,_dmp1,_dmq1,_iqmp) ? NH_OK : S_SYSERROR(ERR_get_error()) | NH_RSA_IMPORT_ERROR;
 #else
 	key->e=_e;
 	key->n=_n;
