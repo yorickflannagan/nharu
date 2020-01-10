@@ -6,7 +6,11 @@
 #ifdef UNIX_IMPL
 #include <stdio.h>
 #include <errno.h>
+#ifdef _DEBUG_
+#define RND_SOURCE			"/dev/urandom"
+#else
 #define RND_SOURCE			"/dev/random"
+#endif
 #else
 #include <windows.h>
 #include <wincrypt.h>

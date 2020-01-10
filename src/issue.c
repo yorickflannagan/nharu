@@ -586,10 +586,9 @@ static NH_NODE_WAY __tbscert_map[] =
 #define __NH_SUBJECT_SET		(__NH_VERSION_SET << 4)
 #define __NH_VALIDITY_SET		(__NH_VERSION_SET << 5)
 #define __NH_PUBKEY_SET			(__NH_VERSION_SET << 6)
-#define __NH_AKI_SET			(__NH_VERSION_SET << 7)
-#define __NH_KEYUSAGE_SET		(__NH_VERSION_SET << 8)
-#define __NH_CDP_SET			(__NH_VERSION_SET << 9)
-#define __NH_WELLFORMED_TBS		0x03FF
+#define __NH_KEYUSAGE_SET		(__NH_VERSION_SET << 7)
+#define __NH_CDP_SET			(__NH_VERSION_SET << 8)
+#define __NH_WELLFORMED_TBS		0x01FF
 #define __PATH_TO_EXTENSIONS		((NH_SAIL_SKIP_SOUTH << 16) | ((NH_PARSE_EAST | 9) << 8) | NH_SAIL_SKIP_SOUTH)
 static NH_RV __put_version(_INOUT_ NH_TBSCERT_ENCODER_STR *hEncoder, _IN_ unsigned int uVersion)
 {
@@ -746,13 +745,9 @@ static NH_RV __put_aki(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ NH_OCTET_SRING
 	NH_OCTET_SRING extValue = { 0, 0 };
 	NH_OID_STR oid = { aki_oid, AKI_OID_COUNT };
 
-	if
-	(
-		NH_SUCCESS(rv = !__IS_SET(__NH_AKI_SET, hTBS->fields) ? NH_OK : NH_ISSUE_ALREADY_PUT_ERROR) &&
-		NH_SUCCESS(rv = __encode_aki(pValue, &extValue))
-	)
+	if (NH_SUCCESS(rv = __encode_aki(pValue, &extValue)))
 	{
-		if (NH_SUCCESS(rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue))) hTBS->fields |= __NH_AKI_SET;
+		rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue);
 		free(extValue.data);
 	}
 	return rv;
@@ -986,7 +981,7 @@ static NH_RV __put_basic_constraints(_INOUT_ NH_TBSCERT_ENCODER_STR *hTBS, _IN_ 
 				{
 					extValue.data = pBuffer;
 					extValue.length = uSize;
-					if (NH_SUCCESS(rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue))) hTBS->fields |= __NH_AKI_SET;
+					rv = hTBS->put_extension(hTBS, &oid, FALSE, &extValue);
 				}
 				free(pBuffer);
 			}
