@@ -1,7 +1,7 @@
 #ifndef TEST_H_INCLUDED
 #define TEST_H_INCLUDED
 
-#include "pki-issue.h"
+#include "pfx.h"
 
 int save_buffer(unsigned char*, size_t, char*);
 int load_file(char*, unsigned char**, int*);
@@ -29,6 +29,8 @@ int test_issue_crl();
 int test_digest_info();
 
 int check_crl_serpro();
+
+int test_pfx_parsing();
 
 EXTERN unsigned char __ca_privkey[];
 #define CA_PRIVKEY_SIZE			1217

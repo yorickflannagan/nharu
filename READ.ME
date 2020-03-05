@@ -78,7 +78,7 @@ OpenSSL:
 	- checkout OpenSSL_1_1_0f
 >>>>>>> 577d7010c6ffa98e8dc61d8826693db9d8f57bd5
 	- config options: threads no-shared -fPIC
-	./config threads no-shared -fPIC --prefix=$HOME/development/3rdParty/openssl/nharu_dist --openssldir=$HOME/development/3rdParty/openssl/nharu_dist
+	./config threads -D_REENTRANT no-shared -fPIC --prefix=$HOME/development/3rdParty/openssl/nharu_dist --openssldir=$HOME/development/3rdParty/openssl/nharu_dist
 	make depend
 	make
 	make install

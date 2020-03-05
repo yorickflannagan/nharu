@@ -21,10 +21,13 @@
 
 int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
+	return test_pfx_parsing();
+
+/*
 	int rv = 0;
 	NH_NOISE_HANDLER hNoise;
 	char pkibrpf[MAX_PATH], endca[MAX_PATH], pkibrcrl[MAX_PATH], pkibrac[MAX_PATH], signer[MAX_PATH];
-	
+
 	memset(pkibrpf, 0, MAX_PATH);
 	strcpy(pkibrpf, argc[1]);
 	strcat(pkibrpf, PKIBRPF);
@@ -67,6 +70,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	if (NH_SUCCESS(rv)) rv = test_digest_info();
 	printf("%s\n", "Test done");
 	return rv;
+*/
 }
 
 

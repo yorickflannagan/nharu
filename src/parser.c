@@ -378,7 +378,6 @@ INLINE NH_UTILITY(NH_RV, parse)(_INOUT_ NH_ASN1_PNODE node, _IN_ unsigned char o
 {
 	if (!(ASN_IS_CONSTRUCTED(*node->identifier) || ASN_IS_TAG(node, octet) || ASN_TAG_IS_PRESENT(node, octet))) return NH_INVALID_DER_TYPE;
 	node->value = node->contents;
-	node->value = node->contents;
 	node->valuelen = node->size;
 	return NH_OK;
 }
