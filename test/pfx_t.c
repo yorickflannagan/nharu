@@ -250,44 +250,13 @@ static char *__secret = "secret";
 int test_pfx_parsing()
 {
 	NH_RV rv;
-	NH_PDU_PARSER hPfx;
-	unsigned char *pBuffer, *pData;
-	unsigned int uiBufLen, uiDataLen;
-	NH_AUTH_SAFE_PARSER hAuth;
-	int i;
-	NH_SAFE_CONTENTS_PARSER hSafe;
-	NH_SAFE_BAG pBag;
+	NH_PFX_PARSER hPFX;
 
 	printf("%s\n", "Testing PKCS #12 parsing...");
-	if (NH_SUCCESS(rv = __new_pdu_parser(__only_key_pfx, __only_key_pfx_len, &hPfx)))
+	if (NH_SUCCESS(rv = NHFX_new_pfx_parser(__only_key_pfx, __only_key_pfx_len, __secret, &hPFX)))
 	{
-		printf("%s", "Validating HMAC...");
-		rv = hPfx->verify_mac(hPfx, __secret);
-		if (NH_SUCCESS(rv))
-		{
-			printf("%s\n", " done!");
-			if
-			(
-				NH_SUCCESS(rv = hPfx->contents(hPfx, &pBuffer, &uiBufLen)) &&
-				NH_SUCCESS(rv = __new_authenticated_safe_parser(pBuffer, uiBufLen, &hAuth))
-			)
-			{
-				for (i = 0; i < hAuth->count; i++)
-				{
-					if
-					(
-						NH_SUCCESS(rv = hAuth->contents(hAuth, i, &pData, &uiDataLen)) &&
-						NH_SUCCESS(rv = __new_safe_contents_parser(pData, uiDataLen, &hSafe))
-					)
-					{
-						pBag = hSafe->enumerate(hSafe, 0);
-						__delete_safe_contents_parser(hSafe);
-					}
-				}
-				__delete_authenticated_safe_parser(hAuth);
-			}
-		}
-		__delete_pdu_parser(hPfx);
+
+		NHFX_delete_pfx_parser(hPFX);
 	}
 	if (NH_SUCCESS(rv)) printf("%s\n", "PKCS #12 test succeeded!");
 	else printf("PKCS #12 test failed with error code %lu\n", rv);

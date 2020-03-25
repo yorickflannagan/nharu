@@ -395,6 +395,95 @@ NH_FUNCTION(NH_RV, __new_authenticated_safe_parser)(_IN_ unsigned char *pBuffer,
 }
 
 
+/*
+ * CertBag ::= SEQUENCE {
+ * 	certId      BAG-TYPE.&id   ({CertTypes}),
+ * 	certValue   [0] EXPLICIT BAG-TYPE.&Type ({CertTypes}{@certId})
+ * }
+ * x509Certificate BAG-TYPE ::= {OCTET STRING IDENTIFIED BY {certTypes 1}} -- DER-encoded X.509 certificate stored in OCTET STRING
+ * sdsiCertificate BAG-TYPE ::= {IA5String IDENTIFIED BY {certTypes 2}}    -- Base64-encoded SDSI certificate stored in IA5String
+ * CertTypes BAG-TYPE ::= {
+ * 	x509Certificate |
+ * 	sdsiCertificate,
+ * 	... -- For future extensions
+ * }
+ */
+static NH_NODE_WAY __certbag_map[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_OBJECT_ID | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_OCTET_STRING | NH_ASN1_CONTEXT_BIT | NH_ASN1_CT_TAG_0 | NH_ASN1_EXPLICIT_BIT,
+		NULL,
+		0
+	}
+};
+NH_FUNCTION(void, __delete_certbag_parser)(_INOUT_ NH_CERTBAG hBag)
+{
+	if (hBag)
+	{
+		if (hBag->certType.pIdentifier) free(hBag->certType.pIdentifier);
+		if (hBag->contents.data) free(hBag->contents.data);
+		free(hBag);
+	}
+}
+NH_FUNCTION(NH_RV, __new_certbag_parser)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _OUT_ NH_CERTBAG *hBag)
+{
+	NH_RV rv;
+	NH_CERTBAG hOut;
+	NH_ASN1_PARSER_HANDLE hParser;
+	NH_ASN1_PNODE pNode;
+
+	if
+	(
+		NH_SUCCESS(rv = pBuffer ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = (hOut = (NH_CERTBAG) malloc(sizeof(NH_CERTBAG_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+	)
+	{
+		memset(hOut, 0, sizeof(NH_CERTBAG_STR));
+		if (NH_SUCCESS(rv = NH_new_parser(pBuffer, uiBufLen, 4, 8192, &hParser)))
+		{
+			if
+			(
+				NH_SUCCESS(rv = hParser->map(hParser, __certbag_map, ASN_NODE_WAY_COUNT(__certbag_map))) &&
+				NH_SUCCESS(rv = (pNode = hParser->root->child) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+				NH_SUCCESS(rv = hParser->parse_oid(hParser, pNode)) &&
+				NH_SUCCESS(rv = (hOut->certType.pIdentifier = (unsigned int*) malloc(pNode->valuelen * sizeof(unsigned int))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				memcpy(hOut->certType.pIdentifier, pNode->value, pNode->valuelen * sizeof(unsigned int));
+				hOut->certType.uCount = pNode->valuelen;
+				if
+				(
+					NH_SUCCESS(rv = (pNode = hParser->sail(pNode, NH_SAIL_SKIP_EAST << 8 | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_UNEXPECTED_ENCODING) &&
+					NH_SUCCESS(rv = hParser->parse_octetstring(hParser, pNode)) &&
+					NH_SUCCESS(rv = (hOut->contents.data = (unsigned char*) malloc(pNode->valuelen)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				)
+				{
+					memcpy(hOut->contents.data, pNode->value, pNode->valuelen);
+					hOut->contents.length = pNode->valuelen;
+					*hBag = hOut;
+				}
+			}
+			NH_release_parser(hParser);
+		}
+		if (NH_FAIL(rv)) __delete_certbag_parser(hOut);
+	}
+	return rv;
+}
+
+
 /**
  * SafeContents ::= SEQUENCE OF SafeBag
  * SafeBag ::= SEQUENCE {
@@ -470,10 +559,40 @@ unsigned int pfx_certBag_oid[]			= { 1, 2, 840, 113549, 1, 12, 10, 1, 3 };
 unsigned int pfx_crlBag_oid[]				= { 1, 2, 840, 113549, 1, 12, 10, 1, 4 };
 unsigned int pfx_secretBag_oid[]			= { 1, 2, 840, 113549, 1, 12, 10, 1, 5 };
 unsigned int pfx_safeContentsBag_oid[]		= { 1, 2, 840, 113549, 1, 12, 10, 1, 6 };
+unsigned int pkcs9_x509_certificate_oid[]		= { 1, 2, 840, 113549, 1,  9, 22, 1    };
+
 NH_FUNCTION(void, __delete_safe_contents_parser)(_INOUT_ NH_SAFE_CONTENTS_PARSER hSafe)
 {
+	unsigned int i;
+	NH_SAFE_BAG pBag;
+
 	if (hSafe)
 	{
+		if (hSafe->bagSet)
+		{
+			/* TODO: Release bag resources */
+			for (i = 0; i < hSafe->bagCount; i++)
+			{
+				if ((pBag = hSafe->enumerate(hSafe, i)))
+				{
+					switch (pBag->id)
+					{
+					case PFX_keyBag:
+						break;
+					case PFX_pkcs8ShroudedKeyBag:
+						break;
+					case PFX_certBag:
+						__delete_certbag_parser(pBag->bag.certBag);
+						break;
+					case PFX_crlBag:
+					case PFX_secretBag:
+					case PFX_safeContentsBag:
+						break;
+						/* TODO */
+					}
+				}
+			}
+		}
 		if (hSafe->hParser) NH_release_parser(hSafe->hParser);
 		free(hSafe);
 	}
@@ -515,6 +634,7 @@ NH_FUNCTION(NH_RV, __new_safe_contents_parser)(_IN_ unsigned char *pBuffer, _IN_
 				NH_SUCCESS(rv = hSafe->hParser->container->bite_chunk(hSafe->hParser->container, hSafe->bagCount * sizeof(NH_SAFE_BAG_STR), (void*) &hSafe->bagSet))
 			)
 			{
+				memset(hSafe->bagSet, 0, hSafe->bagCount * sizeof(NH_SAFE_BAG_STR));
 				pBag = hSafe->hParser->root->child;
 				while
 				(
@@ -535,26 +655,92 @@ NH_FUNCTION(NH_RV, __new_safe_contents_parser)(_IN_ unsigned char *pBuffer, _IN_
 	}
 	return rv;
 }
-NH_FUNCTION(NH_RV, NHFX_new_pfx_parser)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _IN_ char *szSecret)
+NH_FUNCTION(NH_RV, NHFX_new_pfx_parser)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _IN_ char *szSecret, _OUT_ NH_PFX_PARSER *hParser)
 {
 	NH_RV rv;
-	NH_PDU_PARSER hPDU;
 	unsigned char *pData;
-	unsigned int uiDataLen, i;
-	NH_AUTH_SAFE_PARSER hAuth;
-	NH_SAFE_CONTENTS_PARSER hSafe;
+	unsigned int uiDataLen, i, j;
+	NH_SAFE_BAG pBag;
 
-	rv = pBuffer ? NH_OK : NH_INVALID_ARG;
-	rv = __new_pdu_parser(pBuffer, uiBufLen, &hPDU);
-	rv = hPDU->verify_mac(hPDU, szSecret);
-	rv = hPDU->contents(hPDU, &pData, &uiDataLen);
-	rv = __new_authenticated_safe_parser(pData, uiDataLen, &hAuth);
-	i = 0;
-	while (NH_SUCCESS(rv) && i < hAuth->count)
+	NH_PDU_PARSER hPDU = NULL;
+	NH_AUTH_SAFE_PARSER hAuth = NULL;
+	NH_SAFE_CONTENTS_PARSER hSafe = NULL;
+	NH_PFX_PARSER hOut;
+
+	if
+	(
+		NH_SUCCESS(rv = pBuffer ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = __new_pdu_parser(pBuffer, uiBufLen, &hPDU)) &&
+		NH_SUCCESS(rv = hPDU->verify_mac(hPDU, szSecret)) &&
+		NH_SUCCESS(rv = hPDU->contents(hPDU, &pData, &uiDataLen)) &&
+		NH_SUCCESS(rv = __new_authenticated_safe_parser(pData, uiDataLen, &hAuth))
+	)
 	{
-		rv = hAuth->contents(hAuth, i++, &pData, &uiDataLen);
-		rv = __new_safe_contents_parser(pData, uiDataLen, &hSafe);
+		i = 0;
+		while
+		(
+			NH_SUCCESS(rv) &&
+			i < hAuth->count &&
+			NH_SUCCESS(rv = hAuth->contents(hAuth, i++, &pData, &uiDataLen)) &&
+			NH_SUCCESS(rv = __new_safe_contents_parser(pData, uiDataLen, &hSafe))
+		)
+		{
+			j = 0;
+			while
+			(
+				NH_SUCCESS(rv) &&
+				j < hSafe->bagCount &&
+				NH_SUCCESS(rv = (pBag = hSafe->enumerate(hSafe, j++)) ? NH_OK : NH_PFX_BAG_ERROR)
+			)
+			{
+				if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_keyBag_oid, NHC_OID_COUNT(pfx_keyBag_oid)))
+				{
+					pBag->id = PFX_keyBag;
+					/* TODO */
+				}
+				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_pkcs8ShroudedKeyBag_oid, NHC_OID_COUNT(pfx_pkcs8ShroudedKeyBag_oid)))
+				{
+					pBag->id = PFX_pkcs8ShroudedKeyBag;
+					/* TODO */
+				}
+				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_certBag_oid, NHC_OID_COUNT(pfx_certBag_oid)))
+				{
+					pBag->id = PFX_certBag;
+					rv = __new_certbag_parser(pBag->contents.data, pBag->contents.length, &pBag->bag.certBag);
+				}
+				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_crlBag_oid, NHC_OID_COUNT(pfx_crlBag_oid))) pBag->id = PFX_crlBag;
+				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_secretBag_oid, NHC_OID_COUNT(pfx_secretBag_oid))) pBag->id = PFX_secretBag;
+				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_safeContentsBag_oid, NHC_OID_COUNT(pfx_safeContentsBag_oid))) pBag->id = PFX_safeContentsBag;
+				else rv = NH_PFX_BAG_ERROR;
+			}
+		}
 	}
-
+	if
+	(
+		NH_SUCCESS(rv) &&
+		NH_SUCCESS(rv = (hOut = (NH_PFX_PARSER) malloc(sizeof(NH_PFX_PARSER_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+	)
+	{
+		hOut->hPDU = hPDU;
+		hOut->hAuth = hAuth;
+		hOut->hSafe = hSafe;
+		*hParser = hOut;
+	}
+	else
+	{
+		if (hSafe) __delete_safe_contents_parser(hSafe);
+		if (hAuth) __delete_authenticated_safe_parser(hAuth);
+		if (hPDU) __delete_pdu_parser(hPDU);
+	}
 	return rv;
+}
+NH_FUNCTION(void, NHFX_delete_pfx_parser)(_INOUT_ NH_PFX_PARSER hParser)
+{
+	if (hParser)
+	{
+		if (hParser->hSafe) __delete_safe_contents_parser(hParser->hSafe);
+		if (hParser->hAuth) __delete_authenticated_safe_parser(hParser->hAuth);
+		if (hParser->hPDU) __delete_pdu_parser(hParser->hPDU);
+		free(hParser);
+	}
 }
