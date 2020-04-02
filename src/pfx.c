@@ -394,6 +394,133 @@ NH_FUNCTION(NH_RV, __new_authenticated_safe_parser)(_IN_ unsigned char *pBuffer,
 	return rv;
 }
 
+/*
+ * EncryptedPrivateKeyInfo ::= SEQUENCE {
+ * 	encryptionAlgorithm  EncryptionAlgorithmIdentifier,
+ * 	encryptedData        EncryptedData
+ * }
+ * EncryptionAlgorithmIdentifier ::= AlgorithmIdentifier { CONTENT-ENCRYPTION, { KeyEncryptionAlgorithms }}
+ * EncryptedData ::= OCTET STRING -- Encrypted PrivateKeyInfo
+ */
+static NH_NODE_WAY __pkcs8ShroudedKeyBag_map[] =
+{
+	{
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* encryptionAlgorithm */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_SEQUENCE | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* encryptedData */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_OCTET_STRING,
+		NULL,
+		0
+	},
+	{
+		/* AlgorithmIdentifier */
+		NH_SAIL_SKIP_WEST << 8 | NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_OBJECT_ID | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* parameters */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* iv */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* iteration count */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER,
+		NULL,
+		0
+	}
+};
+NH_FUNCTION(void, __delete_shroudedkeybag)(_INOUT_ NH_SHROUDEDKEYBAG hBag)
+{
+	if (hBag)
+	{
+		if (hBag->algorithm.pIdentifier) free(hBag->algorithm.pIdentifier);
+		if (hBag->contents.data) free(hBag->contents.data);
+		if (hBag->iv.data) free(hBag->iv.data);
+		free(hBag);
+	}
+}
+NH_FUNCTION(NH_RV, __parse_shroudedkeybag)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _OUT_ NH_SHROUDEDKEYBAG *hBag)
+{
+	NH_RV rv;
+	NH_SHROUDEDKEYBAG hOut;
+	NH_ASN1_PARSER_HANDLE hParser;
+	NH_ASN1_PNODE pNode;
+
+	if
+	(
+		NH_SUCCESS(rv = pBuffer ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = (hOut = (NH_SHROUDEDKEYBAG) malloc(sizeof(NH_SHROUDEDKEYBAG_STR))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+	)
+	{
+		memset(hOut, 0, sizeof(NH_SHROUDEDKEYBAG_STR));
+		if (NH_SUCCESS(rv = NH_new_parser(pBuffer, uiBufLen, 4, 8192, &hParser)))
+		{
+			if
+			(
+				NH_SUCCESS(rv = hParser->map(hParser, __pkcs8ShroudedKeyBag_map, ASN_NODE_WAY_COUNT(__pkcs8ShroudedKeyBag_map))) &&
+				NH_SUCCESS(rv = (pNode = hParser->sail(hParser->root, NH_PARSE_SOUTH | 2)) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+				NH_SUCCESS(rv = hParser->parse_oid(hParser, pNode)) &&
+				NH_SUCCESS(rv = (hOut->algorithm.pIdentifier = (unsigned int*) malloc(pNode->valuelen * sizeof(unsigned int))) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+			)
+			{
+				memcpy(hOut->algorithm.pIdentifier, pNode->value, pNode->valuelen * sizeof(unsigned int));
+				hOut->algorithm.uCount = pNode->valuelen;
+				if
+				(
+					NH_SUCCESS(rv = (pNode = hParser->sail(pNode, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+					NH_SUCCESS(rv = hParser->parse_octetstring(hParser, pNode)) &&
+					NH_SUCCESS(rv = (hOut->iv.data = (unsigned char*) malloc(pNode->valuelen)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+				)
+				{
+					memcpy(hOut->iv.data, pNode->value, pNode->valuelen);
+					hOut->iv.length = pNode->valuelen;
+					if
+					(
+						NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+						NH_SUCCESS(rv = hParser->parse_little_integer(hParser, pNode))
+					)
+					{
+						hOut->iCount = *(int*) pNode->value;
+						if
+						(
+							NH_SUCCESS(rv = (pNode = hParser->sail(hParser->root, (NH_SAIL_SKIP_SOUTH << 8) | NH_SAIL_SKIP_EAST)) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+							NH_SUCCESS(rv = hParser->parse_octetstring(hParser, pNode)) &&
+							NH_SUCCESS(rv = (hOut->contents.data = (unsigned char*) malloc(pNode->valuelen)) ? NH_OK : NH_OUT_OF_MEMORY_ERROR)
+						)
+						{
+							memcpy(hOut->contents.data, pNode->value, pNode->valuelen);
+							hOut->contents.length = pNode->valuelen;
+							*hBag = hOut;
+						}
+					}
+				}
+			}
+			NH_release_parser(hParser);
+		}
+		if (NH_FAIL(rv)) __delete_shroudedkeybag(hOut);
+	}
+	return rv;
+}
+
 
 /*
  * CertBag ::= SEQUENCE {
@@ -429,7 +556,7 @@ static NH_NODE_WAY __certbag_map[] =
 		0
 	}
 };
-NH_FUNCTION(void, __delete_certbag_parser)(_INOUT_ NH_CERTBAG hBag)
+NH_FUNCTION(void, __delete_certbag)(_INOUT_ NH_CERTBAG hBag)
 {
 	if (hBag)
 	{
@@ -438,7 +565,7 @@ NH_FUNCTION(void, __delete_certbag_parser)(_INOUT_ NH_CERTBAG hBag)
 		free(hBag);
 	}
 }
-NH_FUNCTION(NH_RV, __new_certbag_parser)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _OUT_ NH_CERTBAG *hBag)
+NH_FUNCTION(NH_RV, __parse_certbag)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _OUT_ NH_CERTBAG *hBag)
 {
 	NH_RV rv;
 	NH_CERTBAG hOut;
@@ -478,7 +605,7 @@ NH_FUNCTION(NH_RV, __new_certbag_parser)(_IN_ unsigned char *pBuffer, _IN_ unsig
 			}
 			NH_release_parser(hParser);
 		}
-		if (NH_FAIL(rv)) __delete_certbag_parser(hOut);
+		if (NH_FAIL(rv)) __delete_certbag(hOut);
 	}
 	return rv;
 }
@@ -580,9 +707,10 @@ NH_FUNCTION(void, __delete_safe_contents_parser)(_INOUT_ NH_SAFE_CONTENTS_PARSER
 					case PFX_keyBag:
 						break;
 					case PFX_pkcs8ShroudedKeyBag:
+						__delete_shroudedkeybag(pBag->bag.pkcs8ShroudedKeyBag);
 						break;
 					case PFX_certBag:
-						__delete_certbag_parser(pBag->bag.certBag);
+						__delete_certbag(pBag->bag.certBag);
 						break;
 					case PFX_crlBag:
 					case PFX_secretBag:
@@ -701,12 +829,12 @@ NH_FUNCTION(NH_RV, NHFX_new_pfx_parser)(_IN_ unsigned char *pBuffer, _IN_ unsign
 				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_pkcs8ShroudedKeyBag_oid, NHC_OID_COUNT(pfx_pkcs8ShroudedKeyBag_oid)))
 				{
 					pBag->id = PFX_pkcs8ShroudedKeyBag;
-					/* TODO */
+					rv = __parse_shroudedkeybag(pBag->contents.data, pBag->contents.length, &pBag->bag.pkcs8ShroudedKeyBag);
 				}
 				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_certBag_oid, NHC_OID_COUNT(pfx_certBag_oid)))
 				{
 					pBag->id = PFX_certBag;
-					rv = __new_certbag_parser(pBag->contents.data, pBag->contents.length, &pBag->bag.certBag);
+					rv = __parse_certbag(pBag->contents.data, pBag->contents.length, &pBag->bag.certBag);
 				}
 				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_crlBag_oid, NHC_OID_COUNT(pfx_crlBag_oid))) pBag->id = PFX_crlBag;
 				else if (NH_match_oid(pBag->bagType.pIdentifier, pBag->bagType.uCount, pfx_secretBag_oid, NHC_OID_COUNT(pfx_secretBag_oid))) pBag->id = PFX_secretBag;

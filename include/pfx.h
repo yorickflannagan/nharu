@@ -78,19 +78,21 @@ typedef union NH_PRIVKEY_CONTENTS
 	/* TODO */
 
 } NH_PRIVKEY_CONTENTS;
-typedef struct NH_PRIVKEY_INFO_STR				/* PrivateKeyInfo parser */
+typedef struct NH_PRIVKEY_INFO_STR				/* PrivateKeyInfo */
 {
 	NH_OID_STR				algorithm;		/* Private Key Algorithm identifier */
 	NH_BLOB				privkey;		/* DER encoded private key */
 	NH_PRIVKEY_CONTENTS		contents;
 
 } NH_PRIVKEY_INFO_STR, *NH_PRIVKEY_INFO;
-typedef struct NH_ENC_PRIVKEY_INFO_STR			/* EncryptedPrivateKeyInfo */
+typedef struct NH_SHROUDEDKEYBAG_STR
 {
-	NH_OID_STR				algorithm;		/* EncryptionAlgorithmIdentifier */
-	NH_BLOB				privkey;		/* DER encoded EncryptedData */
+	NH_OID_STR				algorithm;		/* encryption algorithm identifier */
+	NH_BLOB				iv;			/* encryption initialization vector */
+	int					iCount;		/* iteration count */
+	NH_BLOB				contents;		/* encrypted data contents */
 
-} NH_ENC_PRIVKEY_INFO_STR, *NH_ENC_PRIVKEY_INFO;	/* CertBag */
+} NH_SHROUDEDKEYBAG_STR, *NH_SHROUDEDKEYBAG;
 typedef struct NH_CERTBAG_STR
 {
 	NH_OID_STR				certType;		/* certId */
@@ -118,9 +120,9 @@ typedef enum PFX_SAFE_BAG					/* PKCS12BagSet BAG-TYPE */
 } PFX_SAFE_BAG;
 typedef union NH_BAG_TYPE
 {
-	NH_PRIVKEY_INFO		keyBag;
-	NH_ENC_PRIVKEY_INFO	pkcs8ShroudedKeyBag;
-	NH_CERTBAG			certBag;
+	NH_PRIVKEY_INFO			keyBag;
+	NH_SHROUDEDKEYBAG			pkcs8ShroudedKeyBag;
+	NH_CERTBAG				certBag;
 
 } NH_BAG_TYPE;
 
@@ -175,4 +177,3 @@ NH_FUNCTION(void, NHFX_delete_pfx_parser)
 #endif
 
 #endif /* __PFX_H__ */
-
