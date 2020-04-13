@@ -251,11 +251,26 @@ int test_pfx_parsing()
 {
 	NH_RV rv;
 	NH_PFX_PARSER hPFX;
+	NH_PFX_QUERY_STR query = NH_PFX_INIT_QUERY(PFX_pkcs8ShroudedKeyBag);
+	NH_BLOB privkey = { NULL, 0UL };
 
 	printf("%s\n", "Testing PKCS #12 parsing...");
 	if (NH_SUCCESS(rv = NHFX_new_pfx_parser(__only_key_pfx, __only_key_pfx_len, __secret, &hPFX)))
 	{
-
+		while
+		(
+			NH_SUCCESS(rv = hPFX->next_bag(hPFX, &query)) && query.pResult &&
+			NH_SUCCESS(rv = hPFX->unpack_key(hPFX, query.pResult, __secret, &privkey))
+		)
+		{
+			printf("Importing key number %u...\n", query.uiCount);
+			
+		}
+		query.bagType = PFX_certBag;
+		while (NH_SUCCESS(rv = hPFX->next_bag(hPFX, &query)) && query.pResult)
+		{
+			printf("Importing certificate number %u...\n", query.uiCount);
+		}
 		NHFX_delete_pfx_parser(hPFX);
 	}
 	if (NH_SUCCESS(rv)) printf("%s\n", "PKCS #12 test succeeded!");

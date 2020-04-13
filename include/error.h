@@ -127,6 +127,8 @@ typedef int					NH_SYSRV;
 #define NH_PFX_MAC_FAILURE_ERROR		(NH_PFX_ERROR + 6)
 #define NH_PFX_OPENSSL_ERROR			(NH_PFX_ERROR + 7)
 #define NH_PFX_BAG_ERROR			(NH_PFX_ERROR + 8)
+#define NH_PFX_UNSUPPORTED_KEY_ERROR	(NH_PFX_ERROR + 9)
+#define NH_PFX_UNSUPPORTED_IV_ERROR		(NH_PFX_ERROR + 10)
 
 
 #define NH_VENDOR_DEFINED_ERROR		(NH_PFX_ERROR + 32)	/**< Slot for new range of error codes consistent with this library */

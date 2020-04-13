@@ -17,66 +17,12 @@
 
 
 /**
- * @brief PFX
- * 
- */
-typedef struct NH_PDU_PARSER_STR				NH_PDU_PARSER_STR;
-typedef NH_METHOD(NH_RV, NHFX_VERIFY_MAC)
-(
-	_IN_ NH_PDU_PARSER_STR*,				/* self */
-	_IN_ char*							/* szSecret */
-);
-typedef NH_METHOD(NH_RV, NHFX_GET_BYTE_VALUE)
-(
-	_IN_ NH_PDU_PARSER_STR*,				/* self */
-	_OUT_ unsigned char**,					/* ppBuffer */
-	_OUT_ unsigned int*					/* puiBufLen */
-);
-typedef NH_METHOD(NH_RV, NHFX_GET_INT_VALUE)
-(
-	_IN_ NH_PDU_PARSER_STR*,				/* self */
-	_OUT_ unsigned int*					/* puiBuffer */
-);
-#define PBE_KEY_LEN						20
-struct NH_PDU_PARSER_STR					/* PDU parser */
-{
-	unsigned char*			pKey;			/* PBE key */
-	NH_ASN1_PARSER_HANDLE		hParser;		/* ASN.1 parser */
-	NHFX_VERIFY_MAC			verify_mac;		/* Verify HMAC, if present */
-	NHFX_GET_BYTE_VALUE		contents;		/* Get eContents of data ContentInfo */
-	NHFX_GET_BYTE_VALUE		salt;			/* Get HMAC salt, if present */
-	NHFX_GET_INT_VALUE		iterations;		/* Get iteration count, if present */
-};
-typedef struct NH_PDU_PARSER_STR*				NH_PDU_PARSER;
-
-
-/**
- * @brief AuthenticatedSafe
- * 
- */
-typedef struct NH_AUTH_SAFE_PARSER_STR			NH_AUTH_SAFE_PARSER_STR;
-typedef NH_METHOD(NH_ASN1_PNODE, NHFX_NEXT_CONTENT)
-(
-	_IN_ NH_AUTH_SAFE_PARSER_STR*,			/* self */
-	_IN_ NH_ASN1_PNODE,					/* pCurrent */
-	_OUT_ unsigned char**,					/* ppBuffer */
-	_OUT_ unsigned int*					/* puiBufLen */
-);
-struct NH_AUTH_SAFE_PARSER_STR				/* AuthenticatedSafe parser */
-{
-	NH_ASN1_PARSER_HANDLE		hParser;		/* ASN.1 parser */
-	NHFX_NEXT_CONTENT			next;			/* Get the next content info value */
-};
-typedef struct  NH_AUTH_SAFE_PARSER_STR*			NH_AUTH_SAFE_PARSER;
-
-
-/**
  * @brief PKCS12BagSet
  * 
  */
 typedef enum PFX_SAFE_BAG					/* PKCS12BagSet BAG-TYPE */
 {
-	PFX_keyBag,
+	PFX_keyBag = 1,
 	PFX_pkcs8ShroudedKeyBag,
 	PFX_certBag,
 	PFX_crlBag,
@@ -112,7 +58,7 @@ typedef struct NH_KEYBAG_STR					/* keyBag */
 typedef struct NH_SHROUDEDKEYBAG_STR			/* pkcs8ShroudedKeyBag */
 {
 	NH_OID_STR				algorithm;		/* encryption algorithm identifier */
-	NH_BLOB				iv;			/* encryption initialization vector */
+	NH_BLOB				salt;			/* encryption salt */
 	int					iCount;		/* iteration count */
 	NH_BLOB				contents;		/* encrypted data contents */
 
@@ -139,33 +85,52 @@ struct NH_SAFE_BAG_STR						/* SafeBag */
 	PFX_SAFE_BAG			type;			/* enum */
 	NH_BAG_TYPE				bag;			/* the bag itself */
 	NH_SAFE_BAG_STR*			next;			/* next bag */
+	NH_SAFE_BAG_STR*			previous;		/* previous bag */
 
 };
 typedef struct NH_SAFE_BAG_STR*				NH_SAFE_BAG;
 
 
 /**
- * @brief SafeContents
+ * @brief PFX
  * 
  */
-typedef struct NH_SAFE_CONTENTS_PARSER_STR		NH_SAFE_CONTENTS_PARSER_STR;
-struct NH_SAFE_CONTENTS_PARSER_STR
+EXTERN unsigned int pkcs9_x509_certificate_oid[];
+#define PKCS9_X509_CERTIFICATE_OID_COUNT			8
+#define PBE_MAC_KEY_LEN						20
+#define PBE_DES_KEY_LEN						24
+#define PBE_DES_KEY_IV_LEN					8
+typedef struct NH_PFX_QUERY_STR				/* Bag cursor for queries */
 {
-	NH_ASN1_PARSER_HANDLE		hParser;
-	NH_SAFE_BAG				bagSet;
-};
-typedef struct NH_SAFE_CONTENTS_PARSER_STR*		NH_SAFE_CONTENTS_PARSER;
+	PFX_SAFE_BAG			bagType;		/* Input: bag type to query */
+	unsigned int			uiCurrent;		/* Internal: current bag */
+	unsigned int			uiCount;		/* Internal: found bags */
+	NH_SAFE_BAG				pResult;		/* Output: current bag returned, if any */
 
-
-
+} NH_PFX_QUERY_STR, *NH_PFX_QUERY;
+#define NH_PFX_INIT_QUERY(_val)				{ _val, 0, 0, NULL }
 
 typedef struct NH_PFX_PARSER_STR				NH_PFX_PARSER_STR;
+typedef NH_METHOD(NH_RV, NHFX_QUERY)
+(
+	_IN_ NH_PFX_PARSER_STR*,				/* self */
+	_INOUT_ NH_PFX_QUERY					/* pQuery */
+);
+typedef NH_METHOD(NH_RV, NHFX_UNPACK_SHROUDED)
+(
+	_IN_ NH_PFX_PARSER_STR*,				/* self */
+	_IN_ NH_SAFE_BAG,						/* pBag */
+	_IN_ char*,							/* szSecret */
+	_INOUT_ NH_BLOB*						/* pPlaintext */
+);
 struct NH_PFX_PARSER_STR					/* PKCS #12 parser */
 {
 	NH_CARGO_CONTAINER		hContainer;		/* Memory management handler */
-	NH_PDU_PARSER			hPDU;			/* PDU parsing handler */
-	NH_AUTH_SAFE_PARSER		hAuth;		/* AuthenticatedSafe */
-	NH_SAFE_CONTENTS_PARSER		hSafe;		/* SafeContents */
+	NH_BLOB				salt;			/* Encryption salt */
+	int					iterations;		/* PBE iteration count */
+	NH_SAFE_BAG				pBagSet;		/* PKCS12BagSet */
+	NHFX_QUERY				next_bag;		/* Get next bag in a query */
+	NHFX_UNPACK_SHROUDED		unpack_key;		/* Decrypt shrouded key bag contents*/
 };
 typedef NH_PFX_PARSER_STR*					NH_PFX_PARSER;
 
