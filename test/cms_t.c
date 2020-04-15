@@ -180,12 +180,12 @@ int test_cms_signed_data(char *szSigner, char *szCA)
 	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
 	else printf("failed with error code %lu\n", rv);
 
-	if (pSigner) free(pSigner);
 	if (pCA) free(pCA);
 	if (hCMSEncoder) NH_cms_release_sd_encoder(hCMSEncoder);
 	if (hCert) NH_release_certificate(hCert);
 	if (encoding) free(encoding);
 	if (hCMSParser) NH_cms_release_sd_parser(hCMSParser);
+	if (pSigner) free(pSigner);
 	return (int)rv;
 }
 

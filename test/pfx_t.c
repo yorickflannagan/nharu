@@ -252,7 +252,9 @@ int test_pfx_parsing()
 	NH_RV rv;
 	NH_PFX_PARSER hPFX;
 	NH_PFX_QUERY_STR query = NH_PFX_INIT_QUERY(PFX_pkcs8ShroudedKeyBag);
-	NH_BLOB privkey = { NULL, 0UL };
+	NH_BLOB privkey = { NULL, 0UL }, pRSA = { NULL, 0UL };
+	NH_ASN1_PARSER_HANDLE hPrivKey, hRSA;
+	NH_ASN1_PNODE pNode;
 
 	printf("%s\n", "Testing PKCS #12 parsing...");
 	if (NH_SUCCESS(rv = NHFX_new_pfx_parser(__only_key_pfx, __only_key_pfx_len, __secret, &hPFX)))
@@ -260,16 +262,33 @@ int test_pfx_parsing()
 		while
 		(
 			NH_SUCCESS(rv = hPFX->next_bag(hPFX, &query)) && query.pResult &&
-			NH_SUCCESS(rv = hPFX->unpack_key(hPFX, query.pResult, __secret, &privkey))
+			NH_SUCCESS(rv = hPFX->unpack_key(hPFX, query.pResult, __secret, &privkey)) &&
+			NH_SUCCESS(rv = hPFX->parse_privkey(&privkey, &hPrivKey))
 		)
 		{
-			printf("Importing key number %u...\n", query.uiCount);
-			
+			printf("Importing key number %u... ", query.uiCount);
+			if
+			(
+				NH_SUCCESS(rv = (pNode = hPrivKey->sail(hPrivKey->root, (NH_SAIL_SKIP_SOUTH << 16) | (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+				NH_SUCCESS(rv = NH_match_oid((unsigned int*) pNode->value, pNode->valuelen, rsaEncryption_oid, NHC_RSA_ENCRYPTION_OID_COUNT) ? NH_OK : NH_PFX_UNSUPPORTED_KEY_ERROR) &&
+				NH_SUCCESS(rv = (pNode = hPrivKey->sail(hPrivKey->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) ? NH_OK : NH_PFX_UNSUPPORTED_KEY_ERROR)
+			)
+			{
+				pRSA.data = (unsigned char*) pNode->value;
+				pRSA.length = pNode->valuelen;
+				if (NH_SUCCESS(rv = hPFX->parse_rsa_key(&pRSA, &hRSA))) NH_release_parser(hRSA);
+			}
+			NH_release_parser(hPrivKey);
+			if (NH_SUCCESS(rv)) printf("%s\n", "Done!");
+			else printf("%s\n", "Failed!");
+			free(privkey.data);
 		}
 		query.bagType = PFX_certBag;
 		while (NH_SUCCESS(rv = hPFX->next_bag(hPFX, &query)) && query.pResult)
 		{
-			printf("Importing certificate number %u...\n", query.uiCount);
+			printf("Importing certificate number %u... ", query.uiCount);
+			if (NH_match_oid(query.pResult->bag.certBag->certType.pIdentifier, query.pResult->bag.certBag->certType.uCount, pkcs9_x509_certificate_oid, PKCS9_X509_CERTIFICATE_OID_COUNT)) printf("%s\n", "Done!");
+			else printf("%s\n", "Failed!");
 		}
 		NHFX_delete_pfx_parser(hPFX);
 	}

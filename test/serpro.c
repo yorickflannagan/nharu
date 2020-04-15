@@ -10492,8 +10492,11 @@ int check_crl_serpro()
 	CK_RV rv;
 	NH_CRL_HANDLER hCRL;
 	printf("%s... ", "Checking malformed CRL");
-	rv = NH_parse_crl(__CRL, __CRL_T, &hCRL);
-	if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
-	else printf("failed with error code %lu\n", rv);
+	if (NH_SUCCESS(rv = NH_parse_crl(__CRL, __CRL_T, &hCRL)))
+	{
+		if (NH_SUCCESS(rv)) printf("%s\n", "succeeded!");
+		else printf("failed with error code %lu\n", rv);
+		NH_release_crl(hCRL);
+	}
 	return (int) rv;
 }

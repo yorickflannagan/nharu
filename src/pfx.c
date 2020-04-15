@@ -49,7 +49,7 @@
  * Digest ::= OCTET STRING
  * 
  */
-static NH_NODE_WAY __pfx_map[] =
+const static NH_NODE_WAY __pfx_map[] =
 {
 	{	/* PFX */
 		NH_PARSE_ROOT,
@@ -94,7 +94,7 @@ static NH_NODE_WAY __pfx_map[] =
 		0
 	}
 };
-static NH_NODE_WAY __mac_data_map[] =
+const static NH_NODE_WAY __mac_data_map[] =
 {
 	{	/* MacData*/
 		NH_PARSE_ROOT,
@@ -288,7 +288,7 @@ static NH_NODE_WAY __content_info_map[] =
 		0
 	}
 };
-static NH_NODE_WAY __authenticated_safe_map[] =
+const static NH_NODE_WAY __authenticated_safe_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -382,7 +382,7 @@ static NH_ASN1_PNODE __next_content_info
  * EncryptionAlgorithmIdentifier ::= AlgorithmIdentifier { CONTENT-ENCRYPTION, { KeyEncryptionAlgorithms }}
  * EncryptedData ::= OCTET STRING -- Encrypted PrivateKeyInfo
  */
-static NH_NODE_WAY __pkcs8ShroudedKeyBag_map[] =
+const static NH_NODE_WAY __pkcs8ShroudedKeyBag_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -510,7 +510,7 @@ static NH_RV __parse_shroudedkeybag
  * 	... -- For future extensions
  * }
  */
-static NH_NODE_WAY __certbag_map[] =
+const static NH_NODE_WAY __certbag_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -623,7 +623,7 @@ static NH_NODE_WAY __safe_bag_map[] =
 		0
 	}
 };
-static NH_NODE_WAY __safe_contents_map[] =
+const static NH_NODE_WAY __safe_contents_map[] =
 {
 	{
 		NH_PARSE_ROOT,
@@ -722,8 +722,201 @@ static NH_RV __parse_safe_contents
 }
 
 
+/**
+ * @brief RFC 8017
+ * 
+ * RSAPrivateKey ::= SEQUENCE {
+ *    version           Version,
+ *    modulus           INTEGER,  -- n
+ *    publicExponent    INTEGER,  -- e
+ *    privateExponent   INTEGER,  -- d
+ *    prime1            INTEGER,  -- p
+ *    prime2            INTEGER,  -- q
+ *    exponent1         INTEGER,  -- d mod (p-1)
+ *    exponent2         INTEGER,  -- d mod (q-1)
+ *    coefficient       INTEGER,  -- (inverse of q) mod p
+ *    otherPrimeInfos   OtherPrimeInfos OPTIONAL
+ * }
+ */
+const static NH_NODE_WAY __rsa_privkey_pkcs_map[] =
+{
+	{	/* RSAPrivateKey */
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* Version */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* modulus n */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* publicExponent e */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* privateExponent d */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* prime1 p */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* prime2 q */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* exponent1 dmp */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* exponent2 dmq */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* coefficient qmp */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* OtherPrimeInfos */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_SEQUENCE | NH_ASN1_OPTIONAL_BIT,
+		NULL,
+		0
+	}
+};
+static NH_RV __pfx_parse_rsa_key(_IN_ NH_BLOB *pKey, _OUT_ NH_ASN1_PARSER_HANDLE *hOut)
+{
+	NH_RV rv;
+	NH_ASN1_PARSER_HANDLE hParser;
+	NH_ASN1_PNODE pNode;
 
-static unsigned int pbeWithSHA1And3_KeyTripleDES_CBC_oid[] = { 1, 2, 840, 113549, 1, 12, 1, 3 };
+	if
+	(
+		NH_SUCCESS(rv = pKey && pKey->data ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = NH_new_parser(pKey->data, pKey->length, 8, 4096, &hParser))
+	)
+	{
+		if
+		(
+			NH_SUCCESS(rv = hParser->map(hParser, __rsa_privkey_pkcs_map, ASN_NODE_WAY_COUNT(__rsa_privkey_pkcs_map))) &&
+			NH_SUCCESS(rv = (pNode = hParser->root->child) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			NH_SUCCESS(rv = hParser->parse_little_integer(hParser, pNode)) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode))) &&
+			NH_SUCCESS(rv = (pNode = pNode->next) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			(NH_SUCCESS(rv = hParser->parse_integer(pNode)))
+		)	*hOut = hParser;
+		else NH_release_parser(hParser);
+	}
+	return rv;
+}
+/**
+ * @brief RFC 5208
+ * 
+ *  PrivateKeyInfo ::= SEQUENCE {
+ *    version Version,
+ *    privateKeyAlgorithm AlgorithmIdentifier {{PrivateKeyAlgorithms}},
+ *    privateKey PrivateKey,
+ *    attributes [0] Attributes OPTIONAL }
+ * PrivateKey ::= OCTET STRING
+ * PublicKey ::= BIT STRING
+ * Attributes ::= SET OF Attribute { { OneAsymmetricKeyAttributes } }
+ */
+const static NH_NODE_WAY __privkey_info_map[] =
+{
+	{	/* PrivateKeyInfo */
+		NH_PARSE_ROOT,
+		NH_ASN1_SEQUENCE,
+		NULL,
+		0
+	},
+	{	/* Version */
+		NH_SAIL_SKIP_SOUTH,
+		NH_ASN1_INTEGER | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* PrivateKeyAlgorithmIdentifier */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_SEQUENCE,
+		pkix_algid_map,
+		PKIX_ALGID_COUNT
+	},
+	{	/* PrivateKey */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_OCTET_STRING | NH_ASN1_HAS_NEXT_BIT,
+		NULL,
+		0
+	},
+	{	/* attributes */
+		NH_SAIL_SKIP_EAST,
+		NH_ASN1_SET | NH_ASN1_OPTIONAL_BIT,
+		NULL,
+		0
+	}
+};
+static NH_RV __pfx_parse_privatekey(_IN_ NH_BLOB *pKey, _OUT_ NH_ASN1_PARSER_HANDLE *hOut)
+{
+	NH_RV rv;
+	NH_ASN1_PARSER_HANDLE hParser;
+	NH_ASN1_PNODE pNode;
+
+	if
+	(
+		NH_SUCCESS(rv = pKey && pKey->data ? NH_OK : NH_INVALID_ARG) &&
+		NH_SUCCESS(rv = NH_new_parser(pKey->data, pKey->length, 8, 4096, &hParser))
+	)
+	{
+		if
+		(
+			NH_SUCCESS(rv = hParser->map(hParser, __privkey_info_map, ASN_NODE_WAY_COUNT(__privkey_info_map))) &&
+			NH_SUCCESS(rv = (pNode = hParser->root->child) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			NH_SUCCESS(rv = hParser->parse_little_integer(hParser, pNode)) &&
+			NH_SUCCESS(rv = (pNode = hParser->sail(pNode, (NH_SAIL_SKIP_EAST << 8) | NH_SAIL_SKIP_SOUTH)) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			NH_SUCCESS(rv = hParser->parse_oid(hParser, pNode)) &&
+			NH_SUCCESS(rv = (pNode = hParser->sail(hParser->root, (NH_SAIL_SKIP_SOUTH << 8) | (NH_PARSE_EAST | 2))) ? NH_OK : NH_PFX_INVALID_ENCODING_ERROR) &&
+			NH_SUCCESS(rv = hParser->parse_octetstring(hParser, pNode))
+		)	*hOut = hParser;
+		else NH_release_parser(hParser);
+	}
+	return rv;
+}
+const static unsigned int pbeWithSHA1And3_KeyTripleDES_CBC_oid[] = { 1, 2, 840, 113549, 1, 12, 1, 3 };
 static NH_RV __pfx_unpack_key(_IN_ NH_PFX_PARSER_STR *self, _IN_ NH_SAFE_BAG pBag, _IN_ char *szSecret, _INOUT_ NH_BLOB *pPlaintext)
 {
 	NH_RV rv;
@@ -809,12 +1002,14 @@ static NH_RV __pfx_next_bag(_IN_ NH_PFX_PARSER_STR *self, _INOUT_ NH_PFX_QUERY p
 }
 static NH_PFX_PARSER_STR __default_pfx =
 {
-	NULL,			/* hContainer */
-	{ NULL, 0UL },	/* salt */
-	0,			/* iterations */
-	NULL,			/* pBagSet */
-	__pfx_next_bag,	/* next_bag */
-	__pfx_unpack_key	/* unpack_key */
+	NULL,				/* hContainer */
+	{ NULL, 0UL },		/* salt */
+	0,				/* iterations */
+	NULL,				/* pBagSet */
+	__pfx_next_bag,		/* next_bag */
+	__pfx_unpack_key,		/* unpack_key */
+	__pfx_parse_privatekey,	/* parse_privkey */
+	__pfx_parse_rsa_key	/* parse_rsa_key */
 };
 NH_FUNCTION(NH_RV, NHFX_new_pfx_parser)(_IN_ unsigned char *pBuffer, _IN_ unsigned int uiBufLen, _IN_ char *szSecret, _OUT_ NH_PFX_PARSER *hPFX)
 {

@@ -123,6 +123,11 @@ typedef NH_METHOD(NH_RV, NHFX_UNPACK_SHROUDED)
 	_IN_ char*,							/* szSecret */
 	_INOUT_ NH_BLOB*						/* pPlaintext */
 );
+typedef NH_METHOD(NH_RV, NHFX_PARSE_KEY)
+(
+	_IN_ NH_BLOB*,						/* pKey */
+	_OUT_ NH_ASN1_PARSER_HANDLE*				/* hOut */
+);
 struct NH_PFX_PARSER_STR					/* PKCS #12 parser */
 {
 	NH_CARGO_CONTAINER		hContainer;		/* Memory management handler */
@@ -131,6 +136,8 @@ struct NH_PFX_PARSER_STR					/* PKCS #12 parser */
 	NH_SAFE_BAG				pBagSet;		/* PKCS12BagSet */
 	NHFX_QUERY				next_bag;		/* Get next bag in a query */
 	NHFX_UNPACK_SHROUDED		unpack_key;		/* Decrypt shrouded key bag contents*/
+	NHFX_PARSE_KEY			parse_privkey;	/* Parse RFC 5208 PrivateKeyInfo */
+	NHFX_PARSE_KEY			parse_rsa_key;	/* Parse RFC 8017 RSAPrivateKey */
 };
 typedef NH_PFX_PARSER_STR*					NH_PFX_PARSER;
 
