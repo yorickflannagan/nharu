@@ -1,13 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="GetGit;GetPerl;GetNASM;Check"
-			ToolsVersion="15.9"
-			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		InitialTargets="Check"
+		ToolsVersion="15.9"
+		xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-	<Import Project="targets\project-configurations.targets" />
+	<!-- Project configuration -->
+	<Choose>
+		<When Condition="'$(Configuration)'==''">
+			<PropertyGroup>
+				<Configuration>Release</Configuration>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<Choose>
+		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
+			<PropertyGroup>
+				<Platform>Win32</Platform>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<ItemGroup Label="ProjectConfigurations">
+		<ProjectConfiguration Include="Debug|Win32">
+			<Configuration>Debug</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|Win32">
+			<Configuration>Release</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Debug|x64">
+			<Configuration>Debug</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|x64">
+			<Configuration>Release</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+	</ItemGroup>
+
+	<!-- Build properties -->
 	<PropertyGroup Label="UserMacros">
-		<Home>$(MSBuildProjectDirectory)\openssl</Home>
-		<Prefix Condition="'$(Prefix)'==''">$(MSBuildProjectDirectory)\..\dist\$(Platform)\ssl</Prefix>
+		<Src Condition="'$(Src)'==''">$(USERPROFILE)\development\openssl</Src>
+		<Prefix Condition="'$(Prefix)'==''">$(USERPROFILE)\development\build\$(Platform)\ssl</Prefix>
 		<NoLogo>true</NoLogo>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PerlCmdLine">
@@ -22,70 +56,84 @@
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PerlCmdLine">
 		<PerlCmd>perl.exe Configure VC-WIN64A no-shared --prefix="$(Prefix)" --openssldir="$(Prefix)"</PerlCmd>
 	</PropertyGroup>
-	<Import Project="targets\common.targets" />
 
+	<!-- Build prerequisites -->
+	<PropertyGroup>
+		<BuildDependsOn>
+			Prepare;
+			Config;
+			$(BuildDependsOn)
+		</BuildDependsOn>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CleanDependsOn>
+			$(CleanDependsOn);
+			Clean-Up
+		</CleanDependsOn>
+	</PropertyGroup>
+	<Target Name="Config">
+		<Message Text="Project       = $(ProjectName)" />
+		<Message Text="Configuration = $(Configuration)" />
+		<Message Text="Platform      = $(Platform)" />
+		<Message Text="Src           = $(Src)" />
+		<Message Text="Prefix        = $(Prefix)" />
+	</Target>
 	<Target Name="Configure" DependsOnTargets="Config">
-		<Message Text="Will configure OpenSSL build..." />
-		<Exec Command="$(PerlCmd)" EchoOff="true" WorkingDirectory="$(Home)" />
+		<Message Text="Configuring OpenSSL build..." />
+		<Exec Command="$(PerlCmd)" EchoOff="true" WorkingDirectory="$(Src)" />
 		<Message Text="Command: $(PerlCmd)" />
 	</Target>
-
 	<Target Name="Prepare" >
 		<Message Text="Preparing OpenSSL for Windows compilation..." />
-		<Exec Command='powershell -NoLogo -NoProfile -NonInteractive -Command "(Get-Content $(Home)\makefile) -replace """/MT""", """/MD""" | Set-Content $(Home)\makefile"' EchoOff="true" />
+		<Exec Command='powershell -NoLogo -NoProfile -NonInteractive -Command "(Get-Content $(Src)\makefile) -replace """/MT""", """/MD""" | Set-Content $(Src)\makefile"' EchoOff="true" />
 	</Target>
-
-	<Target Name="Build" DependsOnTargets="Configure;Prepare">
-		<Message Text="Building OpenSSL..." />
-		<Exec Command="nmake.exe /nologo" EchoOff="true" WorkingDirectory="$(Home)" />
-	</Target>
-
-	<Target Name="Test">
-		<Message Text="Testing OpenSSL..." />
-		<Exec Command="nmake.exe /nologo test" EchoOff="true" WorkingDirectory="$(Home)" />
-	</Target>
-
-	<Target Name="Install">
-		<Message Text="Installing OpenSSL..." />
-		<Exec Command="nmake.exe /nologo install" EchoOff="true" WorkingDirectory="$(Home)" />
-	</Target>
-
-	<Target Name="Uninstall">
-		<Message Text="Uninstalling OpenSSL..." />
-		<Exec Command="nmake.exe /nologo uninstall" EchoOff="true" WorkingDirectory="$(Home)" />
-	</Target>
-
-	<Target Name="Clean">
-		<Message Text="Cleaning all things..." />
-		<Exec Command="nmake.exe /nologo clean" EchoOff="true" WorkingDirectory="$(Home)" />
-		<Exec Command="nmake.exe /nologo distclean" EchoOff="true" WorkingDirectory="$(Home)" />
-	</Target>
-
 	<Target Name="Clean-Up" />
 
-	<Target Name="GetGit" Condition="'$(GitLocation)'==''" >
-		<Exec Command="where git.exe" ConsoleToMsBuild="true" EchoOff="false" >
-			<Output TaskParameter="ConsoleOutput" PropertyName="GitLocation" />
-		</Exec>
+	<!-- Targets -->
+	<Target Name="Build" DependsOnTargets="Configure;Prepare">
+		<Message Text="Building OpenSSL..." />
+		<Exec Command="nmake.exe /nologo" EchoOff="true" WorkingDirectory="$(Src)" />
 	</Target>
-	<Target Name="GetPerl" Condition="'$(PerlLocation)'==''" >
+	<Target Name="Test">
+		<Message Text="Testing OpenSSL..." />
+		<Exec Command="nmake.exe /nologo test" EchoOff="true" WorkingDirectory="$(Src)" />
+	</Target>
+	<Target Name="Install">
+		<Message Text="Installing OpenSSL..." />
+		<Exec Command="nmake.exe /nologo install" EchoOff="true" WorkingDirectory="$(Src)" />
+	</Target>
+	<Target Name="Uninstall">
+		<Message Text="Uninstalling OpenSSL..." />
+		<Exec Command="nmake.exe /nologo uninstall" EchoOff="true" WorkingDirectory="$(Src)" />
+	</Target>
+	<Target Name="Clean">
+		<Message Text="Cleaning all things..." />
+		<Exec Command="nmake.exe /nologo clean" EchoOff="true" WorkingDirectory="$(Src)" />
+		<Exec Command="nmake.exe /nologo distclean" EchoOff="true" WorkingDirectory="$(Src)" />
+	</Target>
+
+	<!-- Build requirements check -->
+	<Target Name="CheckPerl" Condition="'$(PerlLocation)'==''" >
 		<Exec Command="where perl.exe" ConsoleToMsBuild="true" EchoOff="false" >
 			<Output TaskParameter="ConsoleOutput" PropertyName="PerlLocation" />
 		</Exec>
 	</Target>
-	<Target Name="GetNASM" Condition="'$(NASMLocation)'==''" >
+	<Target Name="CheckNASM" Condition="'$(NASMLocation)'==''" >
 		<Exec Command="where nasm.exe" ConsoleToMsBuild="true" EchoOff="false" >
 			<Output TaskParameter="ConsoleOutput" PropertyName="NASMLocation" />
 		</Exec>
 	</Target>
-	<Target Name="Check">
+	<Target Name="CheckVersion" Condition="'$(OpenSSLVersion)'==''" >
+		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="false" WorkingDirectory="$(Src)">
+			<Output TaskParameter="ConsoleOutput" PropertyName="OpenSSLVersion" />
+		</Exec>
+	</Target>
+	<Target Name="Check" DependsOnTargets="CheckPerl;CheckNASM;CheckVersion" >
 		<Message Text="Checking prerequisites" />
-		<Error Text="Requires that Git SCM is installed and is in path" Condition="'$(GitLocation)'==''" />
 		<Error Text="Requires that Perl is installed and is in path" Condition="'$(PerlLocation)'==''" />
 		<Error Text="Requires that Netwide Assembler is installed and is in path" Condition="'$(NASMLocation)'==''" />
 		<Error Text="Requires run under vcvarsamd64_x86.bat or vcvars64.bat" Condition="'$(VisualStudioVersion)'==''" />
-		<Exec Command="git clone https://github.com/openssl/openssl" EchoOff="false" Condition="!Exists('$(Home)')" />
-		<Exec Command="git checkout OpenSSL_1_1_0f -B nharu_build" EchoOff="false" WorkingDirectory="$(Home)" Condition="Exists('$(Home)\e_os.h')" />
+		<Error Text="Requires that OpenSSL has been checked out on version OpenSSL_1_1_0f" Condition="'$(OpenSSLVersion)'!='OpenSSL_1_1_0f'" />
 	</Target>
 
 </Project>

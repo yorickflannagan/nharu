@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="GetVersion;GetMVN;GetJava"
-			ToolsVersion="15.9"
-			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		InitialTargets="GetVersion;GetMVN;GetJava"
+		ToolsVersion="15.9"
+		xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+	<!-- Build properties -->
 	<PropertyGroup Label="Globals">
 		<Keyword>JavaProject</Keyword>
 		<ProjectGuid>{67FF37B1-506A-4D3E-9591-661186A3EC83}</ProjectGuid>
-		<Home>$(MSBuildProjectDirectory)\..</Home>
+		<Src>$(MSBuildProjectDirectory)\..</Src>
+		<Prefix Condition="'$(Prefix)'==''">$(USERPROFILE)\development\build\$(Platform)\nharu</Prefix>
 		<ProjectName>$(MSBuildProjectName)</ProjectName>
 		<TargetExt>.jar</TargetExt>
-		<CompileDir Condition="'$(CompileDir)'==''">$(Home)/bin</CompileDir>
-		<BuildDir Condition="'$(BuildDir)'==''">$(Home)/dist</BuildDir>
-		<Prefix Condition="'$(Prefix)'==''">$(BuildDir)\java</Prefix>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Src)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Src)\dist</BuildDir>
 		<LogLevel Condition="'$(LogLevel)'==''">LOG_LEVEL_ERROR</LogLevel>
 		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
-		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(Home)\dist\Win32\Release\nharujca\nharujca.dll</NharuJCALib>
-		<BinDir >$(CompileDir)/java-bin</BinDir>
-		<InstallDir>$(BuildDir)/java</InstallDir>
+		<NharuJCALib Condition="'$(NharuJCALib)'==''">$(Prefix)\libs\nharujca.dll</NharuJCALib>
+		<BinDir >$(CompileDir)\java-bin</BinDir>
+		<InstallDir>$(BuildDir)\java</InstallDir>
 		<NoLogo>true</NoLogo>
 	</PropertyGroup>
-
 	<Target Name="Echo">
-		<Message Text="$(ProjectName) properties:" />
+		<Message Text="ProjectName:   $(ProjectName)" />
 		<Message Text="CompileDir:    $(CompileDir)" />
 		<Message Text="BuildDir:      $(BuildDir)" />
 		<Message Text="Prefix:        $(Prefix)" />
@@ -33,30 +33,41 @@
 		<Message Text="LogLevel:      $(LogLevel)" />
 	</Target>
 
+	<!-- Targets -->
 	<Target Name="Build" DependsOnTargets="Echo">
-		<Error Text="Java SDK must be defined at command line" Condition="'$(JDKHome)'==''" />
+		<Error Text="JDK must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
 		<Error Text="Apache Maven must be in path" Condition="'$(MVN)'==''" />
-		<Exec Command="MVN -B package -Dlog.level=$(LogLevel) -D install.dir=$(InstallDir) -D bin.dir=$(BinDir) -D jar.version=$(JarVersion) -D jdk.home=$(JDKHome) -Dhttps.protocols=TLSv1.2" EchoOff="true" WorkingDirectory="$(Home)" />
+		<Exec	Command='MVN -B package -Dlog.level=$(LogLevel) -Dinstall.dir="$(InstallDir)" -Dbin.dir="$(BinDir)" -Djar.version=$(JarVersion) -Djdk.home="$(JDKHome)" -Dhttps.protocols=TLSv1.2'
+			EnvironmentVariables="JAVA_HOME=$(JDKHome)"
+			EchoOff="true"
+			WorkingDirectory="$(Src)" />
 	</Target>
-
 	<Target Name="Clean" DependsOnTargets="Echo">
+		<Error Text="JDK must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
 		<Error Text="Apache Maven must be in path" Condition="'$(MVN)'==''" />
-		<Exec Command="MVN -B clean -Dlog.level=$(LogLevel) -D install.dir=$(InstallDir) -D bin.dir=$(BinDir) -D jar.version=$(JarVersion) -D jdk.home=$(JDKHome) -Dhttps.protocols=TLSv1.2" EchoOff="true" WorkingDirectory="$(Home)" />
+		<Exec	Command='MVN -B clean -Dlog.level=$(LogLevel) -Dinstall.dir="$(InstallDir)" -Dbin.dir="$(BinDir)" -Djar.version=$(JarVersion) -Djdk.home="$(JDKHome)" -Dhttps.protocols=TLSv1.2'
+			EnvironmentVariables="JAVA_HOME=$(JDKHome)"
+			EchoOff="true"
+			WorkingDirectory="$(Src)" />
 	</Target>
-
 	<Target Name="Test" DependsOnTargets="Echo">
-		<Error Text="Java Runtime must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
+		<Error Text="JDK must me found at JDK Installation directory" Condition="'$(JavaVer)'==''" />
 		<Error Text="JNI project must be built first" Condition="!Exists('$(NharuJCALib)')" />
 		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
-		<Exec Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.provider.NharuProvider "$(Home)\test\repo\signer.p12" "$(Home)\test\repo\trust.jks"' EchoOff="true" />
+		<Exec	Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.provider.NharuProvider "$(Src)\test\repo\signer.p12" "$(Src)\test\repo\trust.jks"'
+			EnvironmentVariables='JAVA_HOME=$"(JDKHome)"'
+			EchoOff="true" />
 	</Target>
-
 	<Target Name="Install" DependsOnTargets="Echo">
 		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
-		<Copy SourceFiles="$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" DestinationFolder="$(Prefix)" />
+		<Copy SourceFiles="$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+	</Target>
+	<Target Name="Uninstall">
+		<Message Text="Removing installation" />
+		<RemoveDir Directories="$(Prefix)" />
 	</Target>
 
-
+	<!-- Build dependencies -->
 	<Target Name="GetVersion" Condition="'$(JarVersion)'==''" >
 		<Exec Command="git describe --dirty" ConsoleToMsBuild="true" EchoOff="true" >
 			<Output TaskParameter="ConsoleOutput" PropertyName="JarVersion" />

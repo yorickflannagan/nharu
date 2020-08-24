@@ -1,52 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="Check"
-			ToolsVersion="15.9"
-			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		InitialTargets="Check"
+		ToolsVersion="15.9"
+		xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-	<Import Project="targets\project-configurations.targets" />
+	<!-- Project configurations -->
+	<Choose>
+		<When Condition="'$(Configuration)'==''">
+			<PropertyGroup>
+				<Configuration>Release</Configuration>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<Choose>
+		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
+			<PropertyGroup>
+				<Platform>Win32</Platform>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<ItemGroup Label="ProjectConfigurations">
+		<ProjectConfiguration Include="Debug|Win32">
+			<Configuration>Debug</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|Win32">
+			<Configuration>Release</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Debug|x64">
+			<Configuration>Debug</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|x64">
+			<Configuration>Release</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+	</ItemGroup>
+
 	<PropertyGroup Label="Globals">
-		<VCProjectVersion>15.0</VCProjectVersion>
+		<VCProjectVersion>16.0</VCProjectVersion>
 		<ProjectGuid>{0A4CDDBD-50BB-4EAD-A02A-002BBD9CAF44}</ProjectGuid>
 		<Keyword>DynamicLibraryProject</Keyword>
 		<RootNamespace>nharujca</RootNamespace>
-		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+		<WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
 		<NoLogo>true</NoLogo>
 	</PropertyGroup>
-
   	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-	<Import Project="targets\sharedlib-configurations.targets" />
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+		<ConfigurationType>DynamicLibrary</ConfigurationType>
+		<UseDebugLibraries>true</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+		<ConfigurationType>DynamicLibrary</ConfigurationType>
+		<UseDebugLibraries>false</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<WholeProgramOptimization>true</WholeProgramOptimization>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+		<ConfigurationType>DynamicLibrary</ConfigurationType>
+		<UseDebugLibraries>true</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+		<ConfigurationType>DynamicLibrary</ConfigurationType>
+		<UseDebugLibraries>false</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<WholeProgramOptimization>true</WholeProgramOptimization>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 	<ImportGroup Label="ExtensionSettings" />
 	<ImportGroup Label="Shared" />
-	<Import Project="targets\appdata-platform.targets" />
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
 
+	<!-- Build properties -->
 	<PropertyGroup Label="UserMacros">
-		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\$(Platform)\ssl</OpenSSLFolder>
-		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\$(Platform)\idn</LibidnFolder>
-		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
-		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
-		<Prefix>$(BuildDir)\$(Platform)</Prefix>
-		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<Src>$(MSBuildProjectDirectory)\..</Src>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(USERPROFILE)\development\build\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(USERPROFILE)\development\build\$(Platform)\idn</LibidnFolder>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Src)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Src)\dist</BuildDir>
+		<Prefix Condition="'$(Prefix)'==''">$(USERPROFILE)\development\build\$(Platform)\nharu</Prefix>
+		<NharuLib Condition="'$(NharuLib)'==''">$(Prefix)\libs</NharuLib>
 		<JDKHome Condition="'$(JDKHome)'==''">$(JAVA_HOME)</JDKHome>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<IncludeFolders>
-			$(Home);
-			$(Home)\include;
-			$(Home)\jca\native;
+			$(Src);
+			$(Src)\include;
+			$(Src)\jca\native;
 			$(JDKHome)\include;
 			$(JDKHome)\include\win32;
 			$(OpenSSLFolder)\include;
 			$(LibidnFolder)\include;
-			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
-			$(VCInstallDir)\Tools\MSVC\14.16.27023\include;
-			$(WindowsSdkDir)\include\10.0.17763.0\ucrt;
-			$(WindowsSdkDir)\include\10.0.17763.0\shared;
-			$(WindowsSdkDir)\include\10.0.17763.0\um;
-			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
-			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
 		</IncludeFolders>
 		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706</Warnings>
 		<Dependencies>
@@ -58,39 +120,199 @@
 		<Libraries>$(NharuLib);$(OpenSSLFolder)\lib;$(LibidnFolder)\lib</Libraries>
 		<IsDLL>true</IsDLL>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>WIN32;_DEBUG;_DEBUG_;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>_DEBUG;_DEBUG_;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>WIN32;NDEBUG;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>NDEBUG;_USRDLL;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;_WINDOWS;_WINDLL;NHARUJCA_EXPORTS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
 
-	<Import Project="targets\sharedlib-vars.targets" />
-	<Import Project="targets\debug.targets" Condition="'$(Configuration)'=='Debug'" />
-	<Import Project="targets\release.targets" Condition="'$(Configuration)'=='Release'" />
+	<!-- Compiler and linker options -->
+	<ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'" >
+		<ClCompile>
+			<AdditionalIncludeDirectories>$(IncludeFolders)</AdditionalIncludeDirectories>
+			<AdditionalOptions>/permissive- /sdl-</AdditionalOptions>
+			<AlwaysAppend>/c</AlwaysAppend>
+			<BufferSecurityCheck>true</BufferSecurityCheck>
+			<CallingConvention>Cdecl</CallingConvention>
+			<CompileAs>CompileAsC</CompileAs>
+			<DisableSpecificWarnings>$(Warnings)</DisableSpecificWarnings>
+			<EnablePREfast>false</EnablePREfast>
+			<FloatingPointModel>Precise</FloatingPointModel>
+			<ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+			<MinimalRebuild>false</MinimalRebuild>
+			<OmitFramePointers>false</OmitFramePointers>
+			<PrecompiledHeader>NotUsing</PrecompiledHeader>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TreatWarningAsError>false</TreatWarningAsError>
+			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+			<UseFullPaths>true</UseFullPaths>
+			<WarningLevel>Level3</WarningLevel>
+			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+			<PreprocessorDefinitions>$(Constants);$(Defines)</PreprocessorDefinitions>
+			<AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+			<AssemblerOutput>AssemblyCode</AssemblerOutput>
+			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ErrorReporting>Prompt</ErrorReporting>
+			<InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+			<Optimization>Disabled</Optimization>
+			<ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+		</ClCompile>
+		<Link>
+			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
+			<DataExecutionPrevention>true</DataExecutionPrevention>
+			<OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
+			<RandomizedBaseAddress>true</RandomizedBaseAddress>
+			<SubSystem>$(TargetSubSystem)</SubSystem>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TypeLibraryResourceID>1</TypeLibraryResourceID>
+			<Version>1.0</Version>
+			<AdditionalLibraryDirectories>$(Libraries)</AdditionalLibraryDirectories>
+			<TargetMachine>$(TargetArchitecture)</TargetMachine>
+			<EnableUAC>true</EnableUAC>
+			<GenerateManifest>true</GenerateManifest>
+			<LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+			<UACExecutionLevel>AsInvoker</UACExecutionLevel>
+			<UACUIAccess>false</UACUIAccess>
+			<AdditionalOptions>/DEBUG:FULL</AdditionalOptions>
+			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+			<LinkDLL>$(IsDLL)</LinkDLL>
+			<IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib</IgnoreSpecificDefaultLibraries>
+			<LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+		</Link>
+	</ItemDefinitionGroup>
+	<ItemDefinitionGroup Condition="'$(Configuration)'=='Release'" >
+		<ClCompile>
+			<AdditionalIncludeDirectories>$(IncludeFolders)</AdditionalIncludeDirectories>
+			<AdditionalOptions>/permissive- /sdl-</AdditionalOptions>
+			<AlwaysAppend>/c</AlwaysAppend>
+			<BufferSecurityCheck>true</BufferSecurityCheck>
+			<CallingConvention>Cdecl</CallingConvention>
+			<CompileAs>CompileAsC</CompileAs>
+			<DisableSpecificWarnings>$(Warnings)</DisableSpecificWarnings>
+			<EnablePREfast>false</EnablePREfast>
+			<FloatingPointModel>Precise</FloatingPointModel>
+			<ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+			<MinimalRebuild>false</MinimalRebuild>
+			<OmitFramePointers>false</OmitFramePointers>
+			<PrecompiledHeader>NotUsing</PrecompiledHeader>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TreatWarningAsError>false</TreatWarningAsError>
+			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+			<UseFullPaths>true</UseFullPaths>
+			<WarningLevel>Level3</WarningLevel>
+			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+			<PreprocessorDefinitions>$(Constants);$(Defines)</PreprocessorDefinitions>
+			<ErrorReporting>None</ErrorReporting>
+			<FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+			<FunctionLevelLinking>true</FunctionLevelLinking>
+			<IntrinsicFunctions>true</IntrinsicFunctions>
+			<Optimization>MinSpace</Optimization>
+			<WholeProgramOptimization>true</WholeProgramOptimization>
+			<ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+		</ClCompile>
+		<Link>
+			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
+			<DataExecutionPrevention>true</DataExecutionPrevention>
+			<OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
+			<RandomizedBaseAddress>true</RandomizedBaseAddress>
+			<SubSystem>$(TargetSubSystem)</SubSystem>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TypeLibraryResourceID>1</TypeLibraryResourceID>
+			<Version>1.0</Version>
+			<AdditionalLibraryDirectories>$(Libraries)</AdditionalLibraryDirectories>
+			<TargetMachine>$(TargetArchitecture)</TargetMachine>
+			<EnableUAC>true</EnableUAC>
+			<GenerateManifest>true</GenerateManifest>
+			<LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+			<UACExecutionLevel>AsInvoker</UACExecutionLevel>
+			<UACUIAccess>false</UACUIAccess>
+			<LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+			<OptimizeReferences>true</OptimizeReferences>
+			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+			<EnableCOMDATFolding>true</EnableCOMDATFolding>
+			<LinkDLL>$(IsDLL)</LinkDLL>
+		</Link>
+	</ItemDefinitionGroup>
 
+	<!-- Project files -->
 	<ItemGroup>
-		<ClInclude Include="$(Home)\jca\native\jca.h" />
-		<ClInclude Include="$(Home)\jca\native\jcms.h" />
-		<ClInclude Include="$(Home)\jca\native\jcrypto.h" />
-		<ClInclude Include="$(Home)\jca\native\jissue.h" />
-		<ClInclude Include="$(Home)\jca\native\version.h" />
-		<ClInclude Include="$(Home)\jca\native\x509.h" />
-		<ClInclude Include="$(Home)\jca\native\b64\cdecode.h" />
-		<ClInclude Include="$(Home)\jca\native\b64\cencode.h" />
-		<ClInclude Include="$(Home)\jca\native\sb8\crc.h" />
+		<ClInclude Include="$(Src)\jca\native\jca.h" />
+		<ClInclude Include="$(Src)\jca\native\jcms.h" />
+		<ClInclude Include="$(Src)\jca\native\jcrypto.h" />
+		<ClInclude Include="$(Src)\jca\native\jissue.h" />
+		<ClInclude Include="$(Src)\jca\native\version.h" />
+		<ClInclude Include="$(Src)\jca\native\x509.h" />
+		<ClInclude Include="$(Src)\jca\native\b64\cdecode.h" />
+		<ClInclude Include="$(Src)\jca\native\b64\cencode.h" />
+		<ClInclude Include="$(Src)\jca\native\sb8\crc.h" />
 	</ItemGroup>
 	<ItemGroup>
-		<ClCompile Include="$(Home)\jca\native\8x256_tables.c" />
-		<ClCompile Include="$(Home)\jca\native\cdecode.c" />
-		<ClCompile Include="$(Home)\jca\native\cencode.c" />
-		<ClCompile Include="$(Home)\jca\native\cms_glue.c" />
-		<ClCompile Include="$(Home)\jca\native\crc.c" />
-		<ClCompile Include="$(Home)\jca\native\crypto_glue.c" />
-		<ClCompile Include="$(Home)\jca\native\general.c" />
-		<ClCompile Include="$(Home)\jca\native\issue_glue.c" />
-		<ClCompile Include="$(Home)\jca\native\version.c" />
-		<ClCompile Include="$(Home)\jca\native\versionjca.c" />
-		<ClCompile Include="$(Home)\jca\native\x509_glue.c" />
+		<ClCompile Include="$(Src)\jca\native\8x256_tables.c" />
+		<ClCompile Include="$(Src)\jca\native\cdecode.c" />
+		<ClCompile Include="$(Src)\jca\native\cencode.c" />
+		<ClCompile Include="$(Src)\jca\native\cms_glue.c" />
+		<ClCompile Include="$(Src)\jca\native\crc.c" />
+		<ClCompile Include="$(Src)\jca\native\crypto_glue.c" />
+		<ClCompile Include="$(Src)\jca\native\general.c" />
+		<ClCompile Include="$(Src)\jca\native\issue_glue.c" />
+		<ClCompile Include="$(Src)\jca\native\version.c" />
+		<ClCompile Include="$(Src)\jca\native\versionjca.c" />
+		<ClCompile Include="$(Src)\jca\native\x509_glue.c" />
 	</ItemGroup>
 
+	<!-- Targets -->
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
-	<Import Project="targets\common.targets" />
+	<PropertyGroup>
+		<BuildDependsOn>
+			Prepare;
+			Config;
+			$(BuildDependsOn)
+		</BuildDependsOn>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CleanDependsOn>
+			$(CleanDependsOn);
+			Clean-Up
+		</CleanDependsOn>
+	</PropertyGroup>
+	<Target Name="Prepare" />
+	<Target Name="Config">
+		<Message Text="Project            = $(ProjectName)" />
+		<Message Text="Configuration      = $(Configuration)" />
+		<Message Text="Platform           = $(Platform)" />
+		<Message Text="Src                = $(Src)" />
+		<Message Text="CompileDir         = $(CompileDir)" />
+		<Message Text="BuildDir           = $(BuildDir)" />
+		<Message Text="Prefix             = $(Prefix)" />
+		<Message Text="IncludeFolders     = $(IncludeFolders)" />
+		<Message Text="Warnings           = $(Warnings)" />
+		<Message Text="Dependencies       = $(Dependencies)" />
+		<Message Text="TargetSubSystem    = $(TargetSubSystem)" />
+		<Message Text="Libraries          = $(Libraries)" />
+		<Message Text="Constants          = $(Constants);$(Defines)" />
+		<Message Text="TargetArchitecture = $(TargetArchitecture)" />
+		<Message Text="IsDLL              = $(IsDLL)" />
+	</Target>
+	<Target Name="Clean-Up">
+		<Message Text="Removing MSBuild garbage" />
+		<RemoveDir Directories="$(IntDir);$(OutDir)" />
+	</Target>
 
 	<Target Name="GetVersion" BeforeTargets="MakeVersion">
 		<Exec Command="git describe" ConsoleToMsBuild="true" EchoOff="true">
@@ -98,15 +320,19 @@
 		</Exec>
 	</Target>
 	<Target Name="MakeVersion" BeforeTargets="ClCompile">
-		<Exec Command="$(Home)\jca\make_version.bat $(GitVersion)" EchoOff="true" />
+		<Exec Command="$(Src)\jca\make_version.bat $(GitVersion)" EchoOff="true" />
 	</Target>
-
 	<Target Name="Install" DependsOnTargets="Config">
 		<Error Text="Dinamic library must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
-		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\$(Platform)\nharu\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName)$(TargetExt)" DestinationFolder="$(Prefix)\libs" />
+		<Copy SourceFiles="$(OutDir)$(ProjectName).pdb" DestinationFolder="$(Prefix)\libs" />
+	</Target>
+	<Target Name="Uninstall">
+		<Message Text="Removing installation" />
+		<RemoveDir Directories="$(Prefix)" />
 	</Target>
 
+	<!-- Check dependencies -->
 	<Target Name="Check">
 		<Message Text="Checking prerequisites" />
 		<Error Text="Static library must be found at $(NharuLib)\nharu.lib" Condition="!Exists('$(NharuLib)\nharu.lib')" />

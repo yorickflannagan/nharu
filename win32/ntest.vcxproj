@@ -1,47 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="Check"
-			ToolsVersion="15.9"
-			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		InitialTargets="Check"
+		ToolsVersion="15.9"
+		xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
-	<Import Project="targets\project-configurations.targets" />
+	<!-- Project configurations -->
+	<Choose>
+		<When Condition="'$(Configuration)'==''">
+			<PropertyGroup>
+				<Configuration>Release</Configuration>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<Choose>
+		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
+			<PropertyGroup>
+				<Platform>Win32</Platform>
+			</PropertyGroup>
+		</When>
+	</Choose>
+	<ItemGroup Label="ProjectConfigurations">
+		<ProjectConfiguration Include="Debug|Win32">
+			<Configuration>Debug</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|Win32">
+			<Configuration>Release</Configuration>
+			<Platform>Win32</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Debug|x64">
+			<Configuration>Debug</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+		<ProjectConfiguration Include="Release|x64">
+			<Configuration>Release</Configuration>
+			<Platform>x64</Platform>
+		</ProjectConfiguration>
+	</ItemGroup>
+
 	<PropertyGroup Label="Globals">
-		<VCProjectVersion>15.0</VCProjectVersion>
+		<VCProjectVersion>16.0</VCProjectVersion>
 		<ProjectGuid>{4EB1D61E-64E4-46B9-8120-6FB2A9848189}</ProjectGuid>
 		<Keyword>ConsoleProject</Keyword>
 		<RootNamespace>ntest</RootNamespace>
-		<WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+		<WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
 		<NoLogo>true</NoLogo>
 	</PropertyGroup>
-	
   	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-	<Import Project="targets\console-configurations.targets" />
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+		<ConfigurationType>Application</ConfigurationType>
+		<UseDebugLibraries>true</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+		<ConfigurationType>Application</ConfigurationType>
+		<UseDebugLibraries>false</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<WholeProgramOptimization>true</WholeProgramOptimization>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+		<ConfigurationType>Application</ConfigurationType>
+		<UseDebugLibraries>true</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+		<ConfigurationType>Application</ConfigurationType>
+		<UseDebugLibraries>false</UseDebugLibraries>
+		<PlatformToolset>v142</PlatformToolset>
+		<WholeProgramOptimization>true</WholeProgramOptimization>
+		<CharacterSet>Unicode</CharacterSet>
+	</PropertyGroup>
+
+	<!-- Build properties -->
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
 	<ImportGroup Label="ExtensionSettings" />
 	<ImportGroup Label="Shared" />
-	<Import Project="targets\appdata-platform.targets" />
-
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
+	<ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+	</ImportGroup>
 	<PropertyGroup Label="UserMacros">
-		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(Home)\dist\$(Platform)\ssl</OpenSSLFolder>
-		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(Home)\dist\$(Platform)\idn</LibidnFolder>
-		<CompileDir Condition="'$(CompileDir)'==''">$(Home)\bin</CompileDir>
-		<BuildDir Condition="'$(BuildDir)'==''">$(Home)\dist</BuildDir>
-		<NharuLib Condition="'$(NharuLib)'==''">$(Home)\dist\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<Src>$(MSBuildProjectDirectory)\..</Src>
+		<OpenSSLFolder Condition="'$(OpenSSLFolder)'==''">$(USERPROFILE)\development\build\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder Condition="'$(LibidnFolder)'==''">$(USERPROFILE)\development\build\$(Platform)\idn</LibidnFolder>
+		<CompileDir Condition="'$(CompileDir)'==''">$(Src)\bin</CompileDir>
+		<BuildDir Condition="'$(BuildDir)'==''">$(Src)\dist</BuildDir>
+		<Prefix Condition="'$(Prefix)'==''">$(USERPROFILE)\development\build\$(Platform)\nharu</Prefix>
+		<NharuLib Condition="'$(NharuLib)'==''">$(Prefix)\libs</NharuLib>
 		<IntDir>$(CompileDir)\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
 		<OutDir>$(BuildDir)\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
 		<IncludeFolders>
-			$(Home);
-			$(Home)\include;
+			$(Src);
+			$(Src)\include;
 			$(OpenSSLFolder)\include;
 			$(LibidnFolder)\include;
-			$(VCInstallDir)\Tools\MSVC\14.16.27023\ATLMFC\include;
-			$(VCInstallDir)\Tools\MSVC\14.16.27023\include;
-			$(WindowsSdkDir)\include\10.0.17763.0\ucrt;
-			$(WindowsSdkDir)\include\10.0.17763.0\shared;
-			$(WindowsSdkDir)\include\10.0.17763.0\um;
-			$(WindowsSdkDir)\include\10.0.17763.0\winrt;
-			$(WindowsSdkDir)\include\10.0.17763.0\cppwinrt
 		</IncludeFolders>
 		<Warnings>4018;4389;4244;4005;4142;4701;4703;4706</Warnings>
 		<Dependencies>
@@ -53,35 +116,196 @@
 		<Libraries>$(NharuLib);$(OpenSSLFolder)\lib;$(LibidnFolder)\lib</Libraries>
 		<IsDLL>false</IsDLL>
 	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>WIN32;_DEBUG;_DEBUG_;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<LinkIncremental>true</LinkIncremental>
+		<Constants>_WIN64;_DEBUG;_DEBUG_;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>WIN32;NDEBUG;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX86</TargetArchitecture>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<LinkIncremental>false</LinkIncremental>
+		<Constants>_WIN64;NDEBUG;_CONSOLE;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS</Constants>
+		<TargetArchitecture>MachineX64</TargetArchitecture>
+	</PropertyGroup>
 
-	<Import Project="targets\console-vars.targets" />
-	<Import Project="targets\debug.targets" Condition="'$(Configuration)'=='Debug'" />
-	<Import Project="targets\release.targets" Condition="'$(Configuration)'=='Release'" />
+	<!-- Compiler and linker options -->
+	<ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'" >
+		<ClCompile>
+			<AdditionalIncludeDirectories>$(IncludeFolders)</AdditionalIncludeDirectories>
+			<AdditionalOptions>/permissive- /sdl-</AdditionalOptions>
+			<AlwaysAppend>/c</AlwaysAppend>
+			<BufferSecurityCheck>true</BufferSecurityCheck>
+			<CallingConvention>Cdecl</CallingConvention>
+			<CompileAs>CompileAsC</CompileAs>
+			<DisableSpecificWarnings>$(Warnings)</DisableSpecificWarnings>
+			<EnablePREfast>false</EnablePREfast>
+			<FloatingPointModel>Precise</FloatingPointModel>
+			<ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+			<MinimalRebuild>false</MinimalRebuild>
+			<OmitFramePointers>false</OmitFramePointers>
+			<PrecompiledHeader>NotUsing</PrecompiledHeader>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TreatWarningAsError>false</TreatWarningAsError>
+			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+			<UseFullPaths>true</UseFullPaths>
+			<WarningLevel>Level3</WarningLevel>
+			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+			<PreprocessorDefinitions>$(Constants);$(Defines)</PreprocessorDefinitions>
+			<AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+			<AssemblerOutput>AssemblyCode</AssemblerOutput>
+			<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+			<ErrorReporting>Prompt</ErrorReporting>
+			<InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+			<Optimization>Disabled</Optimization>
+			<ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+		</ClCompile>
+		<Link>
+			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
+			<DataExecutionPrevention>true</DataExecutionPrevention>
+			<OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
+			<RandomizedBaseAddress>true</RandomizedBaseAddress>
+			<SubSystem>$(TargetSubSystem)</SubSystem>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TypeLibraryResourceID>1</TypeLibraryResourceID>
+			<Version>1.0</Version>
+			<AdditionalLibraryDirectories>$(Libraries)</AdditionalLibraryDirectories>
+			<TargetMachine>$(TargetArchitecture)</TargetMachine>
+			<EnableUAC>true</EnableUAC>
+			<GenerateManifest>true</GenerateManifest>
+			<LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+			<UACExecutionLevel>AsInvoker</UACExecutionLevel>
+			<UACUIAccess>false</UACUIAccess>
+			<AdditionalOptions>/DEBUG:FULL</AdditionalOptions>
+			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+			<LinkDLL>$(IsDLL)</LinkDLL>
+			<IgnoreSpecificDefaultLibraries>libcmt.lib;libcmtd.lib;msvcrtd.lib</IgnoreSpecificDefaultLibraries>
+			<LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+		</Link>
+	</ItemDefinitionGroup>
+	<ItemDefinitionGroup Condition="'$(Configuration)'=='Release'" >
+		<ClCompile>
+			<AdditionalIncludeDirectories>$(IncludeFolders)</AdditionalIncludeDirectories>
+			<AdditionalOptions>/permissive- /sdl-</AdditionalOptions>
+			<AlwaysAppend>/c</AlwaysAppend>
+			<BufferSecurityCheck>true</BufferSecurityCheck>
+			<CallingConvention>Cdecl</CallingConvention>
+			<CompileAs>CompileAsC</CompileAs>
+			<DisableSpecificWarnings>$(Warnings)</DisableSpecificWarnings>
+			<EnablePREfast>false</EnablePREfast>
+			<FloatingPointModel>Precise</FloatingPointModel>
+			<ForceConformanceInForLoopScope>true</ForceConformanceInForLoopScope>
+			<MinimalRebuild>false</MinimalRebuild>
+			<OmitFramePointers>false</OmitFramePointers>
+			<PrecompiledHeader>NotUsing</PrecompiledHeader>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TreatWarningAsError>false</TreatWarningAsError>
+			<TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
+			<UseFullPaths>true</UseFullPaths>
+			<WarningLevel>Level3</WarningLevel>
+			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+			<PreprocessorDefinitions>$(Constants);$(Defines)</PreprocessorDefinitions>
+			<ErrorReporting>None</ErrorReporting>
+			<FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+			<FunctionLevelLinking>true</FunctionLevelLinking>
+			<IntrinsicFunctions>true</IntrinsicFunctions>
+			<Optimization>MinSpace</Optimization>
+			<WholeProgramOptimization>true</WholeProgramOptimization>
+			<ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+		</ClCompile>
+		<Link>
+			<AdditionalDependencies>$(Dependencies)</AdditionalDependencies>
+			<DataExecutionPrevention>true</DataExecutionPrevention>
+			<OutputFile>$(OutDir)$(ProjectName)$(TargetExt)</OutputFile>
+			<RandomizedBaseAddress>true</RandomizedBaseAddress>
+			<SubSystem>$(TargetSubSystem)</SubSystem>
+			<SuppressStartupBanner>true</SuppressStartupBanner>
+			<TypeLibraryResourceID>1</TypeLibraryResourceID>
+			<Version>1.0</Version>
+			<AdditionalLibraryDirectories>$(Libraries)</AdditionalLibraryDirectories>
+			<TargetMachine>$(TargetArchitecture)</TargetMachine>
+			<EnableUAC>true</EnableUAC>
+			<GenerateManifest>true</GenerateManifest>
+			<LinkErrorReporting>PromptImmediately</LinkErrorReporting>
+			<UACExecutionLevel>AsInvoker</UACExecutionLevel>
+			<UACUIAccess>false</UACUIAccess>
+			<LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+			<OptimizeReferences>true</OptimizeReferences>
+			<ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
+			<EnableCOMDATFolding>true</EnableCOMDATFolding>
+			<LinkDLL>$(IsDLL)</LinkDLL>
+		</Link>
+	</ItemDefinitionGroup>
 
+	<!-- Project files -->
 	<ItemGroup>
-		<ClInclude Include="$(Home)\test\test.h" />
+		<ClInclude Include="$(Src)\test\test.h" />
 	</ItemGroup>
 	<ItemGroup>
-		<ClCompile Include="$(Home)\test\cadest.c" />
-		<ClCompile Include="$(Home)\test\cert_t.c" />
-		<ClCompile Include="$(Home)\test\cms_t.c" />
-		<ClCompile Include="$(Home)\test\crl_t.c" />
-		<ClCompile Include="$(Home)\test\crypto_t.c" />
-		<ClCompile Include="$(Home)\test\issue_t.c" />
-		<ClCompile Include="$(Home)\test\nmain.c" />
-		<ClCompile Include="$(Home)\test\parser_t.c" />
-		<ClCompile Include="$(Home)\test\serpro.c" />
+		<ClCompile Include="$(Src)\test\cadest.c" />
+		<ClCompile Include="$(Src)\test\cert_t.c" />
+		<ClCompile Include="$(Src)\test\cms_t.c" />
+		<ClCompile Include="$(Src)\test\crl_t.c" />
+		<ClCompile Include="$(Src)\test\crypto_t.c" />
+		<ClCompile Include="$(Src)\test\issue_t.c" />
+		<ClCompile Include="$(Src)\test\nmain.c" />
+		<ClCompile Include="$(Src)\test\parser_t.c" />
+		<ClCompile Include="$(Src)\test\serpro.c" />
+		<ClCompile Include="$(Src)\test\pfx_t.c" />
 	</ItemGroup>
 
+	<!-- Targets -->
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 	<ImportGroup Label="ExtensionTargets" />
-	<Import Project="targets\common.targets" />
-
+	<PropertyGroup>
+		<BuildDependsOn>
+			Prepare;
+			Config;
+			$(BuildDependsOn)
+		</BuildDependsOn>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CleanDependsOn>
+			$(CleanDependsOn);
+			Clean-Up
+		</CleanDependsOn>
+	</PropertyGroup>
+	<Target Name="Prepare" />
+	<Target Name="Config">
+		<Message Text="Project            = $(ProjectName)" />
+		<Message Text="Configuration      = $(Configuration)" />
+		<Message Text="Platform           = $(Platform)" />
+		<Message Text="Src                = $(Src)" />
+		<Message Text="CompileDir         = $(CompileDir)" />
+		<Message Text="BuildDir           = $(BuildDir)" />
+		<Message Text="Prefix             = $(Prefix)" />
+		<Message Text="IncludeFolders     = $(IncludeFolders)" />
+		<Message Text="Warnings           = $(Warnings)" />
+		<Message Text="Dependencies       = $(Dependencies)" />
+		<Message Text="TargetSubSystem    = $(TargetSubSystem)" />
+		<Message Text="Libraries          = $(Libraries)" />
+		<Message Text="Constants          = $(Constants);$(Defines)" />
+		<Message Text="TargetArchitecture = $(TargetArchitecture)" />
+		<Message Text="IsDLL              = $(IsDLL)" />
+	</Target>
+	<Target Name="Clean-Up">
+		<Message Text="Removing MSBuild garbage" />
+		<RemoveDir Directories="$(IntDir);$(OutDir)" />
+	</Target>
 	<Target Name="Test" DependsOnTargets="Config">
 		<Error Text="Test application must be built first" Condition="!Exists('$(OutDir)$(ProjectName)$(TargetExt)')" />
-		<Exec Command='"$(OutDir)$(ProjectName)$(TargetExt)" "$(Home)\test\repo"' EchoOff="true" />
+		<Exec Command='"$(OutDir)$(ProjectName)$(TargetExt)" "$(Src)\test\repo"' EchoOff="true" />
 	</Target>
 
+	<!-- Build requirements check -->
 	<Target Name="Check" >
 		<Message Text="Checking prerequisites" />
 		<Error Text="Static library must be found at $(NharuLib)\nharu.lib" Condition="!Exists('$(NharuLib)\nharu.lib')" />

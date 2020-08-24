@@ -1,24 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project	DefaultTargets="Build"
-			InitialTargets="Check"
-			ToolsVersion="15.0"
-			xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+		InitialTargets="Check"
+		ToolsVersion="15.0"
+		xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
+	<!-- Project configurations -->
 	<PropertyGroup Label="GeneratedByConfigure">
 		<NoLogo>true</NoLogo>
-		<Prefix Condition="'$(Prefix)'==''">__PREFIX__</Prefix>
+		<Prefix >__PREFIX__</Prefix>		<!-- Install directory (project, platform and configuration independent) -->
+		<JDK32>__JDK32HOME__</JDK32>		<!-- JDK 32bits -->
+		<JDK64>__JDK64HOME__</JDK64>		<!-- JDK 64bits -->
+		<OpenSSL>__OPENSSL__</OpenSSL>	<!-- OpenSSL source code download directory -->
+		<Libidn>__LIBIDN__</Libidn>		<!-- Libidn source code download directory -->
 	</PropertyGroup>
 	<Choose>
 		<When Condition="'$(Platform)'=='x86' Or '$(Platform)'==''">
 			<PropertyGroup>
 				<Platform>Win32</Platform>
-				<JDKHome>__JDK32HOME__</JDKHome>
+				<JDKHome>$(JDK32)</JDKHome>
 			</PropertyGroup>
 		</When>
 		<Otherwise>
 			<PropertyGroup>
 				<Platform>$(Platform)</Platform>
-				<JDKHome>__JDK64HOME__</JDKHome>
+				<JDKHome>$(JDK64)</JDKHome>
 			</PropertyGroup>
 		</Otherwise>
 	</Choose>
@@ -34,19 +39,6 @@
 			</PropertyGroup>
 		</Otherwise>
 	</Choose>
-
-	<PropertyGroup>
-		<Home>$(MSBuildProjectDirectory)\..</Home>
-		<TargetDir Condition="'$(TargetDir)'==''">$(Home)</TargetDir>
-		<CompileDir>$(TargetDir)\bin</CompileDir>
-		<BuildDir>$(TargetDir)\dist</BuildDir>
-		<Prefix Condition="'$(Prefix)'=='__PREFIX__'">$(BuildDir)</Prefix>
-		<OpenSSLFolder>$(Prefix)\$(Platform)\ssl</OpenSSLFolder>
-		<LibidnFolder>$(Prefix)\$(Platform)\idn</LibidnFolder>
-		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
-		<NharuJCALib>$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>
-		<JavaPrefix>$(Prefix)\$(Platform)\nharu\libs</JavaPrefix>
-	</PropertyGroup>
 	<Choose>
 		<When Condition="'$(Configuration)'=='Debug'">
 			<PropertyGroup>
@@ -59,16 +51,42 @@
 			</PropertyGroup>
 		</Otherwise>
 	</Choose>
+
+	<!-- Build properties -->
+	<PropertyGroup>
+		<Src>$(MSBuildProjectDirectory)\..</Src>
+		<OpenSSLFolder>$(Prefix)\$(Platform)\ssl</OpenSSLFolder>
+		<LibidnFolder>$(Prefix)\$(Platform)\idn</LibidnFolder>
+		<NharuPrefix>$(Prefix)\$(Platform)\nharu</NharuPrefix>
+		<CompileDir>$(Src)\bin</CompileDir>
+		<BuildDir>$(Src)\dist</BuildDir>
+		<NharuLib>$(BuildDir)\$(Platform)\$(Configuration)\nharu</NharuLib>
+		<NharuJCALib>$(BuildDir)\$(Platform)\$(Configuration)\nharujca\nharujca.dll</NharuJCALib>
+	</PropertyGroup>
 	<PropertyGroup Label="BuildProperties">
+		<OpenSSLProps>
+			$(BuildProperties);
+			Src=$(OpenSSL);
+			Platform=$(Platform);
+			Configuration=$(Configuration);
+			Prefix=$(OpenSSLFolder)
+		</OpenSSLProps>
+		<LibidnProps>
+			$(BuildProperties);
+			Src=$(Libidn);
+			Platform=$(Platform);
+			Configuration=$(Configuration);
+			Prefix=$(LibidnFolder)
+		</LibidnProps>
 		<StaticLibProps>
 			$(BuildProperties);
 			Platform=$(Platform);
 			Configuration=$(Configuration);
 			OpenSSLFolder=$(OpenSSLFolder);
 			LibidnFolder=$(LibidnFolder);
+			Prefix=$(NharuPrefix);
 			CompileDir=$(CompileDir);
-			BuildDir=$(BuildDir);
-			Prefix=$(Prefix)
+			BuildDir=$(BuildDir)
 		</StaticLibProps>
 		<JCALibProps>
 			$(StaticLibProps);
@@ -80,15 +98,14 @@
 			NharuLib=$(NharuLib)
 		</TestProps>
 		<JavaProps>
-			CompileDir=$(CompileDir);
-			BuildDir=$(BuildDir);
-			Prefix=$(JavaPrefix);
-			LogLevel=$(LogLevel);
+			Prefix=$(NharuPrefix);
 			JDKHome=$(JDKHome);
-			NharuJCALib=$(NharuJCALib)
+			NharuJCALib=$(NharuJCALib);
+			LogLevel=$(LogLevel);
 		</JavaProps>
 	</PropertyGroup>
 
+	<!-- Targets -->
 	<Target Name="Echo">
 		<Message Text="Build properties:" />
 		<Message Text="Platform:      $(Platform)" />
@@ -103,45 +120,54 @@
 		<Message Text="NharuJCALib:   $(NharuJCALib)" />
 		<Message Text="LogLevel:      $(LogLevel)" />
 	</Target>
-
 	<Target Name="Build" DependsOnTargets="Echo">
-		<MSBuild Projects="nharu.vcxproj" Properties="$(StaticLibProps)" />
-		<MSBuild Projects="nharujca.vcxproj" Properties="$(JCALibProps)" />
-		<MSBuild Projects="ntest.vcxproj" Properties="$(TestProps)" />
-		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" />
+		<MSBuild Projects="nharu.vcxproj"		Properties="$(StaticLibProps)" />
+		<MSBuild Projects="nharujca.vcxproj"	Properties="$(JCALibProps)" />
+		<MSBuild Projects="ntest.vcxproj"		Properties="$(TestProps)" />
+		<MSBuild Projects="nharujca.javaproj"	Properties="$(JavaProps)" />
 	</Target>
-
 	<Target Name="Test" DependsOnTargets="Echo">
-		<MSBuild Projects="ntest.vcxproj" Properties="$(TestProps)" Targets="Test" />
-		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" Targets="Test" />
+		<MSBuild Projects="ntest.vcxproj"		Properties="$(TestProps)" Targets="Test" />
+		<MSBuild Projects="nharujca.javaproj"	Properties="$(JavaProps)" Targets="Test" />
 	</Target>
-
 	<Target Name="Install" DependsOnTargets="Echo">
 		<MSBuild Projects="nharu.vcxproj" Properties="$(StaticLibProps)" Targets="Install" />
 		<MSBuild Projects="nharujca.vcxproj" Properties="$(JCALibProps)" Targets="Install" />
 		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" Targets="Install" />
 	</Target>
+	<Target Name="Uninstall">
+		<MSBuild Projects="nharu.vcxproj"		Properties="$(StaticLibProps)" Targets="Uninstall" />
+		<MSBuild Projects="nharujca.vcxproj"	Properties="$(JCALibProps)" Targets="Uninstall" />
+		<MSBuild Projects="nharujca.javaproj"	Properties="$(JavaProps)" Targets="Uninstall" />
+	</Target>
 
 	<Target Name="Clean" DependsOnTargets="Echo">
-		<MSBuild Projects="ntest.vcxproj" Properties="$(TestProps)" Targets="Clean" />
-		<MSBuild Projects="nharujca.javaproj" Properties="$(JavaProps)" Targets="Clean" />
-		<MSBuild Projects="nharujca.vcxproj" Properties="$(JCALibProps)" Targets="Clean" />
-		<MSBuild Projects="nharu.vcxproj" Properties="$(StaticLibProps)" Targets="Clean" />
+		<MSBuild Projects="ntest.vcxproj"		Properties="$(TestProps)"		Targets="Clean" />
+		<MSBuild Projects="nharujca.javaproj"	Properties="$(JavaProps)"		Targets="Clean" />
+		<MSBuild Projects="nharujca.vcxproj"	Properties="$(JCALibProps)"		Targets="Clean" />
+		<MSBuild Projects="nharu.vcxproj"		Properties="$(StaticLibProps)"	Targets="Clean" />
 	</Target>
 
+
+	<!-- Dependencies check -->
+	<Target Name="ConfigureCheck">
+		<Error Text="Must execute configure.vbs and set install directory"	Condition="$(Prefix)==__PREFIX__" />
+		<Error Text="Must execute configure.vbs and set JDK 32bist location"	Condition="$(JDK32)==__JDK32HOME__" />
+		<Error Text="Must execute configure.vbs and set JDK 64bits location"	Condition="$(JDK64)==__JDK64HOME__" />
+		<Error Text="Must execute configure.vbs and set OpenSSL location"		Condition="$(OpenSSL)==__OPENSSL__" />
+		<Error Text="Must execute configure.vbs and set Libidn location"		Condition="$(Libidn)==__LIBIDN__" />
+	</Target>
 	<Target Name="SSLBuild" Condition="!Exists('$(OpenSSLFolder)\lib\libcrypto.lib')" >
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Build" />
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Test" />
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Install" />
-		<MSBuild Projects="openssl.proj" Properties="Configuration=Release;Prefix=$(Prefix)\$(OpenSSLFolder)" Targets="Clean" />
+		<MSBuild Projects="openssl.proj" Properties="$(OpenSSLProps)" Targets="Build" />
+		<MSBuild Projects="openssl.proj" Properties="$(OpenSSLProps)" Targets="Install" />
+		<MSBuild Projects="openssl.proj" Properties="$(OpenSSLProps)" Targets="Clean" />
 	</Target>
 	<Target Name="IDNBuild" Condition="!Exists('$(LibidnFolder)\lib\libidn.lib')">
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Clean" />
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Build" />
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Install" />
-		<MSBuild Projects="libidn.vcxproj" Properties="Configuration=Release;Prefix=$(Prefix)\$(LibidnFolder)" Targets="Clean" />
+		<MSBuild Projects="libidn.vcxproj" Properties="$(LibidnProps)" Targets="Build" />
+		<MSBuild Projects="libidn.vcxproj" Properties="$(LibidnProps)" Targets="Install" />
+		<MSBuild Projects="libidn.vcxproj" Properties="$(LibidnProps)" Targets="Clean" />
 	</Target>
-	<Target Name="Check" DependsOnTargets="SSLBuild;IDNBuild" >
+	<Target Name="Check" DependsOnTargets="ConfigureCheck;SSLBuild;IDNBuild" >
 		<Error Text="JDK Must be installed" Condition="!Exists('$(JDKHome)\include\jni.h') Or !Exists('$(JDKHome)\bin\java.exe')" />
 	</Target>
 
