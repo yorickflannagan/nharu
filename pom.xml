@@ -3,8 +3,8 @@
 			xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<properties>
-		<maven.compiler.source>1.7</maven.compiler.source>
-		<maven.compiler.target>1.7</maven.compiler.target>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<version.template.file>${project.basedir}/jca/Version.java.template</version.template.file>
 		<version.file>${project.basedir}/jca/java/org/crypthing/security/provider/Version.java</version.file>
 		<log.template.file>${project.basedir}/jca/LogDevice.java.template</log.template.file>
@@ -62,7 +62,7 @@
 					<verbose>true</verbose>
 					<fork>true</fork>
 					<executable>${jdk.home}/bin/javac</executable>
-					<compilerVersion>1.7</compilerVersion>
+					<compilerVersion>1.8</compilerVersion>
 				</configuration>
 			</plugin>
 			<plugin>
