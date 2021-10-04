@@ -15,15 +15,16 @@
 
 #define PKIBRPF		PATH_SEPARATOR"pkibr-pf.cer"
 #define ENDCA		PATH_SEPARATOR"end-ca.cer"
-#define PKIBRACRL		PATH_SEPARATOR"pkibr-ac.crl"
+#define PKIBRACRL	PATH_SEPARATOR"pkibr-ac.crl"
 #define PKIBRAC		PATH_SEPARATOR"pkibr-ac.cer"
 #define SIGNERCERT	PATH_SEPARATOR"signer.cer"
+#define TKNCRL		PATH_SEPARATOR"LCR_68.crl"
 
 int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 {
 	int rv = 0;
 	NH_NOISE_HANDLER hNoise;
-	char pkibrpf[MAX_PATH], endca[MAX_PATH], pkibrcrl[MAX_PATH], pkibrac[MAX_PATH], signer[MAX_PATH];
+	char pkibrpf[MAX_PATH], endca[MAX_PATH], pkibrcrl[MAX_PATH], pkibrac[MAX_PATH], signer[MAX_PATH], clrTKN[MAX_PATH];
 
 	memset(pkibrpf, 0, MAX_PATH);
 	strcpy(pkibrpf, argc[1]);
@@ -40,6 +41,9 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 	memset(signer, 0, MAX_PATH);
 	strcpy(signer, argc[1]);
 	strcat(signer, SIGNERCERT);
+	memset(clrTKN, 0, MAX_PATH);
+	strcpy(clrTKN, argc[1]);
+	strcat(clrTKN, TKNCRL);
 
 	printf("%s\n", "Nharu library regression test");
 	if (NH_SUCCESS(rv = NH_new_noise_device(&hNoise))) NH_release_noise_device(hNoise);
@@ -66,6 +70,7 @@ int main(_UNUSED_ int argv, _UNUSED_ char **argc)
 
 	if (NH_SUCCESS(rv)) rv = test_digest_info();
 	if (NH_SUCCESS(rv)) rv = test_pfx_parsing();
+	if (NH_SUCCESS(rv)) rv = test_tkn_crl(clrTKN);
 	printf("%s\n", "Test done");
 	return rv;
 }

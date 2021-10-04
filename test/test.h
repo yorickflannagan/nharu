@@ -31,6 +31,7 @@ int test_digest_info();
 int check_crl_serpro();
 
 int test_pfx_parsing();
+int test_tkn_crl(char*);
 
 EXTERN unsigned char __ca_privkey[];
 #define CA_PRIVKEY_SIZE			1217

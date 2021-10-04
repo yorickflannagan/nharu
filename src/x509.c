@@ -1529,14 +1529,19 @@ NH_UTILITY(NH_RV, sort_crl)(_INOUT_ NH_ASN1_PARSER_HANDLE hParser, _IN_ NH_ASN1_
 			rv = inc_integer(hParser->container, current->first, &current->first);
 			if (NH_SUCCESS(rv)) rv = add_crl_node(hParser->container, current, toSort[i]);
 		}
+		/*
+		 * Try to deal with duplicate certificate numbers
+		 * We hoped that this would never happen. However, it has happened!
+		 * Removed since version 1.6.1
 		else
 		{
 			if
-			(	/* Try to deal with duplicate certificate numbers */
+			(
 				i == 0 ||
 				comp_integer(it.data, it.length, (unsigned char*) toSort[i - 1]->child->value, toSort[i - 1]->child->valuelen)
-			)	rv = NH_MALFORMED_CRL_SERIAL; /* We hope that this piece of shit will never happen */
+			)	rv = NH_MALFORMED_CRL_SERIAL;
 		}
+		 */
 		i++;
 	}
 	free(toSort);
