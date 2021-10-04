@@ -1015,7 +1015,7 @@ NH_FUNCTION(NH_RV, NHFX_new_pfx_parser)(_IN_ unsigned char *pBuffer, _IN_ unsign
 {
 	NH_RV rv;
 	NH_PFX_PARSER hSelf = NULL;
-	NH_ASN1_PARSER_HANDLE hPDU, hAuth;
+	NH_ASN1_PARSER_HANDLE hPDU = NULL, hAuth;
 	unsigned char *pContents, *pData;
 	unsigned int uiContentsLen, uiDataLen;
 	NH_ASN1_PNODE pNode;
