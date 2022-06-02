@@ -254,6 +254,7 @@
 		<ClCompile Include="$(Src)\test\cert_t.c" />
 		<ClCompile Include="$(Src)\test\cms_t.c" />
 		<ClCompile Include="$(Src)\test\crl_t.c" />
+		<ClCompile Include="$(Src)\test\crltkn.c" />
 		<ClCompile Include="$(Src)\test\crypto_t.c" />
 		<ClCompile Include="$(Src)\test\issue_t.c" />
 		<ClCompile Include="$(Src)\test\nmain.c" />
