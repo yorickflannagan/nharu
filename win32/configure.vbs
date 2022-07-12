@@ -238,22 +238,22 @@ Sub Main
 
 	' Ensures that support software are installed
 	vs.EnsureInstall()
-	jdk.EnsureInstall("7 Update 80")
-	jdk32 = jdk.GetInstallLocation("7 Update 80")
+	jdk.EnsureInstall("8 Update 181")
+	jdk32 = jdk.GetInstallLocation("8 Update 181")
 	Set jdk = Nothing
 	Set jdk = new Java
-	jdk.EnsureInstall("7 Update 80 (64-bit)")
-	jdk64 = jdk.GetInstallLocation("7 Update 80 (64-bit)")
+	jdk.EnsureInstall("8 Update 261 (64-bit)")
+	jdk64 = jdk.GetInstallLocation("8 Update 261 (64-bit)")
 	If Not installer.IsInPath("drmemory.exe") Then Err.Raise 1, "Main", "Dr. Memory must be installed in path from https://drmemory.org/"
 	If Not installer.IsInPath("mvn.cmd")  Then Err.Raise 1, "Main", " Apache Maven must be installed in path from https://maven.apache.org/download.cgi"
 	If Not installer.IsInPath("perl.exe") Then Err.Raise 1, "Main", " Active Perl must be installed in path from https://downloads.activestate.com/ActivePerl/"
 	If Not installer.IsInPath("nasm.exe") Then Err.Raise 1, "Main", " Netwide Assembler must be installed in path from https://www.nasm.us/pub/nasm/releasebuilds/2.15.04/"
 	WScript.Echo ""
-	WScript.Echo " JDK 7 Update 80:          " & jdk32
-	WScript.Echo " JDK 7 Update 80 (64-bit): " & jdk64
-	WScript.Echo " Install directory:        " & prefix
-	WScript.Echo " OpenSSL source code:      " & openssl
-	WScript.Echo " Libidn source code:       " & libidn
+	WScript.Echo " JDK 8 Update 181:          " & jdk32
+	WScript.Echo " JDK 8 Update 261 (64-bit): " & jdk64
+	WScript.Echo " Install directory:         " & prefix
+	WScript.Echo " OpenSSL source code:       " & openssl
+	WScript.Echo " Libidn source code:        " & libidn
 	WScript.Echo ""
 	WScript.Echo " MSBuild utility found"
 	WScript.Echo " Dr Memory utility found"

@@ -57,6 +57,9 @@
 		<Exec	Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.provider.NharuProvider "$(Src)\test\repo\signer.p12" "$(Src)\test\repo\trust.jks"'
 			EnvironmentVariables='JAVA_HOME=$"(JDKHome)"'
 			EchoOff="true" />
+		<Exec	Command='"$(JDKHome)\bin\java.exe" -classpath "$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)" -Dorg.crypthing.security.provider.nharulib="$(NharuJCALib)" org.crypthing.security.cms.CMSSignedData "$(Src)\test\repo"'
+			EnvironmentVariables='JAVA_HOME=$"(JDKHome)"'
+			EchoOff="true" />
 	</Target>
 	<Target Name="Install" DependsOnTargets="Echo">
 		<Error Text="Java project must be built first" Condition="!Exists('$(InstallDir)\$(ProjectName)-$(JarVersion)$(TargetExt)')" />
