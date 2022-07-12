@@ -1,5 +1,8 @@
 package org.crypthing.security.cms;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
@@ -105,6 +108,46 @@ public final class CMSSignedData
 	}
 
 	/**
+	 * Verifies attached document signature and checks signed attribute eContent.
+	 * Ignores signer certificate trustworthiness.
+	 * @throws CMSSignatureException if cryptographic validation fails.
+	 * @throws CMSInvalidAttributesException if encapsulated content info validation fails.
+	 * @since 1.7.0
+	 */
+	public void verify() throws CMSSignatureException, CMSInvalidAttributesException
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		final int count = countSigners();
+		for (int i = 0; i < count; i++)
+		{
+			final NharuX509Certificate cert = (NharuX509Certificate) getSignerCertificate(i);
+			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) cert.getPublicKey()).getInternalNode());
+			nhcmsValidateAttached(hHandle);
+		}
+	}
+
+	/**
+	 * Verifies CMS document signature of detached content and and checks signed attribute eContent.
+	 * Ignores signer certificate trustworthiness.
+	 * @param eContent signed content
+	 * @throws CMSSignatureException if cryptographic validation fails.
+	 * @throws CMSInvalidAttributesException if encapsulated content info validation fails.
+	 * @since 1.7.0
+	 */
+	public void verify(final byte[] eContent) throws CMSSignatureException, CMSInvalidAttributesException
+	{
+		if (hHandle == 0) throw new IllegalStateException("Object already released");
+		if(eContent == null) throw new NullPointerException("Arguments must not be null");
+		final int count = countSigners();
+		for (int i = 0; i < count; i++)
+		{
+			final NharuX509Certificate cert = (NharuX509Certificate) getSignerCertificate(i);
+			nhcmsVerify(hHandle, i, ((NharuRSAPublicKey) cert.getPublicKey()).getInternalNode());
+			nhcmsValidate(hHandle, eContent);
+		}
+	}
+
+	/**
 	 * Verifies this signed document. EncapsulatedContentInfo must be present.
 	 * @param store: trusted certificates store.
 	 * @throws UntrustedCertificateException
@@ -184,5 +227,66 @@ public final class CMSSignedData
 			nhcmsReleaseHandle(hHandle);
 			hHandle = 0;
 		}
+	}
+
+
+	private static final String INVALID_ARG = "Argument must point to CMS documents folder";
+	private static final String INVALID_FOLDER = INVALID_ARG + " where the following file must exists: ";
+	private static final String ATTACHED = "attached-cms.pem";
+	private static final String DETACHED = "dettached-cms.pem";
+	private static final String ECONTENT = "conteudo assinado";
+	private static File checkArgs(String[] args)
+	{
+		if (args.length == 0) throw new RuntimeException(INVALID_ARG);
+		final File folder = new File(args[0]);
+		if (!folder.isDirectory()) throw new RuntimeException(INVALID_ARG);
+		File child = new File(folder, ATTACHED);
+		if (!child.canRead()) throw new RuntimeException(INVALID_FOLDER + ATTACHED);
+		child = new File(folder, DETACHED);
+		if (!child.canRead()) throw new RuntimeException(INVALID_FOLDER + DETACHED);
+		return folder;
+	}
+	private static byte[] open(final File parent, final String child) throws IOException
+	{
+		byte[] ret = null;
+		final FileInputStream in = new FileInputStream(new File(parent, child));
+		try
+		{
+			final ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
+			byte[] buffer = new byte[1024];
+			int read;
+			while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+			ret = out.toByteArray();
+		}
+		finally { in.close(); }
+		return ret;
+	}
+	private static void checkAttached(final File parent) throws IOException, CMSException
+	{
+		System.out.println("Attached CMS signed document cryptographic validation test...");
+		byte[] input = open(parent, ATTACHED);
+		final CMSSignedData doc = new CMSSignedData(input);
+		try { doc.verify(); }
+		finally { doc.releaseDocument(); }
+		System.out.println("Test done!");
+	}
+	public static void checkDetached(final File parent) throws IOException, CMSException
+	{
+		System.out.println("Detached CMS signed document cryptographic validation test...");
+		byte[] input = open(parent, DETACHED);
+		final CMSSignedData doc = new CMSSignedData(input);
+		try { doc.verify(ECONTENT.getBytes()); }
+		finally { doc.releaseDocument(); }
+		System.out.println("Test done!");
+	}
+	public static void main(String[] args) throws Exception
+	{
+		System.out.println("===================================");
+		System.out.println("Version 1.7.0 validation check...");
+		System.out.println("===================================");
+		final File folder = checkArgs(args);
+		checkAttached(folder);
+		checkDetached(folder);
+		System.out.println("Version 1.7.0 check done");
 	}
 }
